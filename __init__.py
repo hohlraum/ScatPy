@@ -28,7 +28,7 @@ __all__=["DDscat", "ranges", "results", "targets", "config", "fileio", "utils"]
 
 """
 Version Log.
-Another test message
+Another test message. #2
 
 0.924 
     -Started to use git for versioning controls

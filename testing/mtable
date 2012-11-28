@@ -1,0 +1,9 @@
+ DDSCAT --- DDSCAT 7.2.2 [12.06.05]   
+ TARGET --- Rectangular prism; NX,NY,NZ=  16  32  32                          
+ PBCGS2 --- method of solution 
+ GKDLDR --- prescription for polarizabilities
+ RCTGLPRSM --- shape 
+  16384 = NAT0 = number of dipoles
+ /Users/andrewmark/Desktop/ddscat/examples_exp/diel/Au_evap  
+ wave(um)   f(cm-1)     Re(m)     Im(m)    Re(eps)   Im(eps)
+5.0000E-01 2.0000E+04 9.656E-01 1.863E+00-2.537E+00 3.598E+00

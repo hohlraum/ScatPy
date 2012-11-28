@@ -28,6 +28,7 @@ __all__=["DDscat", "ranges", "results", "targets", "config", "fileio", "utils"]
 
 """
 Version Log.
+Another test message
 
 0.923 Nov 27th, 2012
     -Added utility to mix materials for alloy

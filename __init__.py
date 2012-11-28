@@ -29,6 +29,9 @@ __all__=["DDscat", "ranges", "results", "targets", "config", "fileio", "utils"]
 """
 Version Log.
 
+0.924 
+    -Started to use git for versioning controls
+
 0.923 Nov 27th, 2012
     -Added utility to mix materials for alloy
     -Added save method to MInTable

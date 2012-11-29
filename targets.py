@@ -272,7 +272,17 @@ class Target_IsoHomo_FROM_FILE(Target):
     def VTRconvert(self, outfile=None):
         """Execute VTRConvert to generate a model file viewable in Paraview"""
         Target.VTRconvert(self, self.fname, outfile)
-        
+
+
+class Target_FROM_FILE(Target_FROM_FILE):
+    pass        
+
+class Target_Iso_FROM_FILE(Target_FROM_FILE):
+    pass        
+
+
+class Target_DecoratedHelix(Target_Iso_FROM_FILE):
+    pass        
 
 class Target_Helix(Target_IsoHomo_FROM_FILE):
     """

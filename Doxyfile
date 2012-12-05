@@ -789,6 +789,7 @@ IMAGE_PATH             =
 # ignored.
 
 INPUT_FILTER           = "python /usr/local/bin/doxypy.py"
+#INPUT_FILTER		=
 
 # The FILTER_PATTERNS tag can be used to specify filters on a per file pattern 
 # basis.  Doxygen will compare the file name with each pattern and apply the 

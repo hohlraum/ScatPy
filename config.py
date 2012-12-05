@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+"""@namespace ScatPy.config
 The package configuration settings.
 
 All paths should be specified using unix style forward slashes. These will

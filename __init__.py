@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+"""@mainpage @package ScatPy
 A set of tools for setting up and working with the program DDScat.
 
 It includes a number of submodules:

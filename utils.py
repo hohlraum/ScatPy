@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+"""@namespace ScatPy.utils
 A few utility functions.
 
 """

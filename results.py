@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-A set of classes for managing the output files from ddscat
+"""@package ScatPy.results
+For reading, manipulating and plotting the output files from DDSCAT
 
 """
 
@@ -22,14 +22,14 @@ import utils
 
 #class Results():
 #    def __init__(self, **kwargs):
-##        self.log=Log()
+#        self.log=Log()
 #        self.refresh()
 #        self.mtable=MTable(**kwargs)
 #        self.qtable=QTable(**kwargs)
 #        self.qtable2=QTable2(**kwargs)
 #
 #    def refresh(self):        
-##        self.log.refresh()
+#        self.log.refresh()
 #        self.mtable.refresh()
 #        self.qtable.refresh()
 #        self.qtable2.refresh()

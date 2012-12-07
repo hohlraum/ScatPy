@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-"""@mainpage @package ScatPy
-A set of tools for setting up and working with the program DDScat.
+"""@mainpage ScatPy
+A set of tools for setting up and working with the program DDScat.\n
+
 
 It includes a number of submodules:
-    core: the central definiton for a ddscat run including the run settings
-    config: configuration settings
-    targets: target definition classes
-    results: classes for manipulating the ddscat output files
-    ranges: classes for defining DDScat wavelength, size, and other ranges
-    utils: a handful of common utilities
+  -core: the central definiton for a ddscat run including the run settings
+  -config: configuration settings
+  -targets: target definition classes
+  -results: classes for manipulating the ddscat output files
+  -ranges: classes for defining DDScat wavelength, size, and other ranges
+  -utils: a handful of common utilities
 
 @author: andrewmark
 """
@@ -27,12 +28,13 @@ __all__=["DDscat", "ranges", "results", "targets", "config", "fileio", "utils"]
 
 
 """
-0.924 
-    -Started to use git for versioning controls
+@section clog Change Log
+@version 0.924 
+-Started to use git for versioning controls
 
-0.923 Nov 27th, 2012
-    -Added utility to mix materials for alloy
-    -Added save method to MInTable
+@version 0.923 Nov 27th, 2012
+-Added utility to mix materials for alloy
+-Added save method to MInTable
 
 0.922 Nov 19th, 2012
   -Added Target CYLINDER contributed by Sahand
@@ -43,9 +45,4 @@ __all__=["DDscat", "ranges", "results", "targets", "config", "fileio", "utils"]
   -Added profile for luna
   -Added additional profile field for mpi_path
   -Modified sge_write to write to use mpi_paths
-
-
-
-
-
 """

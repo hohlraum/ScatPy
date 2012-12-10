@@ -440,3 +440,90 @@ class Target_SpheresHelix(Target_IsoHomo_FROM_FILE):
                     self.grid[i,j,k]=sphere_check(i,j,k)
 
         self.update_N()
+
+
+class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
+    """
+    A helix target
+    
+    """
+    def __init__(self, height, pitch, major_r, minor_r, d=None, build=True, **kwargs):
+        '''
+        Build a Helix Target
+        
+        dimensions are physical, in um
+
+        Arguments:
+            height: the height of the helix (not counting it's thickness)
+            pitch: the helix pitch, um/turn
+            major_r: the radius of the helix sweep
+            minor_r: the radius of the wire that is swept to form the helix
+        
+        Optional Arguments:
+            d: the dipole dipole spacing, if not specified default value is used
+            build: if False, delays building the helix until requested. default is True
+            
+            **kwargs are passed to Target
+        '''
+
+        if d is None:
+            d=default_d
+        shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
+        shape+=1
+        Target_IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+
+        self.height=height
+        self.pitch=pitch
+        self.major_r=major_r
+        self.minor_r=minor_r
+        self.d=d
+
+        if build:
+            self.build_helix()
+        else:
+            self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
+
+    def build_helix(self):
+
+        self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
+        
+        print 'Generating Helix...'
+        #the helix dimensions in pixels
+        p_height=self.height/self.d
+        p_pitch=-self.pitch/self.d
+        p_major_r=self.major_r/self.d
+        p_minor_r=self.minor_r/self.d        
+
+        #the sweep path
+        t=np.linspace(0,1, self.height/abs(self.pitch)*360)
+#        x=np.int16(p_height*t + p_minor_r)
+#        y=np.int16(p_major_r * np.cos(2*np.pi* x/p_pitch) + self.origin[1])
+#        z=np.int16(p_major_r * np.sin(2*np.pi* x/p_pitch) + self.origin[2])
+#        
+#        p=np.vstack([x,y,z]).transpose()
+#        p=np.vstack([np.array(u) for u in set([tuple(l) for l in p])]) #remove duplicates
+
+        x=p_height*t + p_minor_r
+        y=((t+1.)/2)*p_major_r * np.cos(2*np.pi* x/p_pitch) + self.origin[1]
+        z=((t+1.)/2)*p_major_r * np.sin(2*np.pi* x/p_pitch) + self.origin[2]
+        
+        p=np.vstack([x,y,z]).transpose()
+#        p=np.vstack([np.array(u) for u in set([tuple(l) for l in p])]) #remove duplicates
+        print 'Done constructing sweep path...'
+        def dist(v):
+            return np.sqrt(v[:,0]**2 +v[:,1]**2 + v[:,2]**2)
+            
+        def sphere_check(i, j, k):
+            
+            d=dist(np.array([i,j,k])-p)
+            if np.any(d<=p_minor_r):
+                return True
+            else:
+                return False
+                
+        for i in range(self.shape[0]):
+            for j in range(self.shape[1]):
+                for k in range(self.shape[2]):
+                    self.grid[i,j,k]=sphere_check(i,j,k)
+
+        self.update_N()

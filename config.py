@@ -9,13 +9,14 @@ be written to file in the correct style.
 import ntpath
 import posixpath
 
+# Eslami:
 local_eslami={'mat_library':'h:/DDSCAT/material/',
         'ddscat_path':'c:/Program Files/ddscat/',
         'os':'windows',
         'path': ntpath}
 
 
-#  landau eslami:
+
 landau_eslami={
         'name':'landau',
         'mat_library':'/home/guests/eslami/mat_prop/',
@@ -33,7 +34,7 @@ luna_eslami={
         'path': posixpath}
 
 
-#  landau:
+#  Mark:
 landau_mark={
         'name':'landau',
         'mat_library':'/home/guests/mark/mat_prop',
@@ -52,7 +53,7 @@ luna_mark={
         'path': posixpath}
 
 
-#  local:
+
 local_mark={'mat_library': '~/Documents/Analysis/ddscat/mp/',
             'ddscat_path':'/usr/local/bin/',
             'os':'unix',
@@ -60,6 +61,6 @@ local_mark={'mat_library': '~/Documents/Analysis/ddscat/mp/',
 
 
 #edit this to use the desired configuration
-exec_settings=luna_mark
+exec_settings=luna_eslami
 
 

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Wed Sep  5 22:09:06 2012
+"""@namespace ScatPy.fileio
 
-@author: andrewmark
+Functions for reading an writing from files.
+
 """
 from __future__ import division
 import subprocess

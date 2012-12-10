@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""
-This module is a set of tools for setting up and working with the program DDScat.
+"""@namespace ScatPy.core
+A set of tools for setting up and working with the program DDScat.
 
 
 """

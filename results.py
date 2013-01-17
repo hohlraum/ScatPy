@@ -674,7 +674,7 @@ class ResultCollection(OrderedDict):
         
 
 class FolderCollection(ResultCollection):
-    def __init__(self, r_type=None, path=None):
+    def __init__(self, r_type=None, path=None, recurse=True):
         """
         A collection of several results files together in one object.
     
@@ -687,7 +687,8 @@ class FolderCollection(ResultCollection):
 
         Arguments:
             r_type: a string denoting the type of result file to load from each folder
-            path: the root directory whose subfolders will be read        
+            path: the root directory whose subfolders will be read
+            recurse: True recurses all subdirectories, False loads only from the specified (or working folder)
         """
         if r_type is None:
             r_type='qtable'
@@ -702,16 +703,24 @@ class FolderCollection(ResultCollection):
         if path is None:
             path='.'
             
-        folders=[i for i in os.listdir(path) if os.path.isdir(i)]
+#        folders=[i for i in os.listdir(path) if os.path.isdir(i)]
 
         super(FolderCollection, self).__init__()    
-    
+
+        folders=[]    
+        if recurse:
+            for root, dirs, files in os.walk(path):
+                folders.append(root)                
+        else:
+            folders=[i for i in os.listdir(path) if os.path.isdir(i)]
+
         for f in folders:
             try:
                 f_key=os.path.normpath(f)
                 self[f_key]=rtable(folder=f)
             except (IOError):
                 pass
+
     
 class FileCollection(ResultCollection):
     def __init__(self, r_type=None, path=None):

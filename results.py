@@ -642,21 +642,17 @@ class ResultCollection(OrderedDict):
             fields=['Q_ext']            
             
         CD=ResultCollection()
-        for l in self.keys():
-            if l[-3:]=='LCP' or l[-3:]=='_cL':
-                print 'Dichroism from: '+l
-                if l[-3:]=='LCP':
+        for L in self.keys():
+            if L.endswith(('LCP', '_cL')):
+                print 'Dichroism from: '+L
+                if L.endswith('LCP'):
                     match='RCP'
                 else:
                     match='_cR'
-                L=l
 
-                rname=L[:-3]+match
-                for R in self.keys():
-                    if R==rname:
-                        break
+                R=L[:-3]+match
     
-                if R==rname:
+                if R in self.keys():
                     cd=Table()
                     for f in fields:
                         cd[f]=self[L][f]-self[R][f]

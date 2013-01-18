@@ -20,8 +20,9 @@ def str2pol(s):
     """
     Convert a string into a complex trhee vector indicating the polarization
     
-    This uses the convention for helicity described in DDscat user guide
-    THIS IS THE OPPOSITE OF THAT USED BY CD SPECTROSCOPISTS
+    This now uses the convention for helicity described used by
+    spectroscopists as found in Barron. 
+    THIS IS THE OPPOSITE OF THAT USED BY THE DDSCAT DOCUMENTATION
     
     """
 
@@ -61,8 +62,9 @@ def pol2str(v):
     """
     Convert a vector into a string
     
-    This uses the convention for helicity described in DDscat user guide
-    THIS IS THE OPPOSITE OF THAT USED BY CD SPECTROSCOPISTS
+    This now uses the convention for helicity described used by
+    spectroscopists as found in Barron. 
+    THIS IS THE OPPOSITE OF THAT USED BY THE DDSCAT DOCUMENTATION
     
     """
 

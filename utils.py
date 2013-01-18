@@ -14,6 +14,7 @@ import zipfile
 from numpy.linalg import norm
 
 from config import exec_settings
+from core import (pol_cR, pol_cL, pol_lH, pol_lV)
 
 def str2pol(s):
     """
@@ -26,13 +27,13 @@ def str2pol(s):
 
     s=s.lower()
     if s=='cl':
-        return np.array([0, 0+1j, 1+0j])    
+        return pol_cL
     elif s=='cr':
-        return np.array([0, 1+0j, 0+1j])            
+        return pol_cR
     elif s=='lh':
-        return np.array([0, 1+0j, 0+0j])    
+        return pol_lH    
     elif s=='lv':
-        return np.array([0, 0+0j, 1+0j])        
+        return pol_lV        
     else:
         raise(ValueError, 'Unknown polarization string %s'%s)        
 
@@ -67,13 +68,13 @@ def pol2str(v):
 
     threshold=1e-6
     
-    if n_dist(v, str2pol('cL'))<threshold:
+    if n_dist(v, pol_cL)<threshold:
         return 'cL'
-    elif n_dist(v, str2pol('cR'))<threshold:
+    elif n_dist(v, pol_cR)<threshold:
         return 'cR'
-    elif n_dist(v, str2pol('lH'))<threshold:
+    elif n_dist(v, pol_lH)<threshold:
         return 'lH'
-    elif n_dist(v, str2pol('lV'))<threshold:
+    elif n_dist(v, pol_lV)<threshold:
         return 'lV'
 
     else:

@@ -21,6 +21,12 @@ import ranges
 
 from config import exec_settings
 
+#DEFINE POLARIZATION STATES
+pol_cR=np.array([0, 0+1j, 1+0j])    
+pol_cL=np.array([0, 1+0j, 0+1j])            
+pol_lH=np.array([0, 0+0j, 1+0j])        
+pol_lV=np.array([0, 1+0j, 0+0j])    
+
 class Settings():
     '''
     A class for specifying DDScat execution parameters
@@ -52,7 +58,7 @@ class Settings():
         self.NAMBIENT=1.000# = NAMBIENT
         self.scale_range=None #define a range of scales for the particle geometry, None indicates a single size calc
 
-        self.Epol=np.array([0+0j, 1.+0j, 0.+0j]) #= Polarization state e01 (k along x axis)
+        self.Epol=pol_lV #= Polarization state e01 (k along x axis)
         self.IORTH=2 #  (=1 to do only pol. state e01; =2 to also do orth. pol. state)
 
         self.beta=ranges.Lin_Range(0.,0.,1) #  = BETAMI, BETAMX, NBETA  (beta=rotation around a1)

@@ -474,10 +474,11 @@ class QTable(ResultTable):
     A class for reading qtable output files from DDscat
     
     """
-    def __init__(self, fname=None, **kwargs):
+    def __init__(self, fname=None, num_mat=1, **kwargs):
         if fname==None:
             fname='qtable'
-        ResultTable.__init__(self, fname, 13, [10,11,11,11,11,12,11,11,6], **kwargs)
+        hdr_lines=12+num_mat
+        ResultTable.__init__(self, fname, hdr_lines, [10,11,11,11,11,12,11,11,6], **kwargs)
         self.x_field='wave'
         self.default_plot_fields=['Q_ext']
 

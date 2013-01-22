@@ -469,6 +469,129 @@ class AVGSummaryTable(Table):
         return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qext[b], Qsca[a]-Qsca[b]]
 
 
+class SCASummaryTable(Table):
+    """
+    A class for reading the summary section of SCATables.
+
+    """      
+    def __init__(self, fname=None, folder=None, npol=None, zfile=None, **kwargs):
+        if fname is None:
+            fname='w000r000.sca'
+        self.fname=fname
+        
+        if folder is None:
+            folder=''
+        self.folder=folder
+        self.zfile=zfile
+
+        Table.__init__(self)
+
+        if npol is not None:
+            self.npol=npol
+        else:
+            if self.zfile:
+                with zipfile.ZipFile(os.path.join(self.folder, self.zfile)) as z:
+                    f=z.open(self.fname, 'rU')            
+                    self._find_pol(f)
+            else:
+                with open(os.path.join(self.folder, self.fname), 'Ur') as f:
+                    self._find_pol(f)
+                
+        self.refresh()
+
+    def _find_pol(self, f):
+
+        self.npol=1
+        for i in range(37):
+            line=f.readline()
+            if line.find('inc.pol.vec. 2') <> -1:
+                self.npol=2
+                break
+
+    def refresh(self):
+ 
+        if self.zfile:
+            with zipfile.ZipFile(os.path.join(self.folder, self.zfile)) as z:
+                f=z.open(self.fname, 'rU')
+                if self.npol==1:
+                    self._refresh_1pol(f)
+                else:
+                    self._refresh_2pol(f)
+        else:
+            with open(os.path.join(self.folder, self.fname), 'Ur') as f:
+                if self.npol==1:
+                    self._refresh_1pol(f)
+                else:
+                    self._refresh_2pol(f)
+   
+
+    def _refresh_1pol(self, f):
+                    
+        hdr=''
+
+        for i in range(43):
+            hdr+=f.readline()
+            
+        self.header=hdr
+        hdr=hdr.splitlines()
+
+        l=hdr[13].split()
+        self.wave=float(l[1])
+
+        l=hdr[18]
+        self['Epol']=np.array(utils.str2complexV(l))
+                
+        l=hdr[28].split()
+        self['Q_ext']=np.array(float(l[1]))
+        self['Q_abs']=np.array(float(l[2]))
+        self['Q_sca']=np.array(float(l[3]))
+    
+    def _refresh_2pol(self, f):
+                    
+        hdr=''
+        for i in range(43):
+            hdr+=f.readline()
+            
+        self.header=hdr
+        hdr=hdr.splitlines()
+
+        l=hdr[13].split()
+        self.wave=float(l[1])
+
+        l1=hdr[22]
+        l2=hdr[23]
+        self['Epol']=np.array([utils.str2complexV(l1),
+                              utils.str2complexV(l2)])
+        
+        l1=hdr[34].split()
+        l2=hdr[35].split()
+        self['Q_ext']=np.array([float(l1[1]), float(l2[1])])
+        self['Q_abs']=np.array([float(l1[2]), float(l2[2])])
+        self['Q_sca']=np.array([float(l1[3]), float(l2[3])])
+            
+    def dichroism(self):
+        
+        if self.npol==1:
+            raise (ValueError, 'Table has only one polarization state')
+
+        Epol0=utils.pol2str(self['Epol'][0])
+        
+        if Epol0=='cL' or Epol0=='lH':
+            a=0
+            b=1
+        elif Epol0=='cR' or Epol0=='lV':
+            a=1
+            b=0
+        else:
+            raise(ValueError, 'Can only handle dichroism for cL, cR, lH, or lV polarizations')
+        
+        Qext=self['Q_ext']
+        Qabs=self['Q_abs']
+        Qsca=self['Q_sca']
+        return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qext[b], Qsca[a]-Qsca[b]]
+
+
+
 class QTable(ResultTable):
     """
     A class for reading qtable output files from DDscat

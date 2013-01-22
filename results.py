@@ -671,7 +671,7 @@ class ResultCollection(OrderedDict):
         
 
 class FolderCollection(ResultCollection):
-    def __init__(self, r_type=None, path=None, recurse=True):
+    def __init__(self, r_type=None, num_mat=1, path=None, recurse=True):
         """
         A collection of several results files together in one object.
     
@@ -714,7 +714,7 @@ class FolderCollection(ResultCollection):
         for f in folders:
             try:
                 f_key=os.path.normpath(f)
-                self[f_key]=rtable(folder=f)
+                self[f_key]=rtable(folder=f, num_mat=num_mat)
             except (IOError):
                 pass
 

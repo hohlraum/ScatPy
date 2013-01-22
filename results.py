@@ -1057,8 +1057,17 @@ class SCAHyperSpace():
         Theta=dict(zip(self.theta_range, range(len(self.theta_range))))
         Phi=dict(zip(self.phi_range, range(len(self.phi_range))))
 
-        for f in glob.glob('*.sca'):
-            sca=SCASummaryTable(f)
+        if self.zfile:
+            with zipfile.ZipFile(self.zfile, 'r') as z:
+                flist=z.namelist()
+            flist=[x for x in flist if x.endswith('.sca')]
+        else:
+            flist=glob.glob('*.sca')       
+
+
+        for f in flist:
+            print f
+            sca=SCASummaryTable(f, zfile=self.zfile)
             
             w_idx=W[sca.wave]
             r_idx=R[sca.aeff]
@@ -1080,7 +1089,13 @@ class SCAHyperSpace():
         """
         Wset,Rset,Kset=set(), set(), set()
         
-        for f in glob.glob('*.sca'):
+        if self.zfile:
+            with zipfile.ZipFile(self.zfile, 'r') as z:
+                flist=z.namelist()
+        else:
+            flist=glob.glob('*.sca')       
+        
+        for f in flist:
             try:
                 [_, w, r, k, _] = re.split('w|r|k|\.',f)
             except ValueError:
@@ -1091,21 +1106,27 @@ class SCAHyperSpace():
                 Kset.add(int(k))
     
         #identify wavelengths
+        s=re.compile('w\d+r000k000.sca')        
+        l=[x for x in flist if s.match(x)]        
         W=[0]*len(Wset)    
-        for (i,f) in enumerate(glob.glob('w*r000k000.sca')):
-            sca=SCASummaryTable(f)        
+        for (i,f) in enumerate(l):
+            sca=SCASummaryTable(f, zfile=self.zfile)        
             W[i]=sca.wave
         
         #identify radii
+        s=re.compile('w000r\d+k000.sca')        
+        l=[x for x in flist if s.match(x)]        
         R=[0]*len(Rset)    
-        for (i,f) in enumerate(glob.glob('w000r*k000.sca')):   
-            sca=SCASummaryTable(f)        
+        for (i,f) in enumerate(l):   
+            sca=SCASummaryTable(f, zfile=self.zfile)        
             R[i]=sca.aeff
         
         #identify angles
         beta, theta, phi=set(), set(), set()
-        for (i,f) in enumerate(glob.glob('w000r000k*.sca')):   
-            sca=SCASummaryTable(f)        
+        s=re.compile('w000r000k\d+.sca')        
+        l=[x for x in flist if s.match(x)]        
+        for (i,f) in enumerate(l):   
+            sca=SCASummaryTable(f, zfile=self.zfile)        
             beta.add(sca.beta)
             theta.add(sca.theta)
             phi.add(sca.phi)

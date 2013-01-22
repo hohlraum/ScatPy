@@ -502,9 +502,9 @@ class SCASummaryTable(Table):
     def _find_pol(self, f):
 
         self.npol=1
-        for i in range(37):
+        for i in range(44):
             line=f.readline()
-            if line.find('inc.pol.vec. 2') <> -1:
+            if line.find('JO=2:') <> -1:
                 self.npol=2
                 break
 
@@ -535,13 +535,16 @@ class SCASummaryTable(Table):
         self.header=hdr
         hdr=hdr.splitlines()
 
+        l=hdr[12].split()
+        self.aeff=float(l[1])
+
         l=hdr[13].split()
         self.wave=float(l[1])
 
-        l=hdr[18]
+        l=hdr[27]
         self['Epol']=np.array(utils.str2complexV(l))
                 
-        l=hdr[28].split()
+        l=hdr[34].split()
         self['Q_ext']=np.array(float(l[1]))
         self['Q_abs']=np.array(float(l[2]))
         self['Q_sca']=np.array(float(l[3]))
@@ -555,11 +558,18 @@ class SCASummaryTable(Table):
         self.header=hdr
         hdr=hdr.splitlines()
 
+        l=hdr[12].split()
+        self.aeff=float(l[1])
+
         l=hdr[13].split()
         self.wave=float(l[1])
 
-        l1=hdr[22]
-        l2=hdr[23]
+        self.beta=float(hdr[29].split('=')[1])
+        self.theta=float(hdr[30].split('=')[1])
+        self.phi=float(hdr[31].split('=')[1])
+
+        l1=hdr[27]
+        l2=hdr[28]
         self['Epol']=np.array([utils.str2complexV(l1),
                               utils.str2complexV(l2)])
         

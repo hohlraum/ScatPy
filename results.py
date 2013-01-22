@@ -12,6 +12,7 @@ import posixpath
 import glob
 import zipfile
 import copy
+import re
 
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, UnivariateSpline
@@ -541,6 +542,10 @@ class SCASummaryTable(Table):
         l=hdr[13].split()
         self.wave=float(l[1])
 
+        self.beta=float(hdr[29].split('=')[1])
+        self.theta=float(hdr[30].split('=')[1])
+        self.phi=float(hdr[31].split('=')[1])
+
         l=hdr[27]
         self['Epol']=np.array(utils.str2complexV(l))
                 
@@ -874,8 +879,8 @@ class FileCollection(ResultCollection):
         elif r_type.lower()=='fmltable':
             rtable=FMLTable
             flt='*.fml'
-        elif r_type.lower()=='scatable2':
-            rtable=SCATable2
+        elif r_type.lower()=='scatable':
+            rtable=SCATable
             flt='*.sca'
             
         if path is None:
@@ -1023,7 +1028,124 @@ class ZipCollection(FileCollection):
         for n in names:
             self[n]=rtable(n, folder=self.folder, zfile=zname)
 
+class SCAHyperSpace():
+    
+    def __init__(self):
 
+        if len(glob.glob('*.sca'))==0:
+            self.zfile='all_sca.zip'
+        else:
+            self.zfile=None
+
+        self.ProcessSCASpace()
+        self.shape=(len(self.w_range), len(self.r_range), len(self.beta_range),
+                    len(self.theta_range), len(self.phi_range),
+                    len(self.Epol_range), 3)
+
+        self.data=np.zeros(self.shape)
+        self.refresh()
+
+        
+    def refresh(self):
+        """
+        Load the sca data into the array
+        """
+
+        W=dict(zip(self.w_range, range(len(self.w_range))))
+        R=dict(zip(self.r_range, range(len(self.r_range))))
+        Beta=dict(zip(self.beta_range, range(len(self.beta_range))))
+        Theta=dict(zip(self.theta_range, range(len(self.theta_range))))
+        Phi=dict(zip(self.phi_range, range(len(self.phi_range))))
+
+        for f in glob.glob('*.sca'):
+            sca=SCASummaryTable(f)
+            
+            w_idx=W[sca.wave]
+            r_idx=R[sca.aeff]
+            beta_idx=Beta[sca.beta]
+            theta_idx=Theta[sca.theta]
+            phi_idx=Phi[sca.phi]
+
+            dat=np.array((sca['Q_ext'], sca['Q_abs'], sca['Q_sca'])).transpose()
+
+            self.data[w_idx, r_idx, beta_idx, theta_idx, phi_idx, :, :]=dat
+
+    def __getitem__(self, *args):
+        return self.data.__getitem__(*args)
+        
+    def ProcessSCASpace(self):
+        """
+        Identify the extents of the dataset in w,r,k, and Epol
+        
+        """
+        Wset,Rset,Kset=set(), set(), set()
+        
+        for f in glob.glob('*.sca'):
+            try:
+                [_, w, r, k, _] = re.split('w|r|k|\.',f)
+            except ValueError:
+                pass
+            else:
+                Wset.add(int(w))
+                Rset.add(int(r))
+                Kset.add(int(k))
+    
+        #identify wavelengths
+        W=[0]*len(Wset)    
+        for (i,f) in enumerate(glob.glob('w*r000k000.sca')):
+            sca=SCASummaryTable(f)        
+            W[i]=sca.wave
+        
+        #identify radii
+        R=[0]*len(Rset)    
+        for (i,f) in enumerate(glob.glob('w000r*k000.sca')):   
+            sca=SCASummaryTable(f)        
+            R[i]=sca.aeff
+        
+        #identify angles
+        beta, theta, phi=set(), set(), set()
+        for (i,f) in enumerate(glob.glob('w000r000k*.sca')):   
+            sca=SCASummaryTable(f)        
+            beta.add(sca.beta)
+            theta.add(sca.theta)
+            phi.add(sca.phi)
+
+        beta=sorted(list(beta))
+        theta=sorted(list(theta))
+        phi=sorted(list(phi))
+
+        #identify polarizations
+        Epol=range(sca.npol)
+        
+        self.w_range=W
+        self.r_range=R
+        self.beta_range=beta
+        self.theta_range=theta
+        self.phi_range=phi
+        self.Epol_range=Epol
+
+        self.Epol=sca['Epol']
+
+    def dichroism(self):
+        if len(self.Epol_range)<2:
+            raise ValueError('Cannot calculate dichroism with only one polarization')
+        
+
+        Epol0=utils.pol2str(self.Epol[0])
+        
+        if Epol0=='cL' or Epol0=='lH':
+            a=0
+        elif Epol0=='cR' or Epol0=='lV':
+            a=1
+        else:
+            raise(ValueError, 'Can only handle dichroism for cL, cR, lH, or lV polarizations')
+        
+        if a==0:
+            cd=self.data[...,0,:] - self.data[...,1,:]
+        else:
+            cd=self.data[...,1,:] - self.data[...,0,:]
+
+        return cd
 
 def split_string(s, widths=None):
     '''

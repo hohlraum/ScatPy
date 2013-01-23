@@ -809,7 +809,7 @@ class ResultCollection(OrderedDict):
         
 
 class FolderCollection(ResultCollection):
-    def __init__(self, r_type=None, num_mat=1, path=None, recurse=True):
+    def __init__(self, r_type=None, path=None, recurse=True):
         """
         A collection of several results files together in one object.
     
@@ -852,7 +852,7 @@ class FolderCollection(ResultCollection):
         for f in folders:
             try:
                 f_key=os.path.normpath(f)
-                self[f_key]=rtable(folder=f, num_mat=num_mat)
+                self[f_key]=rtable(folder=f)
             except (IOError):
                 pass
 
@@ -1029,6 +1029,21 @@ class ZipCollection(FileCollection):
             self[n]=rtable(n, folder=self.folder, zfile=zname)
 
 class SCAHyperSpace():
+    """
+    Create an object that stores the results from an isotropic simulation
+    into a multi-dimensional np array.
+    
+    The array indices correspond to:
+        [lambda, aeff, beta, theta, phi, Epol, Q]    
+ 
+    In dichroism spectra there is no polarization dependance so the indices are:
+        [lambda, aeff, beta, theta, phi, CD]
+        
+    The array is addressed by integer indices. The wavelength/radius/amgle
+    corresponding to a given index can be recoverred with he lists w_range,
+    r_range, etc.
+        
+    """
     
     def __init__(self):
 

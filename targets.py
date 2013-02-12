@@ -91,10 +91,15 @@ class Target():
 
     def VTRconvert(self, infile=None, outfile=None):
         """Execute VTRconvert to generate a file for viewing in Paraview"""
+
         if infile is None:
-            infile='target.out'
+            infile='shape.dat'
+
         if outfile is None:
             outfile='output'
+            
+        self.write()
+            
         if os.path.exists(os.path.join(self.folder, infile)):
             subprocess.call(['%s'%os.path.join(exec_settings['ddscat_path'], 'vtrconvert'), infile, outfile], cwd=self.folder)
         else:

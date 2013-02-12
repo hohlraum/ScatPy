@@ -317,7 +317,13 @@ class DDscat():
             print 'Done!'
         else:
             subprocess.call(command + ' 2>&1 | tee output.log', shell=True, cwd=self.folder)
-        
+
+    def VTRconvert(self, outfile=None):
+        """
+        Convert the target shape into a form viewable in Paraview
+
+        """
+        self.target.VTRconvert()
 
     def calltarget(self):
         '''

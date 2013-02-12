@@ -136,7 +136,7 @@ class DDscat():
         if target is None:
             self.target=targets.Target_Sphere(0.2, folder=self.folder)
         else:
-            self.target=target.copy()
+            self.target=target
             self.target.folder=self.folder
             
         #self.results=results.Results(folder=self.folder)

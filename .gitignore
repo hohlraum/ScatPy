@@ -3,3 +3,4 @@
 *.pyc
 config.py
 docs/
+.spyderproject

@@ -22,7 +22,14 @@ def gauss(x, sigma):
     return 1/(np.sqrt(2*np.pi) *sigma) * np.exp(-x**2/2/sigma**2)  
 
 
-def weighted_gauss(c, sigma):
+def r_parser(k):
+    return float(k.split('r')[1].split('/')[0])
+
+def L_parser(k):
+    return float(k.split('L')[1].split('/')[0])
+
+
+def weighted_gauss(c, parser, sigma):
 
     ans=c[c.keys()[0]].copy()
     
@@ -33,13 +40,13 @@ def weighted_gauss(c, sigma):
             
     g=np.zeros(len(c))
     for (i,spec_k) in enumerate(c.keys()):
-        x=float(spec_k.split('r')[1].split('/')[0])
+        x=parser(spec_k)
         g[i]=gauss(x, sigma)
 
     g/=g.sum()
 
     for (i, spec_k) in enumerate(c.keys()):
-        x=float(spec_k.split('r')[1].split('/')[0])
+        x=parser(spec_k)
         for field_k in ans.keys():
             if field_k != x_field:
                 ans[field_k] += g[i] * c[spec_k][field_k]

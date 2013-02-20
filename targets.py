@@ -89,19 +89,19 @@ class Target():
     def write(self):
         pass
 
-    def VTRconvert(self, infile=None, outfile=None):
+    def VTRconvert(self, outfile=None):
         """Execute VTRconvert to generate a file for viewing in Paraview"""
 
-        if infile is None:
-            infile='shape.dat'
 
         if outfile is None:
             outfile='output'
             
         self.write()
             
-        if os.path.exists(os.path.join(self.folder, infile)):
-            subprocess.call(['%s'%os.path.join(exec_settings['ddscat_path'], 'vtrconvert'), infile, outfile], cwd=self.folder)
+        if os.path.exists(os.path.join(self.folder, self.fname)):
+            #This assumes that vtrconvert is in your path
+            #check os.environ['PATH'] to be sure
+            subprocess.call(['vtrconvert', self.fname, outfile], cwd=self.folder)
         else:
             print 'No target.out file to convert'
 
@@ -276,7 +276,7 @@ class Target_IsoHomo_FROM_FILE(Target):
     
     def VTRconvert(self, outfile=None):
         """Execute VTRConvert to generate a model file viewable in Paraview"""
-        Target.VTRconvert(self, self.fname, outfile)
+        Target.VTRconvert(self, outfile)
 
 
 class Target_FROM_FILE(Target):

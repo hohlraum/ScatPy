@@ -136,7 +136,7 @@ class DDscat():
         if target is None:
             self.target=targets.Target_Sphere(0.2, folder=self.folder)
         else:
-            self.target=target.copy()
+            self.target=target
             self.target.folder=self.folder
             
         #self.results=results.Results(folder=self.folder)
@@ -317,7 +317,13 @@ class DDscat():
             print 'Done!'
         else:
             subprocess.call(command + ' 2>&1 | tee output.log', shell=True, cwd=self.folder)
-        
+
+    def VTRconvert(self, outfile=None):
+        """
+        Convert the target shape into a form viewable in Paraview
+
+        """
+        self.target.VTRconvert()
 
     def calltarget(self):
         '''

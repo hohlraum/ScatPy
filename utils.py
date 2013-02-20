@@ -33,23 +33,25 @@ def weighted_gauss(c, parser, sigma):
 
     ans=c[c.keys()[0]].copy()
     
+    #Initialize new
     x_field=ans.x_field
     for k in ans.keys():
         if k != x_field:
             ans[k] *= 0
-            
-    g=np.zeros(len(c))
-    for (i,spec_k) in enumerate(c.keys()):
-        x=parser(spec_k)
-        g[i]=gauss(x, sigma)
-
-    g/=g.sum()
-
-    for (i, spec_k) in enumerate(c.keys()):
+    
+    gsum=0
+    for spec_k in c.keys():
         x=parser(spec_k)
         for field_k in ans.keys():
             if field_k != x_field:
-                ans[field_k] += g[i] * c[spec_k][field_k]
+                g=gauss(x, sigma)
+                ans[field_k] += g * c[spec_k][field_k]
+                gsum+=g
+
+    #Normalize
+    for field_k in ans.keys():
+        if field_k != x_field:
+            ans[field_k] /= gsum
         
     return ans
 

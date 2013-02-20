@@ -850,8 +850,12 @@ class FolderCollection(ResultCollection):
             folders=[i for i in os.listdir(path) if os.path.isdir(i)]
 
         for f in folders:
+            #
+            f_key=f
+            f_key.replace('\\', '/')
+#            if f_key.startswith('./'): f_key.replace('./', '') #Not sure if this is necessary
+            f_key=posixpath.normpath(f)
             try:
-                f_key=os.path.normpath(f)
                 self[f_key]=rtable(folder=f)
             except (IOError):
                 pass

@@ -600,9 +600,11 @@ class SCASummaryTable(Table):
         else:
             raise(ValueError, 'Can only handle dichroism for cL, cR, lH, or lV polarizations')
         
+
         Qext=self['CD_ext']
         Qabs=self['CD_abs']
         Qsca=self['CD_sca']
+
         return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qabs[b], Qsca[a]-Qsca[b]]
 
 

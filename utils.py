@@ -17,16 +17,25 @@ from numpy.linalg import norm
 from config import exec_settings
 from core import (pol_cR, pol_cL, pol_lH, pol_lV)
 
+"""
+This makes a Normalized-Gaussian weighted sum of a range of spectras obtained
+with a series of simulations sweeping on a folder-collection names obtained parameters (e.g. r or L)
+from the parser functions
+
+It is written on the data structure obtained from the results.FolderCollection
+
+"""
+
 def gauss(x, sigma):
     
     return 1/(np.sqrt(2*np.pi) *sigma) * np.exp(-x**2/2/sigma**2)  
 
 
 def r_parser(k):
-    return float(k.split('r')[1].split('/')[0])
+    return float(k.split('r')[1].split('\\')[0])
 
 def L_parser(k):
-    return float(k.split('L')[1].split('/')[0])
+    return float(k.split('L')[1].split('\\')[0])
 
 
 def weighted_gauss(c, parser, sigma):

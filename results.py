@@ -464,10 +464,10 @@ class AVGSummaryTable(Table):
         else:
             raise(ValueError, 'Can only handle dichroism for cL, cR, lH, or lV polarizations')
         
-        Qext=self['Q_ext']
-        Qabs=self['Q_abs']
-        Qsca=self['Q_sca']
-        return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qext[b], Qsca[a]-Qsca[b]]
+        Qext=self['CD_ext']
+        Qabs=self['CD_abs']
+        Qsca=self['CD_sca']
+        return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qabs[b], Qsca[a]-Qsca[b]]
 
 
 class SCASummaryTable(Table):
@@ -600,10 +600,10 @@ class SCASummaryTable(Table):
         else:
             raise(ValueError, 'Can only handle dichroism for cL, cR, lH, or lV polarizations')
         
-        Qext=self['Q_ext']
-        Qabs=self['Q_abs']
-        Qsca=self['Q_sca']
-        return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qext[b], Qsca[a]-Qsca[b]]
+        Qext=self['CD_ext']
+        Qabs=self['CD_abs']
+        Qsca=self['CD_sca']
+        return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qabs[b], Qsca[a]-Qsca[b]]
 
 
 

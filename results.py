@@ -603,7 +603,7 @@ class SCASummaryTable(Table):
         Qext=self['Q_ext']
         Qabs=self['Q_abs']
         Qsca=self['Q_sca']
-        return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qext[b], Qsca[a]-Qsca[b]]
+        return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qabs[b], Qsca[a]-Qsca[b]]
 
 
 

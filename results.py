@@ -851,8 +851,7 @@ class FolderCollection(ResultCollection):
         else:
             folders=[i for i in os.listdir(path) if os.path.isdir(i)]
 
-        for f in folders:
-            #
+        for f in folders:            
             f_key=f.replace('\\', '/')            
             f_key=posixpath.normpath(f_key)
             try:

@@ -854,7 +854,6 @@ class FolderCollection(ResultCollection):
         for f in folders:
             #
             f_key=f.replace('\\', '/')            
-            if f_key.startswith('./'): f_key=f_key.replace('./', '') #Not sure if this is necessary
             f_key=posixpath.normpath(f_key)
             try:
                 self[f_key]=rtable(folder=f)

@@ -23,10 +23,10 @@ def gauss(x, sigma):
 
 
 def r_parser(k):
-    return float(k.split('r')[1].split('\\')[0])
+    return float(k.split('r')[1].split('/')[0])
 
 def L_parser(k):
-    return float(k.split('L')[1].split('\\')[0])
+    return float(k.split('L')[1].split('/')[0])
 
 
 def weighted_gauss(c, parser, sigma):

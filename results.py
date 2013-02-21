@@ -796,7 +796,7 @@ class ResultCollection(OrderedDict):
                 if R in self.keys():
                     cd=Table()
                     for f in fields:
-                        cd[f]=self[L][f]-self[R][f]
+                        cd[f]=np.arctan(np.sqrt(self[L][f])-np.sqrt(self[R][f]))*(np.log(10) *180)/(4*np.pi)
                     x_field=self[L].x_field
                     cd[x_field]=self[L][x_field]
                     
@@ -852,8 +852,11 @@ class FolderCollection(ResultCollection):
             folders=[i for i in os.listdir(path) if os.path.isdir(i)]
 
         for f in folders:
+            #
+            f_key=f.replace('\\', '/')            
+            if f_key.startswith('./'): f_key=f_key.replace('./', '') #Not sure if this is necessary
+            f_key=posixpath.normpath(f_key)
             try:
-                f_key=os.path.normpath(f)
                 self[f_key]=rtable(folder=f)
             except (IOError):
                 pass

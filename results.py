@@ -796,7 +796,7 @@ class ResultCollection(OrderedDict):
                 if R in self.keys():
                     cd=Table()
                     for f in fields:
-                        cd[f]=np.arctan(np.sqrt(self[L][f])-np.sqrt(self[R][f]))*(np.log(10) *180)/(4*np.pi)
+                        cd[f]=np.arctan((np.sqrt(1-self[L][f])-np.sqrt(1-self[R][f])/(np.sqrt(1-self[L][f])+np.sqrt(1-self[R][f]))*(np.log(10) *180)/(4*np.pi)
                     x_field=self[L].x_field
                     cd[x_field]=self[L][x_field]
                     

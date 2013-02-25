@@ -519,8 +519,8 @@ class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
 #        p=np.vstack([np.array(u) for u in set([tuple(l) for l in p])]) #remove duplicates
 
         x=p_height*t + p_minor_r
-        y=((t+1.)/2)*p_major_r * np.cos(2*np.pi* x/p_pitch) + self.origin[1]
-        z=((t+1.)/2)*p_major_r * np.sin(2*np.pi* x/p_pitch) + self.origin[2]
+        y=((2.5*t)*p_major_r * np.cos(2*np.pi* x/p_pitch) + self.origin[1]
+        z=((2.5*t)*p_major_r * np.sin(2*np.pi* x/p_pitch) + self.origin[2]
         
         p=np.vstack([x,y,z]).transpose()
 #        p=np.vstack([np.array(u) for u in set([tuple(l) for l in p])]) #remove duplicates

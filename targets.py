@@ -462,16 +462,16 @@ class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
     A helix target
     
     """
-    def __init__(self, height, pitch, major_r, minor_r, d=None, build=True, **kwargs):
+    def __init__(self, height, pitch1, pitch2, major_r, minor_r, d=None, build=True, **kwargs):
         '''
-        Build a Helix Target
+        Build a Conical profile Helix Target
         
         dimensions are physical, in um
 
         Arguments:
             height: the height of the helix (not counting it's thickness)
-            pitch: the helix pitch, um/turn
-            major_r: the radius of the helix sweep
+            pitch1,2: the helix pitch, um/turn (if pitch1 is different from pitch2 will swipe between during the growth)
+                        major_r: the radius of the helix sweep
             minor_r: the radius of the wire that is swept to form the helix
         
         Optional Arguments:
@@ -488,7 +488,8 @@ class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
         Target_IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
 
         self.height=height
-        self.pitch=pitch
+        self.pitch1=pitch1
+        self.pitch2=pitch2
         self.major_r=major_r
         self.minor_r=minor_r
         self.d=d
@@ -496,34 +497,39 @@ class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
         if build:
             self.build_helix()
         else:
-            self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
+            self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f, %f)'%(self.height, self.pitch1, self.pitch2, self.major_r, self.minor_r, self.d)            
 
     def build_helix(self):
 
-        self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
+        self.descriptor='FROM_FILE_Helix (%f, %f,%f, %f, %f, %f)'%(self.height, self.pitch1, self.pitch2, self.major_r, self.minor_r, self.d)            
         
         print 'Generating Helix...'
         #the helix dimensions in pixels
-        p_height=self.height/self.d
-        p_pitch=-self.pitch/self.d
+        p_height=(self.height*(1-(self.pitch2-self.pitch1)/self.pitch2))/self.d
+        p_pitch1=-self.pitch1/self.d
+        p_pitch2=-self.pitch2/self.d
         p_major_r=self.major_r/self.d
         p_minor_r=self.minor_r/self.d        
 
         #the sweep path
-        t=np.linspace(0,1, self.height/abs(self.pitch)*360)
-#        x=np.int16(p_height*t + p_minor_r)
-#        y=np.int16(p_major_r * np.cos(2*np.pi* x/p_pitch) + self.origin[1])
-#        z=np.int16(p_major_r * np.sin(2*np.pi* x/p_pitch) + self.origin[2])
-#        
-#        p=np.vstack([x,y,z]).transpose()
-#        p=np.vstack([np.array(u) for u in set([tuple(l) for l in p])]) #remove duplicates
-
-        x=p_height*t + p_minor_r
-        y=((2.5*t)*p_major_r * np.cos(2*np.pi* x/p_pitch) + self.origin[1]
-        z=((2.5*t)*p_major_r * np.sin(2*np.pi* x/p_pitch) + self.origin[2]
         
+        t=np.linspace(0,1, self.height/abs(self.pitch1)*360)
+        k=p_height*(1+t*(p_pitch2-p_pitch1)/p_pitch2)
+       
+        P=t*k
+        R= t*p_major_r
+        
+        
+        
+        x=P + p_minor_r
+        phi=2*np.pi* t*p_height/p_pitch1
+        y=R* np.cos(phi) + self.origin[1]
+        z=R* np.sin(phi) + self.origin[2]
+
+
+       
         p=np.vstack([x,y,z]).transpose()
-#        p=np.vstack([np.array(u) for u in set([tuple(l) for l in p])]) #remove duplicates
+        
         print 'Done constructing sweep path...'
         def dist(v):
             return np.sqrt(v[:,0]**2 +v[:,1]**2 + v[:,2]**2)
@@ -540,5 +546,5 @@ class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
             for j in range(self.shape[1]):
                 for k in range(self.shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
-
+        
         self.update_N()

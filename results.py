@@ -780,8 +780,10 @@ class ResultCollection(OrderedDict):
         
         
         if fields==None:
-            fields=['Q_ext','Q_sca','Q_abs']            
-            
+            fields=['Q_ext']            
+        else:
+            fields=[fields]
+
         CD=ResultCollection()
         for L in self.keys():
             if L.endswith(('LCP', '_cL')):
@@ -811,7 +813,7 @@ class ResultCollection(OrderedDict):
         
 
 class FolderCollection(ResultCollection):
-    def __init__(self, r_type=None, path=None, recurse=True):
+    def __init__(self, r_type=None, path=None, recurse=True ,fields=None):
         """
         A collection of several results files together in one object.
     

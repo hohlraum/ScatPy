@@ -120,7 +120,7 @@ class Table(dict):
         
             v*=c
 
-    def export(self, fname):
+    def export(self, fname, fields=['Q_ext']):
         """
         Export the table as an ascii file
         
@@ -134,12 +134,16 @@ class Table(dict):
             table=np.array([])
             hdr=''
 
-        for (k,v) in self.iteritems():
-            if k==self.x_field: continue
-        
+#        for (k,v) in self.iteritems():
+#            if k==self.x_field: continue
+#        
+#            hdr+=k+'\t'
+#            table=np.vstack([table, v])
+        for k in fields:
             hdr+=k+'\t'
+            v=self[k]
             table=np.vstack([table, v])
-
+            
         with open(fname, 'wt') as f:
             f.write(hdr+'\n')        
             np.savetxt(f, table.transpose(), delimiter='\t')
@@ -759,6 +763,9 @@ class ResultCollection(OrderedDict):
         ylbl=ylbl[:-2]
         
         plt.ylabel(ylbl)
+
+    def export(self, fields):
+        pass
 
     def smooth(self, width=None, pad_sample=5):
         """

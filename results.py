@@ -41,6 +41,66 @@ import utils
 #        self.qtable2.set_folder(newfolder)
 #    
 
+#def _dichroism_calculator(L,R):
+#    """
+#    Calculates the dichroism of two spectra based on linear absorptance
+#    """
+#    #cd[f]=np.arctan( (np.sqrt(self[L][f]) - np.sqrt(self[R][f]) ) / (np.sqrt(self[L][f]) + np.sqrt(self[R][f]) ) )*(np.log(10) *180)/(4*np.pi)
+#
+#    k=(np.log(10) *180)/(4*np.pi)
+#    num = (np.sqrt(L) - np.sqrt(R))
+#    den = (np.sqrt(L) + np.sqrt(R))
+#    
+#    return k * np.arctan(num/den)
+
+
+def molar_ellipticity(DeltaQ, a_eff, C, l=1):
+    """
+    Calculate the molar ellipticity
+
+    DeltaQ: Q difference spectra
+    a_eff: the effective radius (in um)
+    C: the concentration in mol/l
+    l: the pathlength in cm        
+    """
+    
+    return ellipticity(DeltaQ, a_eff, C, l) * 100./( C * l)
+
+def ellipticity(DeltaQ, a_eff, C, l=1):
+    """
+    Calculate the ellipticity in deg
+    
+    DeltaQ: Q difference spectra
+    a_eff: the effective radius (in um)
+    C: the concentration in mol/l
+    l: the pathlength in cm
+    
+    """
+
+    dA=deltaA(DeltaQ, a_eff, C, l)
+
+    #Exact solution
+    ex=np.exp(dA*np.log(10)/2)
+    return np.arctan((ex-1)/(ex+1)) * (180/np.pi)
+
+    #Taylor approximation
+    #return dA * np.log(10)/4 * 180/np.pi
+
+def deltaA(DeltaQ, a_eff, C, l):
+    """
+    The differential absorbance
+    """    
+
+    return 1.89e13 * a_eff**2 * l * C* DeltaQ
+
+def _dichroism_calculator(L,R):
+    """
+    Calculates the difference spectrum of two spectra
+    """
+    
+    return L-R
+
+
 class Table(dict):
     """
     Base class for tables
@@ -468,10 +528,13 @@ class AVGSummaryTable(Table):
         else:
             raise(ValueError, 'Can only handle dichroism for cL, cR, lH, or lV polarizations')
         
-        Qext=self['CD_ext']
-        Qabs=self['CD_abs']
-        Qsca=self['CD_sca']
-        return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qabs[b], Qsca[a]-Qsca[b]]
+        Qext, Qabs, Qsca = self['Q_ext'], self['Q_abs'], self['Q_sca']
+        
+        CDext = _dichroism_calculator(Qext[a], Qext[b])
+        CDabs = _dichroism_calculator(Qabs[a], Qabs[b])
+        CDsca = _dichroism_calculator(Qsca[a], Qsca[b])
+
+        return [self.wave, CDext, CDabs, CDsca]
 
 
 class SCASummaryTable(Table):
@@ -603,14 +666,14 @@ class SCASummaryTable(Table):
             b=0
         else:
             raise(ValueError, 'Can only handle dichroism for cL, cR, lH, or lV polarizations')
+                
+        Qext, Qabs, Qsca = self['Q_ext'], self['Q_abs'], self['Q_sca']
         
+        CDext = _dichroism_calculator(Qext[a], Qext[b])
+        CDabs = _dichroism_calculator(Qabs[a], Qabs[b])
+        CDsca = _dichroism_calculator(Qsca[a], Qsca[b])
 
-        Qext=self['CD_ext']
-        Qabs=self['CD_abs']
-        Qsca=self['CD_sca']
-
-        return [self.wave, Qext[a]-Qext[b], Qabs[a]-Qabs[b], Qsca[a]-Qsca[b]]
-
+        return [self.wave, CDext, CDabs, CDsca]
 
 
 class QTable(ResultTable):
@@ -788,8 +851,10 @@ class ResultCollection(OrderedDict):
         
         if fields==None:
             fields=['Q_ext']            
+
         else:
             fields=[fields]
+
 
         CD=ResultCollection()
         for L in self.keys():
@@ -805,7 +870,7 @@ class ResultCollection(OrderedDict):
                 if R in self.keys():
                     cd=Table()
                     for f in fields:
-                        cd[f]=np.arctan( (np.sqrt(self[L][f]) - np.sqrt(self[R][f]) ) )*(np.log(10) *180)/(4*np.pi)
+                        cd[f]=_dichroism_calculator(self[L][f], self[R][f])
                     x_field=self[L].x_field
                     cd[x_field]=self[L][x_field]
                     
@@ -820,7 +885,9 @@ class ResultCollection(OrderedDict):
         
 
 class FolderCollection(ResultCollection):
+
     def __init__(self, r_type=None, path=None, recurse=True ,fields=None):
+
         """
         A collection of several results files together in one object.
     
@@ -992,7 +1059,7 @@ class FileCollection(ResultCollection):
         for l in self.keys():
             print 'Dichroism from: '+l
             cd=self[l].summary.dichroism()
-            CD[L[:-3]]=cd
+            CD[l[:-3]]=cd
 
         cd.default_plot_fields=fields
         return CD
@@ -1189,9 +1256,9 @@ class SCAHyperSpace():
             raise(ValueError, 'Can only handle dichroism for cL, cR, lH, or lV polarizations')
         
         if a==0:
-            cd=self.data[...,0,:] - self.data[...,1,:]
+            cd=_dichroism_calculator(self.data[...,0,:], self.data[...,1,:])
         else:
-            cd=self.data[...,1,:] - self.data[...,0,:]
+            cd=_dichroism_calculator(self.data[...,1,:], self.data[...,0,:])
 
         return cd
 

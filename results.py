@@ -66,9 +66,9 @@ def molar_ellipticity(DeltaQ, a_eff, C, l=1):
     
     return ellipticity(DeltaQ, a_eff, C, l) * 100./( C * l)
 
-def ellipticity(DeltaQ, a_eff, C, l=1):
+def ellipticity_vol(DeltaQ, a_eff, C, l=1):
     """
-    Calculate the ellipticity in deg
+    Calculate the ellipticity in deg of a suspension
     
     DeltaQ: Q difference spectra
     a_eff: the effective radius (in um)
@@ -77,21 +77,19 @@ def ellipticity(DeltaQ, a_eff, C, l=1):
     
     """
 
-    dA=deltaA(DeltaQ, a_eff, C, l)
+    return 2.71e14 * a_eff**2 * l * C * DeltaQ
 
-    #Exact solution
-    ex=np.exp(dA*np.log(10)/2)
-    return np.arctan((ex-1)/(ex+1)) * (180/np.pi)
-
-    #Taylor approximation
-    #return dA * np.log(10)/4 * 180/np.pi
-
-def deltaA(DeltaQ, a_eff, C, l):
+def ellipticity_surf(DeltaQ, a_eff, rho):
     """
-    The differential absorbance
-    """    
+    Calculate the ellipticity in deg of a suspension
+    
+    DeltaQ: Q difference spectra
+    a_eff: the effective radius (in um)
+    rho: the surface density in number/um^2    
+    """
 
-    return 1.89e13 * a_eff**2 * l * C* DeltaQ
+    return 45 * a_eff**2 * rho * DeltaQ
+
 
 def _dichroism_calculator(L,R):
     """

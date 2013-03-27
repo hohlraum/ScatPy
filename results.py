@@ -41,17 +41,26 @@ import utils
 #        self.qtable2.set_folder(newfolder)
 #    
 
+#def _dichroism_calculator(L,R):
+#    """
+#    Calculates the dichroism of two spectra based on linear absorptance
+#    """
+#    #cd[f]=np.arctan( (np.sqrt(self[L][f]) - np.sqrt(self[R][f]) ) / (np.sqrt(self[L][f]) + np.sqrt(self[R][f]) ) )*(np.log(10) *180)/(4*np.pi)
+#
+#    k=(np.log(10) *180)/(4*np.pi)
+#    num = (np.sqrt(L) - np.sqrt(R))
+#    den = (np.sqrt(L) + np.sqrt(R))
+#    
+#    return k * np.arctan(num/den)
+
+
 def _dichroism_calculator(L,R):
     """
-    Calculates the dichroism of two spectra based on linear absorptance
+    Calculates the difference spectrum of two spectra
     """
-    #cd[f]=np.arctan( (np.sqrt(self[L][f]) - np.sqrt(self[R][f]) ) / (np.sqrt(self[L][f]) + np.sqrt(self[R][f]) ) )*(np.log(10) *180)/(4*np.pi)
-
-    k=(np.log(10) *180)/(4*np.pi)
-    num = (np.sqrt(L) - np.sqrt(R))
-    den = (np.sqrt(L) + np.sqrt(R))
     
-    return k * np.arctan(num/den)
+    return L-R
+
 
 class Table(dict):
     """

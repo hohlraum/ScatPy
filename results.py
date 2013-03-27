@@ -54,6 +54,45 @@ import utils
 #    return k * np.arctan(num/den)
 
 
+def molar_ellipticity(DeltaQ, a_eff, C, l=1):
+    """
+    Calculate the molar ellipticity
+
+    DeltaQ: Q difference spectra
+    a_eff: the effective radius (in um)
+    C: the concentration in mol/l
+    l: the pathlength in cm        
+    """
+    
+    return ellipticity(DeltaQ, a_eff, C, l) * 100./( C * l)
+
+def ellipticity(DeltaQ, a_eff, C, l=1):
+    """
+    Calculate the ellipticity in deg
+    
+    DeltaQ: Q difference spectra
+    a_eff: the effective radius (in um)
+    C: the concentration in mol/l
+    l: the pathlength in cm
+    
+    """
+
+    dA=deltaA(DeltaQ, a_eff, C, l)
+
+    #Exact solution
+    ex=np.exp(dA*np.log(10)/2)
+    return np.arctan((ex-1)/(ex+1)) * (180/np.pi)
+
+    #Taylor approximation
+    #return dA * np.log(10)/4 * 180/np.pi
+
+def deltaA(DeltaQ, a_eff, C, l):
+    """
+    The differential absorbance
+    """    
+
+    return 1.89e13 * a_eff**2 * l * C* DeltaQ
+
 def _dichroism_calculator(L,R):
     """
     Calculates the difference spectrum of two spectra

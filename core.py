@@ -73,8 +73,10 @@ class Settings():
         self.CMDFRM='LFRAME'# = CMDFRM (LFRAME, TFRAME for Lab Frame or Target Frame)
         self.scat_planes=[ranges.Scat_Range(0,0,180,5), ranges.Scat_Range(90,0,180,5)]
 
-        #***** Specify if calculation is to be run with serial or parallel code on landau
+        #***** Specify if calculation is to be run with serial or parallel code
         self.serial=True
+        self.num_slots=(8, 16) #The number of processor slots to use for parallel calcs
+
         #self.NPLANES=2# = NPLANES = number of scattering planes
         #0.   0. 180.  5 = phi, thetan_min, thetan_max, dtheta (in deg) for plane 1
         #90.  0. 180.  5 = phi, thetan_min, thetan_max, dtheta (in deg) for plane 2
@@ -181,8 +183,8 @@ class DDscat():
                     f.write('#$ -N ddscat_ser\n')
                 else:
                     f.write('#$ -N ddscat_mpi\n#\n')
-                    f.write('# pe request\n')
-                    f.write('#$ -pe openmpi 4-16\n')
+                    f.write('# pe request\n')                    
+                    f.write('#$ -pe openmpi %d-%d\n' % tuple(self.settings.num_slots))
 
                 f.write('#\n')
 

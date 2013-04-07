@@ -13,6 +13,7 @@ import glob
 import zipfile
 import copy
 import re
+import struct
 
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, UnivariateSpline
@@ -1290,6 +1291,64 @@ def clean_string(s):
 
 
 
+def read_nearfield(fname):
+    """
+    
+    Read the nearfield results of file fname
+
+    Fortran read info from readnf.f90
+    NRWORD_NF   (int)
+    NXYZ        (int)
+    NAT0        (int)
+    NAT3        (int)
+    NX          (int)
+    NY          (int)
+    NZ          (int)
+    X0          (real * 3)
+    AEFF        (real)
+    NAMBIENT    (real)
+    WAVE        (real)
+    AKR         (real * 3)
+    CXE0R       (complex * 3)
+
+    AEFF             = effective radius of target (phys. units)
+!    NAMBIENT         = (real) refractive index of ambient medium
+!    WAVE             = wavelength in vacuo of incident wave (phys. units)
+!    DPHYS            = interdipole separation (phys. units)
+!    NAT0             = number of dipoles in physical target
+!    NX,NY,NZ         = dimensions/d of computational volume
+!                       (computational volume has NXYZ=NX*NY*NZ points)
+!    X0(1-3)          = (x/d,y/d,z/d) in Target frame for index I,J,K=0,0,0
+!                       thus (x,y,z)=[ x0(1,2,3) + (I,J,K) ]*d
+!    AKR(1-3)         = (k_x,k_y,k_z)*d in the Target Frame
+!
+
+    In Fortran:
+        int is 4-bytes
+        real is 4-bytes
+        complex is 8-bytes
+    """
+    
+    d=OrderedDict([('NRWORD','i'),
+       ('NXYZ', 'i'),
+       ('NAT0', 'i'),
+       ('NAT3', 'i'),
+       ('NX', 'i'),
+       ('NY', 'i'),
+       ('NZ', 'i'),
+       ('X0', 'fff'),
+       ('AEFF','f'),
+       ('NAMBIENT', 'f'),
+       ('WAVE', 'f'),
+       ('AKR', 'fff'),
+       ('CXE0R', 'ffffff')])
+       
+    with open(fname, 'rb') as f:
+        for k in d:
+            d[k]=struct.unpack_from(d[k], f)
+    
+    return d
+    
 ### ===============================================================================
 ### DEPRECATED
 

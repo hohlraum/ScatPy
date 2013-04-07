@@ -6,6 +6,7 @@ For reading, manipulating and plotting the output files from DDSCAT
 
 from __future__ import division
 import numpy as np
+import io
 import os
 import os.path
 import posixpath
@@ -1321,6 +1322,14 @@ def read_nearfield(fname):
 !    X0(1-3)          = (x/d,y/d,z/d) in Target frame for index I,J,K=0,0,0
 !                       thus (x,y,z)=[ x0(1,2,3) + (I,J,K) ]*d
 !    AKR(1-3)         = (k_x,k_y,k_z)*d in the Target Frame
+!    CXE0R(1-3)       = E_inc (complex) in the Target Frame
+!                       at (x_TF,y_TF,z_TF)=(0,0,0)
+!    CXEINC(1-3*NXYZ) = complex incident E field at all points
+!    CXESCA(1-3*NXYZ) = complex radiated E field at all points
+!    CXPOL(1-3*NXYZ)  = complex polarization/d^3 at all points
+!    CXADIA(1-3*NXYZ) = diagonal element of polarizability/d^3 at all pts
+!    ICOMP(1-3*NXYZ)  = composition identifier at all points
+!                     = 0 for vacuum
 !
 
     In Fortran:
@@ -1342,12 +1351,28 @@ def read_nearfield(fname):
        ('WAVE', 'f'),
        ('AKR', 'fff'),
        ('CXE0R', 'ffffff')])
-       
+   
+    hdr=OrderedDict()
     with open(fname, 'rb') as f:
         for k in d:
-            d[k]=struct.unpack_from(d[k], f)
-    
-    return d
+            s=f.read(struct.calcsize(d[k]))
+            hdr[k]=struct.unpack_from(d[k], s)
+
+        nxyz=hdr['NXYZ'][0]
+        print f.tell()
+
+    #y=np.reshape(x, (96,96,96,3), order='F')
+    #we would like the output to be in the form of a vector field:
+    # F[x,y,z] gives a vector [Ex, Ey, Ez]
+        ICOMP=np.fromfile(f, dtype=np.int16, count=3 * nxyz)
+        CXPOL=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
+        CXESCA=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
+        CXEINC=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
+        CXADIA=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)        
+
+    dat=[ICOMP, CXPOL, CXESCA, CXEINC, CXADIA]
+
+    return [hdr,dat]
     
 ### ===============================================================================
 ### DEPRECATED

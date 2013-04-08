@@ -1549,8 +1549,20 @@ class NF_Table(dict):
         """
         self.folder=new_folder
 
+    def show(self, field=None):
+        """
+        Visualize the selected field with mayavi
 
+        call mlab.show() to display the figure after making desired adjustments
+        """
 
+        #TODO: add default physical axes
+        
+        if field is None:
+            field='Etot2'
+        
+        mlab.contour3d(self['Etot2'])
+        
 
 
 def Esq(E):

@@ -1533,12 +1533,15 @@ class NF_Table(dict):
     
         self['Comp']=np.fromfile(f, dtype=np.int16, count=3 * self.nxyz)
         self['Pol']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
-        self['E_sca']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
-        self['E_inc']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
-        self['P_dia']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)        
+        self['Esca']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
+        self['Einc']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
+        self['Pdia']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)        
     
         for (k,v) in self.iteritems():
             self[k] = v.reshape(3, self.nz, self.ny, self.nx).T
+
+        self['Etot']=self['Einc']+self['Esca']
+        self['Etot2']=Esq(self['Etot'])
 
     def set_folder(self, new_folder):
         """

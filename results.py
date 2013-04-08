@@ -803,9 +803,7 @@ class ShapeTable(dict):
             self.folder=''
         else:
             self.folder=folder
-         
-        self.hdr_len=7
-         
+                  
         self.refresh()
 
     def copy(self):
@@ -873,39 +871,22 @@ class ShapeTable(dict):
         mlab.show()
 
 
-class TargetTable(dict):
+class TargetTable(ShapeTable):
     """
     A class for reading the target.out files used by DDscat.
         
     """
     def __init__(self, fname=None, folder=None):
-        dict.__init__(self)
+
         if fname==None:
             fname='target.out'
-        self.fname=fname
 
-        if folder is None:
-            self.folder=''
-        else:
-            self.folder=folder
-         
-        self.hdr_len=7
-         
-        self.refresh()
+        ShapeTable.__init__(self, fname, folder)
 
     def copy(self):
         return copy.deepcopy(self)
 
     
-    def refresh(self):
-        """
-        Refresh the data from the file
-                
-        """
-        
-        with open(os.path.join(self.folder, self.fname), 'Ur') as f:
-            self._load(f)
-
     def _load(self, f):
         self.label=f.readline()
         self.nat=int(f.readline().split('=')[0])
@@ -930,19 +911,6 @@ class TargetTable(dict):
         self.data=dat
         for (l,d) in zip(self.col_lbl, self.data.transpose()):
             self[l]=d
-
-    def set_folder(self, new_folder):
-        """
-        Change the working folder.        
-        """
-        self.folder=new_folder
-    
-    def show(self, *args, **kwargs):
-        """
-        Display the dipoles using Mayavi
-        """
-        mlab.points3d(self['IX'], self['IY'], self['IZ'], *args, **kwargs)
-        mlab.show()
         
     
 

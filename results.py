@@ -1089,6 +1089,8 @@ class ZipCollection(FileCollection):
         elif r_type.lower()=='scatable2':
             rtable=SCATable2
             zname='all_sca.zip'
+        elif r_type.lower()=='efield':
+            rtable=
         
         self.folder=folder
         if folder is None:
@@ -1292,25 +1294,10 @@ def clean_string(s):
 
 
 
-def read_nearfield(fname):
+class nearfieldE(dict):
     """
     
     Read the nearfield results of file fname
-
-    Fortran read info from readnf.f90
-    NRWORD_NF   (int)
-    NXYZ        (int)
-    NAT0        (int)
-    NAT3        (int)
-    NX          (int)
-    NY          (int)
-    NZ          (int)
-    X0          (real * 3)
-    AEFF        (real)
-    NAMBIENT    (real)
-    WAVE        (real)
-    AKR         (real * 3)
-    CXE0R       (complex * 3)
 
     AEFF             = effective radius of target (phys. units)
 !    NAMBIENT         = (real) refractive index of ambient medium
@@ -1332,12 +1319,12 @@ def read_nearfield(fname):
 !                     = 0 for vacuum
 !
 
-    In Fortran:
+    On my mac:
         int is 4-bytes
         real is 4-bytes
         complex is 8-bytes
     """
-    
+
     hdr_fields=OrderedDict([('NRWORD','i'),
        ('NXYZ', 'i'),
        ('NAT0', 'i'),
@@ -1352,33 +1339,29 @@ def read_nearfield(fname):
        ('AKR', 'fff'),
        ('CXE0R', 'ffffff')])
 
-    dat={'ICOMP':None,
-         'CXPOL':None,
-         'CXESCA':None,
-         'CXEINC':None,
-         'CXADIA':None}
-   
-    hdr=OrderedDict()
-    with open(fname, 'rb') as f:
-        for k in hdr_fields:
-            s=f.read(struct.calcsize(hdr_fields[k]))
-            hdr[k]=struct.unpack_from(hdr_fields[k], s)
-
-        nx = hdr['NX'][0]
-        ny = hdr['NY'][0]
-        nz = hdr['NZ'][0]
-        nxyz=hdr['NXYZ'][0]
-
-        dat['ICOMP']=np.fromfile(f, dtype=np.int16, count=3 * nxyz)
-        dat['CXPOL']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
-        dat['CXESCA']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
-        dat['CXEINC']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
-        dat['CXADIA']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)        
-
-    for (k,v) in dat.iteritems():
-        dat[k] = v.reshape(3, nz, ny, nx).T
-
-    return [hdr,dat]
+    def __init__(self, fname):    
+        dict.__init__(self)
+    
+        self.hdr=OrderedDict()
+        with open(fname, 'rb') as f:
+            for k in hdr_fields:
+                s=f.read(struct.calcsize(hdr_fields[k]))
+                self.hdr[k]=struct.unpack_from(hdr_fields[k], s)
+    
+            nx = self.hdr['NX'][0]
+            ny = self.hdr['NY'][0]
+            nz = self.hdr['NZ'][0]
+            nxyz=self.hdr['NXYZ'][0]
+    
+            self['ICOMP']=np.fromfile(f, dtype=np.int16, count=3 * nxyz)
+            self['CXPOL']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
+            self['CXESCA']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
+            self['CXEINC']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
+            self['CXADIA']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)        
+    
+        for (k,v) in self.iteritems():
+            self[k] = v.reshape(3, nz, ny, nx).T
+    
 
 def Esq(E):
     """

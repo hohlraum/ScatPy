@@ -6,7 +6,6 @@ For reading, manipulating and plotting the output files from DDSCAT
 
 from __future__ import division
 import numpy as np
-import io
 import os
 import os.path
 import posixpath
@@ -15,6 +14,8 @@ import zipfile
 import copy
 import re
 import struct
+import pdb
+import tempfile
 
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, UnivariateSpline
@@ -1064,6 +1065,7 @@ class FileCollection(ResultCollection):
         cd.default_plot_fields=fields
         return CD
 
+
 class ZipCollection(FileCollection):
     def __init__(self, r_type=None, folder=None):
         """
@@ -1089,8 +1091,6 @@ class ZipCollection(FileCollection):
         elif r_type.lower()=='scatable2':
             rtable=SCATable2
             zname='all_sca.zip'
-        elif r_type.lower()=='efield':
-            rtable=
         
         self.folder=folder
         if folder is None:
@@ -1294,10 +1294,10 @@ def clean_string(s):
 
 
 
-class nearfieldE(dict):
+class NF_Table(dict):
     """
     
-    Read the nearfield results of file fname
+    Table of nearfield results 
 
     AEFF             = effective radius of target (phys. units)
 !    NAMBIENT         = (real) refractive index of ambient medium
@@ -1325,43 +1325,88 @@ class nearfieldE(dict):
         complex is 8-bytes
     """
 
-    hdr_fields=OrderedDict([('NRWORD','i'),
-       ('NXYZ', 'i'),
-       ('NAT0', 'i'),
-       ('NAT3', 'i'),
-       ('NX', 'i'),
-       ('NY', 'i'),
-       ('NZ', 'i'),
-       ('X0', 'fff'),
-       ('AEFF','f'),
-       ('NAMBIENT', 'f'),
-       ('WAVE', 'f'),
-       ('AKR', 'fff'),
-       ('CXE0R', 'ffffff')])
-
-    def __init__(self, fname):    
+    def __init__(self, fname, folder=None, zfile=None):  
+        """
+        Initialize a new nearfield result table
+        """
         dict.__init__(self)
+
+        if folder is None:
+            self.folder=''
+        else:
+            self.folder=folder
+
+        self.zfile=zfile
+        self.fname=fname
+    
+        self.refresh()    
+         
+    def refresh(self):
+        """
+        Refresh the data from the file
+                
+        """
+        
+        if self.zfile:
+            with zipfile.ZipFile(os.path.join(self.folder, self.zfile)) as z:
+                #This is a hack until the problems with fromfile and zip are resolved
+                tmppath=tempfile.gettempdir()
+                z.extract(self.fname, tmppath)
+                fname=os.path.join(tmppath, self.fname)
+                with open(fname, 'rb') as f:
+                    self._load(f)
+                os.remove(fname)
+                
+        else:            
+            with open(os.path.join(self.folder, self.fname), 'rb') as f:
+                self._load(f)
+
+    def _load(self, f):
+        """
+        Load the contents of the file
+        """
+        hdr_fields=OrderedDict([('nrword','i'),
+           ('nxyz', 'i'),
+           ('nat0', 'i'),
+           ('nat3', 'i'),
+           ('nx', 'i'),
+           ('ny', 'i'),
+           ('nz', 'i'),
+           ('X0', 'fff'),
+           ('aeff','f'),
+           ('nambient', 'f'),
+           ('wave', 'f'),
+           ('akr', 'fff'),
+           ('E_inc', 'ffffff')])
+
     
         self.hdr=OrderedDict()
-        with open(fname, 'rb') as f:
-            for k in hdr_fields:
-                s=f.read(struct.calcsize(hdr_fields[k]))
-                self.hdr[k]=struct.unpack_from(hdr_fields[k], s)
+        for k in hdr_fields:
+            s=f.read(struct.calcsize(hdr_fields[k]))
+            v=np.array(struct.unpack_from(hdr_fields[k], s))
+            setattr(self, k, v)
+        
+        E_inc=self.E_inc
+        self.E_inc=E_inc[0::2]+1j*E_inc[1::2]
     
-            nx = self.hdr['NX'][0]
-            ny = self.hdr['NY'][0]
-            nz = self.hdr['NZ'][0]
-            nxyz=self.hdr['NXYZ'][0]
-    
-            self['ICOMP']=np.fromfile(f, dtype=np.int16, count=3 * nxyz)
-            self['CXPOL']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
-            self['CXESCA']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
-            self['CXEINC']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
-            self['CXADIA']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)        
+        self['Comp']=np.fromfile(f, dtype=np.int16, count=3 * self.nxyz)
+        self['Pol']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
+        self['E_sca']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
+        self['E_inc']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
+        self['P_dia']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)        
     
         for (k,v) in self.iteritems():
-            self[k] = v.reshape(3, nz, ny, nx).T
-    
+            self[k] = v.reshape(3, self.nz, self.ny, self.nx).T
+
+    def set_folder(self, new_folder):
+        """
+        Change the working folder.        
+        """
+        self.folder=new_folder
+
+
+
+
 
 def Esq(E):
     """
@@ -1372,7 +1417,7 @@ def Esq(E):
     Ey=E[...,1]
     Ez=E[...,2]
     
-    return Ex*np.conj(Ex) + Ey*np.conj(Ey) + Ez*np.conj(Ez)
+    return np.real(Ex*np.conj(Ex) + Ey*np.conj(Ey) + Ez*np.conj(Ez))
     
 ### ===============================================================================
 ### DEPRECATED

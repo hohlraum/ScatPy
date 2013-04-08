@@ -200,11 +200,11 @@ def compress_files(folder=None, recurse=False):
 
     supdir=os.path.join(folder, 'support')
 
-    for ext in ['avg', 'sca', 'fml']:
+    for ext in ['avg', 'sca', 'fml', 'pol*', 'E*']:
 
         if len(glob.glob1(folder, '*.'+ext)):
 
-            zname=os.path.join(folder, 'all_'+ext+'.zip')
+            zname=os.path.join(folder, 'all_'+ext.replace('*', 'n')+'.zip')
 #            if os.path.exists(zname):
 #                ans=raw_input('%s alread exists. Do you wish to overwrite? [n]\y: '%zname)
 #                if ans.lower()<>'y':

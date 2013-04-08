@@ -102,6 +102,9 @@ def _dichroism_calculator(L,R):
     return L-R
 
 
+# ===================================================================
+###  Tables
+
 class Table(dict):
     """
     Base class for tables
@@ -780,6 +783,10 @@ class MInTable(ResultTable):
             f.write('\t'.join(self.col_lbl)+'\n')
             np.savetxt(f, self.data, fmt='%6.4f\t%4.2f\t%5.3f')
 
+###===================================================================
+###  Collections
+#===================================================================
+
 class ResultCollection(OrderedDict):
 
     def __init__(self):
@@ -1109,6 +1116,10 @@ class ZipCollection(FileCollection):
         for n in names:
             self[n]=rtable(n, folder=self.folder, zfile=zname)
 
+#===================================================================
+###  Multi-dimensional Datasets
+#===================================================================
+
 class SCAHyperSpace():
     """
     Create an object that stores the results from an isotropic simulation
@@ -1419,7 +1430,7 @@ def Esq(E):
     
     return np.real(Ex*np.conj(Ex) + Ey*np.conj(Ey) + Ez*np.conj(Ez))
     
-### ===============================================================================
+# ===============================================================================
 ### DEPRECATED
 
 def dichroism_from_avg(fields, folder=None):

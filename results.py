@@ -1338,7 +1338,7 @@ def read_nearfield(fname):
         complex is 8-bytes
     """
     
-    d=OrderedDict([('NRWORD','i'),
+    hdr_fields=OrderedDict([('NRWORD','i'),
        ('NXYZ', 'i'),
        ('NAT0', 'i'),
        ('NAT3', 'i'),
@@ -1351,28 +1351,45 @@ def read_nearfield(fname):
        ('WAVE', 'f'),
        ('AKR', 'fff'),
        ('CXE0R', 'ffffff')])
+
+    dat={'ICOMP':None,
+         'CXPOL':None,
+         'CXESCA':None,
+         'CXEINC':None,
+         'CXADIA':None}
    
     hdr=OrderedDict()
     with open(fname, 'rb') as f:
-        for k in d:
-            s=f.read(struct.calcsize(d[k]))
-            hdr[k]=struct.unpack_from(d[k], s)
+        for k in hdr_fields:
+            s=f.read(struct.calcsize(hdr_fields[k]))
+            hdr[k]=struct.unpack_from(hdr_fields[k], s)
 
+        nx = hdr['NX'][0]
+        ny = hdr['NY'][0]
+        nz = hdr['NZ'][0]
         nxyz=hdr['NXYZ'][0]
-        print f.tell()
 
-    #y=np.reshape(x, (96,96,96,3), order='F')
-    #we would like the output to be in the form of a vector field:
-    # F[x,y,z] gives a vector [Ex, Ey, Ez]
-        ICOMP=np.fromfile(f, dtype=np.int16, count=3 * nxyz)
-        CXPOL=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
-        CXESCA=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
-        CXEINC=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
-        CXADIA=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)        
+        dat['ICOMP']=np.fromfile(f, dtype=np.int16, count=3 * nxyz)
+        dat['CXPOL']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
+        dat['CXESCA']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
+        dat['CXEINC']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)
+        dat['CXADIA']=np.fromfile(f, dtype=np.complex64, count=3 * nxyz)        
 
-    dat=[ICOMP, CXPOL, CXESCA, CXEINC, CXADIA]
+    for (k,v) in dat.iteritems():
+        dat[k] = v.reshape(3, nz, ny, nx).T
 
     return [hdr,dat]
+
+def Esq(E):
+    """
+    Return the magnitude squared of a vector field.
+    
+    """
+    Ex=E[...,0]
+    Ey=E[...,1]
+    Ez=E[...,2]
+    
+    return Ex*np.conj(Ex) + Ey*np.conj(Ey) + Ez*np.conj(Ez)
     
 ### ===============================================================================
 ### DEPRECATED

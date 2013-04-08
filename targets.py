@@ -11,6 +11,7 @@ import numpy as np
 import os
 import os.path
 import copy
+import results
 
 import utils
 from config import exec_settings
@@ -278,7 +279,16 @@ class Target_IsoHomo_FROM_FILE(Target):
         """Execute VTRConvert to generate a model file viewable in Paraview"""
         Target.VTRconvert(self, outfile)
 
-
+    def show(self, *args, **kwargs):
+        """
+        Display the shape using mayavi
+        
+        """
+        self.write()
+        fname=os.path.join(self.folder, self.fname)
+        s=results.ShapeTable(fname)
+        s.show(*args, **kwargs)
+        
 class Target_FROM_FILE(Target):
     pass        
 

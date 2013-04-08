@@ -17,6 +17,11 @@ import struct
 import pdb
 import tempfile
 
+try:
+    from mayavi import mlab
+except:
+    pass
+
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, UnivariateSpline
 from collections import OrderedDict
@@ -782,6 +787,164 @@ class MInTable(ResultTable):
             f.write(self.header+'\n')
             f.write('\t'.join(self.col_lbl)+'\n')
             np.savetxt(f, self.data, fmt='%6.4f\t%4.2f\t%5.3f')
+
+class ShapeTable(dict):
+    """
+    A class for reading the shape.dat files used by DDscat.
+        
+    """
+    def __init__(self, fname=None, folder=None):
+        dict.__init__(self)
+        if fname==None:
+            fname='shape.dat'
+        self.fname=fname
+
+        if folder is None:
+            self.folder=''
+        else:
+            self.folder=folder
+         
+        self.hdr_len=7
+         
+        self.refresh()
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+    
+    def refresh(self):
+        """
+        Refresh the data from the file
+                
+        """
+        
+        with open(os.path.join(self.folder, self.fname), 'Ur') as f:
+            self._load(f)
+
+    def _load(self, f):
+        self.label=f.readline()
+        self.nat=int(f.readline())
+        self.a1=np.array(f.readline().split())
+        self.a2=np.array(f.readline().split())
+        self.d=np.array(f.readline().split())
+        self.offset=np.array(f.readline().split())
+
+        l=f.readline()
+        self.col_lbl=['JA', 'IX', 'IY', 'IZ', 'ICOMPx', 'ICOMPy', 'ICOMPz']
+
+        dat=np.loadtxt(f, np.int)
+        
+        self.data=dat
+        for (l,d) in zip(self.col_lbl, self.data.transpose()):
+            self[l]=d
+
+    def set_folder(self, new_folder):
+        """
+        Change the working folder.        
+        """
+        self.folder=new_folder
+    
+    def show(self, *args, **kwargs):
+        """
+        Display the dipoles using Mayavi
+        """
+        max_points=20000
+        #This mask_point business shouldn't be necessary, but the builtin VTK
+        #implementation causes my computer to segfault
+        if 'mask_points' in kwargs:
+            mask_points=kwargs.pop('mask_points')
+        elif self.nat>max_points:
+            print 'Warning! Large number of datapoints in target.'
+            print 'Plotting only a subset. Specify mask_points=None or an integer to force skipping value'
+            mask_points=int(self.nat/max_points)
+        else:
+            mask_points=None
+            
+        if mask_points is None:
+            X=self['IX']
+            Y=self['IY']
+            Z=self['IZ']        
+        else:
+            X=self['IX'][::mask_points]
+            Y=self['IY'][::mask_points]
+            Z=self['IZ'][::mask_points]                    
+            
+        mlab.points3d(X, Y, Z, *args, **kwargs)
+        mlab.show()
+
+
+class TargetTable(dict):
+    """
+    A class for reading the target.out files used by DDscat.
+        
+    """
+    def __init__(self, fname=None, folder=None):
+        dict.__init__(self)
+        if fname==None:
+            fname='target.out'
+        self.fname=fname
+
+        if folder is None:
+            self.folder=''
+        else:
+            self.folder=folder
+         
+        self.hdr_len=7
+         
+        self.refresh()
+
+    def copy(self):
+        return copy.deepcopy(self)
+
+    
+    def refresh(self):
+        """
+        Refresh the data from the file
+                
+        """
+        
+        with open(os.path.join(self.folder, self.fname), 'Ur') as f:
+            self._load(f)
+
+    def _load(self, f):
+        self.label=f.readline()
+        self.nat=int(f.readline().split('=')[0])
+        self.a1=np.array(f.readline().split()[:3])
+        self.a2=np.array(f.readline().split()[:3])
+        self.d=np.array(f.readline().split()[:3])
+        self.offset=np.array(f.readline().split()[:3])
+
+        l=f.readline()
+        self.col_lbl=['JA', 'IX', 'IY', 'IZ', 'ICOMPx', 'ICOMPy', 'ICOMPz']
+
+        #Cannot use the faster np.loadtxt technique used by ShapeTable because
+        #output often squeezes columns leaving no space between them
+        c_width=[7,5,5,5,2,2,2]
+        l=f.readline()
+        dat=np.asarray(map(int, split_string(l, c_width)), dtype=np.int)
+        l=f.readline()
+        while  l <> '':
+            dat=np.vstack([dat, np.asarray(map(int, split_string(l, c_width)), dtype=np.int)])
+            l=f.readline()                
+        
+        self.data=dat
+        for (l,d) in zip(self.col_lbl, self.data.transpose()):
+            self[l]=d
+
+    def set_folder(self, new_folder):
+        """
+        Change the working folder.        
+        """
+        self.folder=new_folder
+    
+    def show(self, *args, **kwargs):
+        """
+        Display the dipoles using Mayavi
+        """
+        mlab.points3d(self['IX'], self['IY'], self['IZ'], *args, **kwargs)
+        mlab.show()
+        
+    
 
 ###===================================================================
 ###  Collections

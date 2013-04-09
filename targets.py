@@ -304,6 +304,35 @@ class Target_Iso_FROM_FILE(Target_FROM_FILE):
 class Target_DecoratedHelix(Target_Iso_FROM_FILE):
     pass        
 
+
+class Ellipsoid_FF(Target_IsoHomo_FROM_FILE):
+    """
+    Build an ellipsoidal target to be loaded from file
+    """
+
+    def __init__(self, phys_shape, d=None, **kwargs):
+        """
+        Create a new Ellipsoid Target
+        
+        phys_shape is the length of the three semi-major axes in physical units
+        """
+        if d is None:
+            d=default_d
+        shape=np.int16(np.array(phys_shape) *2/d)
+        Target_IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+
+        self.phys_shape=phys_shape
+
+        self.descriptor='Ellipsoid_FF (%f, %f, %f, %f)'%(tuple(self.phys_shape)+(self.d,))            
+        
+        (a,b,c) = tuple(shape)
+        xx,yy,zz=np.mgrid[-a:a, -b:b, -c:c] 
+        dist=(xx/a)**2 + (yy/b)**2 + (zz/c)**2
+
+        self.grid = dist<1
+        
+        self.N=self.grid.sum()
+
 class Target_Helix(Target_IsoHomo_FROM_FILE):
     """
     A helix target

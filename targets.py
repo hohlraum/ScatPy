@@ -237,6 +237,11 @@ class Target_IsoHomo_FROM_FILE(Target):
     
     '''
     def __init__(self, shape, **kwargs):
+        """
+        Initialize a new target
+        
+        shape is in units of number of dipoles
+        """
         Target.__init__(self, shape, **kwargs)
         self.descrip=''
         self.directive='FROM_FILE'

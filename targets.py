@@ -592,3 +592,30 @@ class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
                     self.grid[i,j,k]=sphere_check(i,j,k)
         
         self.update_N()
+
+def Holify(target, radius, posns=None, num=None, seed=None):
+    """
+    Punches holes into a target
+    
+    radius: the radius of the holes to be punched (in units of d)
+
+    Where to punch the holes can be specified by:    
+    
+    posns: a list of the x,y,z positions to punch the holes
+    
+    or    
+    
+    num: the number of holes. their positions are selected randomly
+    seed: a seed value to use for the random number generator
+    
+    """
+    
+    if posns is None:
+        if num is None:
+            raise ValueError('Either posns or num must be specificed')
+        
+        posns=np.random.rand(num, 3)
+        for (p, s) in zip(posns.T, target.shape):
+            p *= s
+
+        

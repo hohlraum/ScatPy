@@ -609,13 +609,39 @@ def Holify(target, radius, posns=None, num=None, seed=None):
     seed: a seed value to use for the random number generator
     
     """
+    shape=target.grid.shape
     
     if posns is None:
         if num is None:
             raise ValueError('Either posns or num must be specificed')
         
         posns=np.random.rand(num, 3)
-        for (p, s) in zip(posns.T, target.shape):
+        for (p, s) in zip(posns.T, shape):
             p *= s
 
-        
+    posns=np.asarray(posns, dtype=np.int16)
+
+    r=np.ceil(radius)
+    xx,yy,zz=np.mgrid[-(r+1):r+1, -(r+1):r+1, -(r+1):r+1] 
+    dist=np.sqrt(xx**2 + yy**2 + zz**2)
+    mask=np.array(np.where(dist<r))
+    
+    new_target=target.copy()
+    grid=np.ravel(new_target.grid)
+    print grid.sum()
+    
+    for p in posns:
+        p=p[:, np.newaxis]
+#        print p            
+        mask_r=np.ravel_multi_index(mask+p, shape, mode='clip')
+        print mask_r[0]
+#        g_len=grid.sum()
+        print grid[mask_r[0]]
+        grid[mask_r] &= False
+        print grid[mask_r[0]]
+
+#        print g_len, '->', grid.sum()
+
+    print grid.sum()
+    new_target.N = new_target.grid.sum()
+    return new_target

@@ -22,8 +22,16 @@ try:
 except:
     pass
 
-import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d, UnivariateSpline
+try:
+    import matplotlib.pyplot as plt
+except:
+    pass
+
+try:
+    from scipy.interpolate import interp1d, UnivariateSpline
+except:
+    pass
+
 from collections import OrderedDict
 
 import utils

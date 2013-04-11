@@ -998,36 +998,28 @@ class EnTable(dict):
         Load the contents of the file
         """
         self.nrword=struct.unpack_from('i', f.read(4))[0]
-        if self.nrword==4: ##Use 32bit floats    
-            hdr_fields=OrderedDict([#('nrword',np.int32),
-               ('nxyz', np.int32),
-               ('nat0', np.int32),
-               ('nat3', np.int32),
-               ('nx', np.int32),
-               ('ny', np.int32),
-               ('nz', np.int32),
-               ('X0', np.dtype((np.float32, (3)))),
-               ('aeff', np.float32),
-               ('nambient', np.float32),
-               ('wave', np.float32),
-               ('akr', np.dtype((np.float32, (3)))),
-               ('E_inc', np.dtype((np.float32, (6))))])
-            dt=np.complex64
+        if self.nrword==4: ##Use 32bit floats 
+            i=np.int32
+            f=np.float32
+            c=np.complex64            
         else:               ##Use 64bit floats
-            hdr_fields=OrderedDict([#('nrword',np.int64),
-               ('nxyz', np.int32),
-               ('nat0', np.int32),
-               ('nat3', np.int32),
-               ('nx', np.int32),
-               ('ny', np.int32),
-               ('nz', np.int32),
-               ('X0', np.dtype((np.float64, (3)))),
-               ('aeff', np.float64),
-               ('nambient', np.float64),
-               ('wave', np.float64),
-               ('akr', np.dtype((np.float64, (3)))),
-               ('E_inc', np.dtype((np.float64, (6))))])
-            dt=np.complex128            
+            i=np.int32
+            f=np.float64
+            c=np.complex128            
+
+        hdr_fields=OrderedDict([
+           ('nxyz', i),
+           ('nat0', i),
+           ('nat3', i),
+           ('nx', i),
+           ('ny', i),
+           ('nz', i),
+           ('X0', np.dtype((f, (3)))),
+           ('aeff', f),
+           ('nambient', f),
+           ('wave', f),
+           ('akr', np.dtype((f, (3)))),
+           ('E_inc', np.dtype((f, (6))))])
     
         self.hdr=OrderedDict()
         for k in hdr_fields:
@@ -1037,15 +1029,18 @@ class EnTable(dict):
         E_inc=self.E_inc
         self.E_inc=E_inc[0::2]+1j*E_inc[1::2]
     
+        #Load the 3D arrays
         self['Comp']=np.fromfile(f, dtype=np.int16, count=3 * self.nxyz)
-        self['Pol']=np.fromfile(f, dtype=dt, count=3 * self.nxyz)
-        self['Esca']=np.fromfile(f, dtype=dt, count=3 * self.nxyz)
-        self['Einc']=np.fromfile(f, dtype=dt, count=3 * self.nxyz)
-        self['Pdia']=np.fromfile(f, dtype=dt, count=3 * self.nxyz)        
+        self['Pol']=np.fromfile(f, dtype=c, count=3 * self.nxyz)
+        self['Esca']=np.fromfile(f, dtype=c, count=3 * self.nxyz)
+        self['Einc']=np.fromfile(f, dtype=c, count=3 * self.nxyz)
+        self['Pdia']=np.fromfile(f, dtype=c, count=3 * self.nxyz)        
     
+        #Reshape the arrays
         for (k,v) in self.iteritems():
             self[k] = v.reshape(3, self.nz, self.ny, self.nx).T
 
+        #Calculate the total E-field and its sq. magnitude
         self['Etot']=self['Einc']+self['Esca']
         self['Etot2']=Esq(self['Etot'])
 

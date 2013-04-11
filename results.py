@@ -920,6 +920,133 @@ class TargetTable(ShapeTable):
         for (l,d) in zip(self.col_lbl, self.data.transpose()):
             self[l]=d
         
+
+class EnTable(dict):
+    """
+    
+    Table of nearfield results 
+
+    AEFF             = effective radius of target (phys. units)
+!    NAMBIENT         = (real) refractive index of ambient medium
+!    WAVE             = wavelength in vacuo of incident wave (phys. units)
+!    DPHYS            = interdipole separation (phys. units)
+!    NAT0             = number of dipoles in physical target
+!    NX,NY,NZ         = dimensions/d of computational volume
+!                       (computational volume has NXYZ=NX*NY*NZ points)
+!    X0(1-3)          = (x/d,y/d,z/d) in Target frame for index I,J,K=0,0,0
+!                       thus (x,y,z)=[ x0(1,2,3) + (I,J,K) ]*d
+!    AKR(1-3)         = (k_x,k_y,k_z)*d in the Target Frame
+!    CXE0R(1-3)       = E_inc (complex) in the Target Frame
+!                       at (x_TF,y_TF,z_TF)=(0,0,0)
+!    CXEINC(1-3*NXYZ) = complex incident E field at all points
+!    CXESCA(1-3*NXYZ) = complex radiated E field at all points
+!    CXPOL(1-3*NXYZ)  = complex polarization/d^3 at all points
+!    CXADIA(1-3*NXYZ) = diagonal element of polarizability/d^3 at all pts
+!    ICOMP(1-3*NXYZ)  = composition identifier at all points
+!                     = 0 for vacuum
+!
+
+    On my mac:
+        int is 4-bytes
+        real is 4-bytes
+        complex is 8-bytes
+    """
+
+    def __init__(self, fname, folder=None, zfile=None):  
+        """
+        Initialize a new nearfield result table
+        """
+        dict.__init__(self)
+
+        if folder is None:
+            self.folder=''
+        else:
+            self.folder=folder
+
+        self.zfile=zfile
+        self.fname=fname
+    
+        self.refresh()    
+         
+    def refresh(self):
+        """
+        Refresh the data from the file
+                
+        """
+        
+        if self.zfile:
+            with zipfile.ZipFile(os.path.join(self.folder, self.zfile)) as z:
+                #This is a hack until the problems with fromfile and zip are resolved
+                tmppath=tempfile.gettempdir()
+                z.extract(self.fname, tmppath)
+                fname=os.path.join(tmppath, self.fname)
+                with open(fname, 'rb') as f:
+                    self._load(f)
+                os.remove(fname)
+                
+        else:            
+            with open(os.path.join(self.folder, self.fname), 'rb') as f:
+                self._load(f)
+
+    def _load(self, f):
+        """
+        Load the contents of the file
+        """
+        hdr_fields=OrderedDict([('nrword','i'),
+           ('nxyz', 'i'),
+           ('nat0', 'i'),
+           ('nat3', 'i'),
+           ('nx', 'i'),
+           ('ny', 'i'),
+           ('nz', 'i'),
+           ('X0', 'fff'),
+           ('aeff','f'),
+           ('nambient', 'f'),
+           ('wave', 'f'),
+           ('akr', 'fff'),
+           ('E_inc', 'ffffff')])
+
+    
+        self.hdr=OrderedDict()
+        for k in hdr_fields:
+            s=f.read(struct.calcsize(hdr_fields[k]))
+            v=np.array(struct.unpack_from(hdr_fields[k], s))
+            setattr(self, k, v)
+        
+        E_inc=self.E_inc
+        self.E_inc=E_inc[0::2]+1j*E_inc[1::2]
+    
+        self['Comp']=np.fromfile(f, dtype=np.int16, count=3 * self.nxyz)
+        self['Pol']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
+        self['Esca']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
+        self['Einc']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
+        self['Pdia']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)        
+    
+        for (k,v) in self.iteritems():
+            self[k] = v.reshape(3, self.nz, self.ny, self.nx).T
+
+        self['Etot']=self['Einc']+self['Esca']
+        self['Etot2']=Esq(self['Etot'])
+
+    def set_folder(self, new_folder):
+        """
+        Change the working folder.        
+        """
+        self.folder=new_folder
+
+    def show(self, field=None):
+        """
+        Visualize the selected field with mayavi
+
+        call mlab.show() to display the figure after making desired adjustments
+        """
+
+        #TODO: add default physical axes
+        
+        if field is None:
+            field='Etot2'
+        
+        mlab.contour3d(self['Etot2'])
     
 
 ###===================================================================
@@ -1444,132 +1571,6 @@ def clean_string(s):
 
 
 
-class NF_Table(dict):
-    """
-    
-    Table of nearfield results 
-
-    AEFF             = effective radius of target (phys. units)
-!    NAMBIENT         = (real) refractive index of ambient medium
-!    WAVE             = wavelength in vacuo of incident wave (phys. units)
-!    DPHYS            = interdipole separation (phys. units)
-!    NAT0             = number of dipoles in physical target
-!    NX,NY,NZ         = dimensions/d of computational volume
-!                       (computational volume has NXYZ=NX*NY*NZ points)
-!    X0(1-3)          = (x/d,y/d,z/d) in Target frame for index I,J,K=0,0,0
-!                       thus (x,y,z)=[ x0(1,2,3) + (I,J,K) ]*d
-!    AKR(1-3)         = (k_x,k_y,k_z)*d in the Target Frame
-!    CXE0R(1-3)       = E_inc (complex) in the Target Frame
-!                       at (x_TF,y_TF,z_TF)=(0,0,0)
-!    CXEINC(1-3*NXYZ) = complex incident E field at all points
-!    CXESCA(1-3*NXYZ) = complex radiated E field at all points
-!    CXPOL(1-3*NXYZ)  = complex polarization/d^3 at all points
-!    CXADIA(1-3*NXYZ) = diagonal element of polarizability/d^3 at all pts
-!    ICOMP(1-3*NXYZ)  = composition identifier at all points
-!                     = 0 for vacuum
-!
-
-    On my mac:
-        int is 4-bytes
-        real is 4-bytes
-        complex is 8-bytes
-    """
-
-    def __init__(self, fname, folder=None, zfile=None):  
-        """
-        Initialize a new nearfield result table
-        """
-        dict.__init__(self)
-
-        if folder is None:
-            self.folder=''
-        else:
-            self.folder=folder
-
-        self.zfile=zfile
-        self.fname=fname
-    
-        self.refresh()    
-         
-    def refresh(self):
-        """
-        Refresh the data from the file
-                
-        """
-        
-        if self.zfile:
-            with zipfile.ZipFile(os.path.join(self.folder, self.zfile)) as z:
-                #This is a hack until the problems with fromfile and zip are resolved
-                tmppath=tempfile.gettempdir()
-                z.extract(self.fname, tmppath)
-                fname=os.path.join(tmppath, self.fname)
-                with open(fname, 'rb') as f:
-                    self._load(f)
-                os.remove(fname)
-                
-        else:            
-            with open(os.path.join(self.folder, self.fname), 'rb') as f:
-                self._load(f)
-
-    def _load(self, f):
-        """
-        Load the contents of the file
-        """
-        hdr_fields=OrderedDict([('nrword','i'),
-           ('nxyz', 'i'),
-           ('nat0', 'i'),
-           ('nat3', 'i'),
-           ('nx', 'i'),
-           ('ny', 'i'),
-           ('nz', 'i'),
-           ('X0', 'fff'),
-           ('aeff','f'),
-           ('nambient', 'f'),
-           ('wave', 'f'),
-           ('akr', 'fff'),
-           ('E_inc', 'ffffff')])
-
-    
-        self.hdr=OrderedDict()
-        for k in hdr_fields:
-            s=f.read(struct.calcsize(hdr_fields[k]))
-            v=np.array(struct.unpack_from(hdr_fields[k], s))
-            setattr(self, k, v)
-        
-        E_inc=self.E_inc
-        self.E_inc=E_inc[0::2]+1j*E_inc[1::2]
-    
-        self['Comp']=np.fromfile(f, dtype=np.int16, count=3 * self.nxyz)
-        self['Pol']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
-        self['Esca']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
-        self['Einc']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
-        self['Pdia']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)        
-    
-        for (k,v) in self.iteritems():
-            self[k] = v.reshape(3, self.nz, self.ny, self.nx).T
-
-        self['Etot']=self['Einc']+self['Esca']
-        self['Etot2']=Esq(self['Etot'])
-
-    def set_folder(self, new_folder):
-        """
-        Change the working folder.        
-        """
-        self.folder=new_folder
-
-    def show(self, field=None):
-        """
-        Visualize the selected field with mayavi
-
-        call mlab.show() to display the figure after making desired adjustments
-        """
-
-        #TODO: add default physical axes
-        
-        if field is None:
-            field='Etot2'
-        
-        mlab.contour3d(self['Etot2'])
         
 
 

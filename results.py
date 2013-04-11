@@ -16,6 +16,7 @@ import re
 import struct
 import pdb
 import tempfile
+import warnings
 
 try:
     from mayavi import mlab
@@ -952,11 +953,16 @@ class EnTable(dict):
         complex is 8-bytes
     """
 
-    def __init__(self, fname, folder=None, zfile=None):  
+    def __init__(self, fname=None, folder=None, zfile=None):  
         """
         Initialize a new nearfield result table
         """
         dict.__init__(self)
+
+        if fname is None:
+            fname='w000r000k000.E1'
+
+        self.fname=fname
 
         if folder is None:
             self.folder=''
@@ -964,7 +970,6 @@ class EnTable(dict):
             self.folder=folder
 
         self.zfile=zfile
-        self.fname=fname
     
         self.refresh()    
          
@@ -992,35 +997,51 @@ class EnTable(dict):
         """
         Load the contents of the file
         """
-        hdr_fields=OrderedDict([('nrword','i'),
-           ('nxyz', 'i'),
-           ('nat0', 'i'),
-           ('nat3', 'i'),
-           ('nx', 'i'),
-           ('ny', 'i'),
-           ('nz', 'i'),
-           ('X0', 'fff'),
-           ('aeff','f'),
-           ('nambient', 'f'),
-           ('wave', 'f'),
-           ('akr', 'fff'),
-           ('E_inc', 'ffffff')])
-
+        self.nrword=struct.unpack_from('i', f.read(4))[0]
+        if self.nrword==4: ##Use 32bit floats    
+            hdr_fields=OrderedDict([#('nrword',np.int32),
+               ('nxyz', np.int32),
+               ('nat0', np.int32),
+               ('nat3', np.int32),
+               ('nx', np.int32),
+               ('ny', np.int32),
+               ('nz', np.int32),
+               ('X0', np.dtype((np.float32, (3)))),
+               ('aeff', np.float32),
+               ('nambient', np.float32),
+               ('wave', np.float32),
+               ('akr', np.dtype((np.float32, (3)))),
+               ('E_inc', np.dtype((np.float32, (6))))])
+            dt=np.complex64
+        else:               ##Use 64bit floats
+            hdr_fields=OrderedDict([#('nrword',np.int64),
+               ('nxyz', np.int32),
+               ('nat0', np.int32),
+               ('nat3', np.int32),
+               ('nx', np.int32),
+               ('ny', np.int32),
+               ('nz', np.int32),
+               ('X0', np.dtype((np.float64, (3)))),
+               ('aeff', np.float64),
+               ('nambient', np.float64),
+               ('wave', np.float64),
+               ('akr', np.dtype((np.float64, (3)))),
+               ('E_inc', np.dtype((np.float64, (6))))])
+            dt=np.complex128            
     
         self.hdr=OrderedDict()
         for k in hdr_fields:
-            s=f.read(struct.calcsize(hdr_fields[k]))
-            v=np.array(struct.unpack_from(hdr_fields[k], s))
+            v=np.fromfile(f, dtype=hdr_fields[k], count=1)
             setattr(self, k, v)
         
         E_inc=self.E_inc
         self.E_inc=E_inc[0::2]+1j*E_inc[1::2]
     
         self['Comp']=np.fromfile(f, dtype=np.int16, count=3 * self.nxyz)
-        self['Pol']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
-        self['Esca']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
-        self['Einc']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)
-        self['Pdia']=np.fromfile(f, dtype=np.complex64, count=3 * self.nxyz)        
+        self['Pol']=np.fromfile(f, dtype=dt, count=3 * self.nxyz)
+        self['Esca']=np.fromfile(f, dtype=dt, count=3 * self.nxyz)
+        self['Einc']=np.fromfile(f, dtype=dt, count=3 * self.nxyz)
+        self['Pdia']=np.fromfile(f, dtype=dt, count=3 * self.nxyz)        
     
         for (k,v) in self.iteritems():
             self[k] = v.reshape(3, self.nz, self.ny, self.nx).T
@@ -1047,6 +1068,7 @@ class EnTable(dict):
             field='Etot2'
         
         mlab.contour3d(self['Etot2'])
+        warnings.warn('Use mlab.show() to display the figure when you are ready')
     
 
 ###===================================================================

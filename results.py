@@ -20,18 +20,18 @@ import warnings
 
 try:
     from mayavi import mlab
-except:
-    pass
+except ImportError, err:
+    warnings.warn(str(err))
 
 try:
     import matplotlib.pyplot as plt
-except:
-    pass
+except ImportError:
+    warnings.warn(str(err))
 
 try:
     from scipy.interpolate import interp1d, UnivariateSpline
-except:
-    pass
+except ImportError:
+    warnings.warn(str(err))
 
 from collections import OrderedDict
 

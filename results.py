@@ -2,6 +2,17 @@
 """@package ScatPy.results
 For reading, manipulating and plotting the output files from DDSCAT
 
+
+Results from an individual file (e.g. qtable or shape.dat) are held within a
+dictionary-like object. The columns of the table (e.g. wavelength, Q_ext) are
+accessible as entires in the dictionary that can be accessed using the key 
+name (e.g. T['wave'], T['Q_ext']). Other results parameters like polarization
+are available as attribute fields (eg. T.Epol). The available fields vary
+between result types.
+
+The fields available table columns can be found with T.keys(). The other
+attributes can be found with dir(T).)
+
 """
 
 from __future__ import division

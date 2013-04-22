@@ -20,7 +20,7 @@ from config import exec_settings
 default_d=0.015 
 
 
-class Target():
+class Target(object):
     """
     The base class for defining DDscat Target geometries.
     
@@ -43,9 +43,9 @@ class Target():
         self.directive=''
         self.NCOMP=1
         if folder is None:
-            self.folder='.'
+            self._folder='.'
         else:
-            self.folder=folder
+            self._folder=folder
             
         if material is None:
             self.mat_file='Au_Palik.txt'
@@ -61,14 +61,20 @@ class Target():
             
         #self.aeff=0.246186 #How_Range(0.246186, 0.246186, 1, 'LIN')# = aeff (first,last,how many,how=LIN,INV,LOG)
         self.N=0
-    
-    def aeff(self, d=None):
+
+    @property
+    def aeff(self):
         """Calculate the effective diameter of the target"""
-        
-        if d is None:
-            d=self.d
-            
-        return (self.N*3/4/np.pi)**(1/3)*d
+                    
+        return (self.N*3/4/np.pi)**(1/3)*self.d
+
+    @property    
+    def phys_shape(self):
+        '''
+        Returns the size of the bounding box that contains the target (in microns)
+    
+        '''
+        return self.shape*self.d
         
     def save_str(self):
         """Return the four line string of target definition for inclusion in the ddscat.par file"""
@@ -79,13 +85,7 @@ class Target():
         out+='\''+utils.resolve_mat_file(self.mat_file)+'\'\n'
         
         return out
-    
-    def phys_shape(self):
-        '''
-        Returns the size of the bounding box that contains the target (in microns)
-    
-        '''
-        return self.shape*self.d
+
     
     def write(self):
         pass
@@ -106,9 +106,15 @@ class Target():
         else:
             print 'No target.out file to convert'
 
-    def set_folder(self, newfolder):
+    @property
+    def folder(self):
+        """The target working directory"""
+        return self._folder
+        
+    @folder.setter
+    def folder(self, newfolder):
         """Redefine the target working directory"""
-        self.folder=newfolder
+        self._folder=newfolder
     
     def copy(self):
         return copy.deepcopy(self)

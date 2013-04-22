@@ -85,7 +85,7 @@ class Settings():
         return copy.deepcopy(self)
         
 
-class DDscat():
+class DDscat(object):
     """
     A class for managing a DDscat run.
     
@@ -123,23 +123,23 @@ class DDscat():
         """        
         
         if folder is None:
-            self.folder='.'
+            self._folder='.'
         else:
             if not os.path.exists(folder):
                 os.makedirs(folder)
-            self.folder=folder
+            self._folder=folder
         
         if settings is None:
-            self.settings=Settings(folder=self.folder)
+            self.settings=Settings(folder=self._folder)
         else:
             self.settings=settings.copy()
-            self.settings.folder=self.folder
+            self.settings.folder=self._folder
         
         if target is None:
-            self.target=targets.Target_Sphere(0.2, folder=self.folder)
+            self._target=targets.Target_Sphere(0.2, folder=self._folder)
         else:
-            self.target=target
-            self.target.folder=self.folder
+            self._target=target
+            self.target.folder=self._folder
             
         #self.results=results.Results(folder=self.folder)
         
@@ -218,19 +218,30 @@ class DDscat():
 #        return 'qsub -wd %s %s \n' % (folder, os.path.join(folder, 'submit.sge'))
 
 
+    @property
+    def folder(self):
+        """The run's home folder"""
+        return self._folder
+    
+    @folder.setter    
     def set_folder(self, newfolder):
         """Redefine the run's home folder."""
         if not os.path.exists(newfolder):
             os.makedirs(newfolder)
       
-        self.folder=newfolder
-        self.target.set_folder(newfolder)
-        #self.results.set_folder(newfolder)
+        self._folder=newfolder
+        self.target.folder = newfolder
 
-    def set_target(self, newtarget):
+    @property
+    def target(self):
+        """The run's target"""
+        return self._target
+
+    @target.setter        
+    def target(self, newtarget):
         """Redefine the run's target."""
-        self.target=newtarget
-        self.target.set_folder(self.folder)
+        self._target=newtarget
+        self._target.folder = self.folder
 
     def info(self):
         """Print some basic run info"""
@@ -252,6 +263,7 @@ class DDscat():
         for r in table.transpose():
             print r
 
+    @property    
     def x(self):
         """Calculate the x-parameter (Userguide p8)."""
         a=self.target.aeff()
@@ -260,7 +272,8 @@ class DDscat():
             out.append(2*np.pi*a/l)
 
         return np.asarray(out)
-        
+    
+    @property    
     def mkd(self):
         """Calculate m*k*d (Userguide p8)."""
         m_dat=results.MInTable(self.target.mat_file)
@@ -270,7 +283,8 @@ class DDscat():
             out.append(m*2*np.pi/l*self.target.d)
             
         return np.asarray(out)
-    
+
+    @property        
     def alpha(self):
         """Calculate the alpha parameter (Userguide Eqn 8, p8)."""
         N=self.target.N
@@ -282,6 +296,7 @@ class DDscat():
 
         return np.asarray(out)
 
+    @property    
     def beta(self):
         """Calculateth beta parameter (Userguide Eqn 8, p8)."""
         N=self.target.N

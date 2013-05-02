@@ -327,7 +327,7 @@ class Ellipsoid_FF(Target_IsoHomo_FROM_FILE):
         shape=np.int16(np.array(phys_shape) *2/d)
         Target_IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
 
-        self.phys_shape=phys_shape
+        #self.phys_shape=phys_shape
 
         self.descriptor='Ellipsoid_FF (%f, %f, %f, %f)'%(tuple(self.phys_shape)+(self.d,))            
         

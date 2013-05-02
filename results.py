@@ -1004,11 +1004,11 @@ class EnTable(dict):
             with open(os.path.join(self.folder, self.fname), 'rb') as f:
                 self._load(f)
 
-    def _load(self, f):
+    def _load(self, fid):
         """
         Load the contents of the file
         """
-        self.nrword=struct.unpack_from('i', f.read(4))[0]
+        self.nrword=struct.unpack_from('i', fid.read(4))[0]
         if self.nrword==4: ##Use 32bit floats 
             i=np.int32
             f=np.float32
@@ -1034,18 +1034,18 @@ class EnTable(dict):
     
         self.hdr=OrderedDict()
         for k in hdr_fields:
-            v=np.fromfile(f, dtype=hdr_fields[k], count=1)
+            v=np.fromfile(fid, dtype=hdr_fields[k], count=1)
             setattr(self, k, v)
         
         E_inc=self.E_inc
         self.E_inc=E_inc[0::2]+1j*E_inc[1::2]
     
         #Load the 3D arrays
-        self['Comp']=np.fromfile(f, dtype=np.int16, count=3 * self.nxyz)
-        self['Pol']=np.fromfile(f, dtype=c, count=3 * self.nxyz)
-        self['Esca']=np.fromfile(f, dtype=c, count=3 * self.nxyz)
-        self['Einc']=np.fromfile(f, dtype=c, count=3 * self.nxyz)
-        self['Pdia']=np.fromfile(f, dtype=c, count=3 * self.nxyz)        
+        self['Comp']=np.fromfile(fid, dtype=np.int16, count=3 * self.nxyz)
+        self['Pol']=np.fromfile(fid, dtype=c, count=3 * self.nxyz)
+        self['Esca']=np.fromfile(fid, dtype=c, count=3 * self.nxyz)
+        self['Einc']=np.fromfile(fid, dtype=c, count=3 * self.nxyz)
+        self['Pdia']=np.fromfile(fid, dtype=c, count=3 * self.nxyz)        
     
         #Reshape the arrays
         for (k,v) in self.iteritems():
@@ -1574,7 +1574,7 @@ def split_string(s, widths=None):
     Splits a string into list of strings at the partition points provided by
     the sequence widths.
     
-    Required to parse ddscat results files which are fixed width without whitespace
+    Required to parse ddscat results files which are fixed width often without whitespace
     '''
 
     if widths is None:

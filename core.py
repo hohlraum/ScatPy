@@ -224,7 +224,7 @@ class DDscat(object):
         return self._folder
     
     @folder.setter    
-    def set_folder(self, newfolder):
+    def folder(self, newfolder):
         """Redefine the run's home folder."""
         if not os.path.exists(newfolder):
             os.makedirs(newfolder)

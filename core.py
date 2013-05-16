@@ -75,7 +75,7 @@ class Settings():
 
         #***** Specify if calculation is to be run with serial or parallel code
         self.serial=True
-        self.num_slots=(8, 16) #The number of processor slots to use for parallel calcs
+        self.num_slots=(16, 32) #The number of processor slots to use for parallel calcs
 
         #self.NPLANES=2# = NPLANES = number of scattering planes
         #0.   0. 180.  5 = phi, thetan_min, thetan_max, dtheta (in deg) for plane 1
@@ -180,9 +180,9 @@ class DDscat(object):
                 f.write('# our name \n')
                 
                 if self.settings.serial:
-                    f.write('#$ -N ddscat_ser\n')
+                    f.write('#$ -N ddscat_ser_PRE_\n')
                 else:
-                    f.write('#$ -N ddscat_mpi\n#\n')
+                    f.write('#$ -N ddscat_mpi_PRE_\n#\n')
                     f.write('# pe request\n')                    
                     f.write('#$ -pe openmpi %d-%d\n' % tuple(self.settings.num_slots))
 
@@ -211,7 +211,11 @@ class DDscat(object):
                 f.write('echo completed `pwd`\n')
                 f.write('echo \'------------------------------------------\'\n')
                 f.write('date\n')
-
+                
+                if self.settings.serial:
+                    f.write('for old in ddscat_ser_PRE_.*; do; mv old ${old/_PRE_/}".txt"; done')
+                else:
+                    f.write('for old in ddscat_mpi_PRE_.*; do; mv old ${old/_PRE_/}".txt"; done')
 #    def batch_str(self):
 #        
 #        folder=os.path.join('~', os.path.normpath(self.folder))

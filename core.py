@@ -178,7 +178,7 @@ class DDscat(object):
                 f.write('#\n#\n#\n')
                 f.write('# ---------------------------\n')
                 f.write('# our name \n')
-                
+
                 if self.settings.serial:
                     f.write('#$ -N ddscat_ser_PRE_\n')
                 else:
@@ -213,9 +213,9 @@ class DDscat(object):
                 f.write('date\n')
                 
                 if self.settings.serial:
-                    f.write('for old in ddscat_ser_PRE_.*; do; mv old ${old/_PRE_/}".txt"; done')
+                    f.write('foreach old (ddscat_ser_PRE_.*)\nmv $old "$old:gas/_PRE_//"".txt"\nend\n')
                 else:
-                    f.write('for old in ddscat_mpi_PRE_.*; do; mv old ${old/_PRE_/}".txt"; done')
+                    f.write('foreach old (ddscat_mpi_PRE_.*)\nmv $old "$old:gas/_PRE_//"".txt"\nend\n')
 #    def batch_str(self):
 #        
 #        folder=os.path.join('~', os.path.normpath(self.folder))

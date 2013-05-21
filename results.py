@@ -1405,7 +1405,7 @@ class ZipCollection(FileCollection):
 #            raise (IOError, 'Archive %s not found'% os.path.join(folder, zname))
  #       else:
         with zipfile.ZipFile(os.path.join(folder, zname), 'r') as z:
-            names=z.namelist()
+            names=sorted(z.namelist())
 
         for n in names:
             self[n]=rtable(n, folder=self.folder, zfile=zname)

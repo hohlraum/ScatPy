@@ -1096,7 +1096,7 @@ class ResultCollection(OrderedDict):
                                         hex(id(self)))    
 
     
-    def plot(self, fields=None, normalize=False, lw=2, **kwargs):                
+    def plot(self, fields=None, label=None, normalize=False, lw=2, **kwargs):                
         """
         Plot all of the tables in the collectin in one plot.
 
@@ -1110,7 +1110,12 @@ class ResultCollection(OrderedDict):
 #                flds=fields
 
 #            label=key #+'_'+fields[i+1]
-            table.plot(fields, normalize=normalize, label=key, lw=lw, **kwargs)
+            if label is None:
+                l_txt=key
+            else:
+                l_txt=label
+                
+            table.plot(fields, normalize=normalize, label=l_txt, lw=lw, **kwargs)
 #                plt.plot(v[0], y/maxy, label=label, lw=lw, **kwargs)
 
         plt.xlabel(table.x_field)

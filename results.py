@@ -30,11 +30,6 @@ import tempfile
 import warnings
 
 try:
-    from mayavi import mlab
-except ImportError, err:
-    warnings.warn(str(err))
-
-try:
     import matplotlib.pyplot as plt
 except ImportError:
     warnings.warn(str(err))
@@ -866,6 +861,8 @@ class ShapeTable(dict):
         """
         Display the dipoles using Mayavi
         """
+        from mayavi import mlab
+
         max_points=20000
         #This mask_point business shouldn't be necessary, but the builtin VTK
         #implementation causes my computer to segfault

@@ -1446,6 +1446,8 @@ class SCAHyperSpace():
         self.data=np.zeros(self.shape)
         self.refresh()
 
+    def mean(self, *args, **kwargs):
+        return self.data.mean(*args, **kwargs)
         
     def refresh(self):
         """

@@ -163,6 +163,7 @@ class Table(dict):
             ylbl+=f+', '
         ylbl=ylbl[:-2] #trim last ', '
         
+        plt.xlabel(x_field)
         plt.ylabel(ylbl)
       
         for f in fields:

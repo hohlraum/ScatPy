@@ -21,7 +21,7 @@ import ranges
 
 from config import exec_settings
 
-#DEFINE POLARIZATION STATES
+#DEFINE POLARIZATION STATES USING SPECTROSCOPIST'S CONVENTION
 pol_cR=np.array([0, 0+1j, 1+0j])    
 pol_cL=np.array([0, 1+0j, 0+1j])            
 pol_lH=np.array([0, 0+0j, 1+0j])        
@@ -36,30 +36,30 @@ class Settings():
     '''
 
     def __init__(self, **kwargs):        
-        self.CMDTRQ= False #NOTORQ = 'CMDTRQ'*6 (NOTORQ, DOTORQ) -- either do or skip torque calculations
-        self.CMDSOL='PBCGS2'# = CMDSOL*6 (PBCGS2, PBCGST, GPBICG, PETRKP, QMRCCG) -- solution method
-        self.CMDFFT='GPFAFT'# = CMDFFT*6 (GPFAFT, FFTMKL) -- FFT method
-        self.CALPHA='GKDLDR'# = CALPHA*6 (GKDLDR, LATTDR) -- prescription for polarizabilities
-        self.CBINFLAG='NOTBIN'# = CBINFLAG (NOTBIN, ORIBIN, ALLBIN) -- specify binary output
+        self.CMDTRQ= False #: NOTORQ = 'CMDTRQ'*6 (NOTORQ, DOTORQ) -- either do or skip torque calculations
+        self.CMDSOL='PBCGS2'#: = CMDSOL*6 (PBCGS2, PBCGST, GPBICG, PETRKP, QMRCCG) -- solution method
+        self.CMDFFT='GPFAFT'#: = CMDFFT*6 (GPFAFT, FFTMKL) -- FFT method
+        self.CALPHA='GKDLDR'#: = CALPHA*6 (GKDLDR, LATTDR) -- prescription for polarizabilities
+        self.CBINFLAG='NOTBIN'#: = CBINFLAG (NOTBIN, ORIBIN, ALLBIN) -- specify binary output
 
         self.InitialMalloc=np.array([100,100,100])
 
-        self.NRFLD=False #0 = NRFLD (=0 to skip nearfield calc., =1 to calculate nearfield E)
-        self.NRFLD_EXT=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])# (fract. extens. of calc. vol. in -x,+x,-y,+y,-z,+z)
+        self.NRFLD=False #0: = NRFLD (=0 to skip nearfield calc., =1 to calculate nearfield E)
+        self.NRFLD_EXT=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) #: (fract. extens. of calc. vol. in -x,+x,-y,+y,-z,+z)
 
-        self.TOL=1.00e-5# = TOL = MAX ALLOWED (NORM OF |G>=AC|E>-ACA|X>)/(NORM OF AC|E>)
-        self.MXITER=600
-        self.GAMMA=1.00e-2# = GAMMA (1e-2 is normal, 3e-3 for greater accuracy)
+        self.TOL=1.00e-5 #: = TOL = MAX ALLOWED (NORM OF |G>=AC|E>-ACA|X>)/(NORM OF AC|E>)
+        self.MXITER=600  #: Maximum number of iterations
+        self.GAMMA=1.00e-2 #: = GAMMA (1e-2 is normal, 3e-3 for greater accuracy)
 
-        self.ETASCA=0.5#	= ETASCA (number of angles is proportional to [(3+x)/ETASCA]^2 )
-        self.IWRKSC=True#1 = IWRKSC (=0 to suppress, =1 to write ".sca" file for each target orient.
-        self.wavelengths=ranges.How_Range(0.3500, 0.8000, 10, 'LIN')# = wavelengths (first,last,how many,how=LIN,INV,LOG)
+        self.ETASCA=0.5 #:	= ETASCA (number of angles is proportional to [(3+x)/ETASCA]^2 )
+        self.IWRKSC=True #: 1 = IWRKSC (=0 to suppress, =1 to write ".sca" file for each target orient.
+        self.wavelengths=ranges.How_Range(0.3500, 0.8000, 10, 'LIN') #: = wavelengths (first,last,how many,how=LIN,INV,LOG)
 
-        self.NAMBIENT=1.000# = NAMBIENT
-        self.scale_range=None #define a range of scales for the particle geometry, None indicates a single size calc
+        self.NAMBIENT=1.000 #: = NAMBIENT
+        self.scale_range=None #: define a range of scales for the particle geometry, None indicates a single size calc
 
-        self.Epol=pol_lV #= Polarization state e01 (k along x axis)
-        self.IORTH=2 #  (=1 to do only pol. state e01; =2 to also do orth. pol. state)
+        self.Epol=pol_lV #:= Polarization state e01 (k along x axis)
+        self.IORTH=2 #:  (=1 to do only pol. state e01; =2 to also do orth. pol. state)
 
         self.beta=ranges.Lin_Range(0.,0.,1) #  = BETAMI, BETAMX, NBETA  (beta=rotation around a1)
         self.theta=ranges.Lin_Range(0.,0.,1)#= THETMI, THETMX, NTHETA (theta=angle between a1 and k)

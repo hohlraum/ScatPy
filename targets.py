@@ -506,6 +506,10 @@ class Target_SpheresHelix(Target_IsoHomo_FROM_FILE):
 
         self.update_N()
 
+class Target_Gap_Helix(Target_IsoHomo_FROM_FILE):
+    """
+    A target with two helical segments (of different pitches seperated by glass)
+    """
 
 class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
     """

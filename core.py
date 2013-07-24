@@ -64,12 +64,15 @@ class Settings():
         self.beta=ranges.Lin_Range(0.,0.,1) #  = BETAMI, BETAMX, NBETA  (beta=rotation around a1)
         self.theta=ranges.Lin_Range(0.,0.,1)#= THETMI, THETMX, NTHETA (theta=angle between a1 and k)
         self.phi=ranges.Lin_Range(0.,0.,1)#  = PHIMIN, PHIMAX, NPHI (phi=rotation angle of a1 around k)
-        '**** Specify first IWAV, IRAD, IORI (normally 0 0 0) ****'
+
+        #'**** Specify first IWAV, IRAD, IORI (normally 0 0 0) ****'
         self.first_I=[0,   0,   0]#    = first IWAV, first IRAD, first IORI (0 0 0 to begin fresh)
-        '**** Select Elements of S_ij Matrix to Print ****'
+
+        #'**** Select Elements of S_ij Matrix to Print ****'
         #self.NSMELTS=6#	= NSMELTS = number of elements of S_ij to print (not more than 9)
         self.S_INDICES=[11, 12, 13, 14, 21, 22, 31, 41, 44]#	= indices ij of elements to print
-        '**** Specify Scattered Directions ****'
+
+        #'**** Specify Scattered Directions ****'
         self.CMDFRM='LFRAME'# = CMDFRM (LFRAME, TFRAME for Lab Frame or Target Frame)
         self.scat_planes=[ranges.Scat_Range(0,0,180,5), ranges.Scat_Range(90,0,180,5)]
 

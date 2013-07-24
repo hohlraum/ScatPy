@@ -2,5 +2,9 @@
 [Tt]humbs.db
 *.pyc
 config.py
-docs/
 .spyderproject
+doc/build
+MANIFEST
+ScatPy.egg-info/
+dist/
+!MANIFEST.in

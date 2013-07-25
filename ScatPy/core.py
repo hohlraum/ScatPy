@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 A set of tools for setting up and working with the program DDScat.
-
-
 """
 
 from __future__ import division
@@ -19,7 +17,8 @@ import results
 import fileio
 import ranges
 
-import config
+#: The configuration settings
+config={}
 
 #: DEFINE POLARIZATION STATES USING SPECTROSCOPIST'S CONVENTION
 pol_cR=np.array([0, 0+1j, 1+0j])    
@@ -217,7 +216,7 @@ class DDscat(object):
         self.target.write()
 
         try:
-            config.config['write_script'](self, *args, **kwargs)
+            config['write_script'](self, *args, **kwargs)
         except KeyError:
             pass            
 
@@ -322,7 +321,7 @@ class DDscat(object):
 
         self.write()
 
-        command=os.path.join(config.config['ddscat_path'], 'ddscat')
+        command=os.path.join(config['ddscat_path'], 'ddscat')
 
         try:
             __IPYTHON__
@@ -353,7 +352,57 @@ class DDscat(object):
             
         self.write()
 
-        subprocess.call(os.path.join(config.config['ddscat_path'], 'calltarget'), cwd=self.folder)
+        subprocess.call(os.path.join(config['ddscat_path'], 'calltarget'), cwd=self.folder)
+
+def set_config(fname=None):
+    """
+    Select which configuration profile to use for ScatPy
+
+    :param fname: The name of the file that contains the configuration
+                  If None then it try to load the default profile
+                  
+    Profiles are stored in Python script files.
+    
+    The search scheme is to first look for the file in the CWD, followed by
+    the folder ~/.ScatPy/ and finally the subdiretory profiles/ relative to
+    where the config.py module resides.
+    """
+    global config    
+    
+    if fname is None:
+        fname = 'default.py'
+        
+    if not fname.endswith('.py'):
+        fname += '.py'
+        
+    pkg_path = os.path.dirname(__file__)
+
+    for path in ['./', os.path.expanduser('~/.ScatPy/'), os.path.join(pkg_path, 'profiles')]:
+        full_name=os.path.join(path, fname)
+        if os.path.exists(full_name):            
+            break
+        else:
+            full_name = None
+
+    if full_name is None:
+        raise(IOError('Could not find configuration profile'))
+
+    execfile(full_name, config) 
+
+#    del config['__builtins__']
+    config['file']=full_name
+
+    # Associate the correct path style based on OS
+    if config['os'].lower() == 'unix' or config['os'].lower() == 'mac':
+        config['path_style']=posixpath
+    elif config['os'].lower() == 'windows':
+        config['path_style']=ntpath
+    else:
+        raise ValueError('Unknown OS: %s' % config['os'])
+    
+
+# ON importe set the configuration to default
+set_config(None)
 
 
 

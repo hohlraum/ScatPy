@@ -14,8 +14,6 @@ import zipfile
 
 from numpy.linalg import norm
 
-import config
-
 from core import (pol_cR, pol_cL, pol_lH, pol_lV)
 
 
@@ -168,14 +166,16 @@ def resolve_mat_file(material):
     If it's only a filename, assume that file is found in the materials library
     
     '''
-    path=config.config['path_style']
+    from core import config
+
+    path=config['path_style']
 
     if path.isabs(material):
         return material
     if path.dirname(material)<>'':
         return path.expanduser(material)
     else:
-        return path.normpath(path.join(path.expanduser(config.config['mat_library']), material))
+        return path.normpath(path.join(path.expanduser(config['mat_library']), material))
 
 
 

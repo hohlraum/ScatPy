@@ -49,7 +49,7 @@ def write_script(job):
  
         f.write('echo beginning `pwd`\n')
         f.write('date\n')
-        mpi=posixpath.path(mpi_path, 'mpirun')
+        mpi=posixpath.join(mpi_path, 'mpirun')
         f.write('time %s -np $NSLOTS -machinefile $TMPDIR/machines /cluster/bin/ddscat_openmpi\n' % (mpi))
         f.write('echo completed `pwd`\n')
         f.write('echo \'------------------------------------------\'\n')

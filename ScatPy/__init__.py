@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-A set of tools for setting up and working with the program DDScat.
+ScatPy is a set of tools for setting up DDSCAT jobs and analaysing the results.
 
 
 It includes a number of submodules:
@@ -11,7 +11,6 @@ It includes a number of submodules:
   -ranges: classes for defining DDScat wavelength, size, and other ranges
   -utils: a handful of common utilities
 
-@author: andrewmark
 """
 
 import config

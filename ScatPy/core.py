@@ -21,7 +21,7 @@ import ranges
 
 from config import exec_settings
 
-#DEFINE POLARIZATION STATES USING SPECTROSCOPIST'S CONVENTION
+#: DEFINE POLARIZATION STATES USING SPECTROSCOPIST'S CONVENTION
 pol_cR=np.array([0, 0+1j, 1+0j])    
 pol_cL=np.array([0, 1+0j, 0+1j])            
 pol_lH=np.array([0, 0+0j, 1+0j])        
@@ -29,101 +29,137 @@ pol_lV=np.array([0, 1+0j, 0+0j])
 
 class Settings():
     '''
-    A class for specifying DDScat execution parameters
+    DDSCAT execution parameters
     
     Most of the field names correspond to their definitions in the ddscat.par file.
     
     '''
 
     def __init__(self, **kwargs):        
-        self.CMDTRQ= False #: NOTORQ = 'CMDTRQ'*6 (NOTORQ, DOTORQ) -- either do or skip torque calculations
-        self.CMDSOL='PBCGS2'#: = CMDSOL*6 (PBCGS2, PBCGST, GPBICG, PETRKP, QMRCCG) -- solution method
-        self.CMDFFT='GPFAFT'#: = CMDFFT*6 (GPFAFT, FFTMKL) -- FFT method
-        self.CALPHA='GKDLDR'#: = CALPHA*6 (GKDLDR, LATTDR) -- prescription for polarizabilities
-        self.CBINFLAG='NOTBIN'#: = CBINFLAG (NOTBIN, ORIBIN, ALLBIN) -- specify binary output
+        #: Either do or skip torque calculations (True:'DOTORQ', False:'NOTORQ')
+        self.CMDTRQ= False 
 
+        #: Solution method (PBCGS2, PBCGST, GPBICG, PETRKP, QMRCCG) 
+        self.CMDSOL='PBCGS2' #: = CMDSOL*6 (PBCGS2, PBCGST, GPBICG, PETRKP, QMRCCG) -- 
+
+        #: FFT method (GPFAFT, FFTMKL)
+        self.CMDFFT='GPFAFT'
+
+        #: Prescription for polarizabilities (GKDLDR, LATTDR)
+        self.CALPHA='GKDLDR'
+
+        #: Specify binary output
+        self.CBINFLAG='NOTBIN'
+
+        #: Initial Memory Allocation
         self.InitialMalloc=np.array([100,100,100])
 
-        self.NRFLD=False #0: = NRFLD (=0 to skip nearfield calc., =1 to calculate nearfield E)
-        self.NRFLD_EXT=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) #: (fract. extens. of calc. vol. in -x,+x,-y,+y,-z,+z)
+        #: Either do or skip nearfield calculations (True, False)
+        self.NRFLD=False 
+        
+        #: Fractional extension of calculated volume in (-x,+x,-y,+y,-z,+z)
+        self.NRFLD_EXT=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) 
 
-        self.TOL=1.00e-5 #: = TOL = MAX ALLOWED (NORM OF |G>=AC|E>-ACA|X>)/(NORM OF AC|E>)
-        self.MXITER=600  #: Maximum number of iterations
-        self.GAMMA=1.00e-2 #: = GAMMA (1e-2 is normal, 3e-3 for greater accuracy)
+        #: Error Tolerence. MAX ALLOWED (NORM OF |G>=AC|E>-ACA|X>)/(NORM OF AC|E>)    
+        self.TOL=1.00e-5
+        
+        #: Maximum number of iterations
+        self.MXITER=600  
+        
+        #: Interaction cutoff parameter for PBC calculations (1e-2 is normal, 3e-3 for greater accuracy)
+        self.GAMMA=1.00e-2 
 
-        self.ETASCA=0.5 #:	= ETASCA (number of angles is proportional to [(3+x)/ETASCA]^2 )
-        self.IWRKSC=True #: 1 = IWRKSC (=0 to suppress, =1 to write ".sca" file for each target orient.
-        self.wavelengths=ranges.How_Range(0.3500, 0.8000, 10, 'LIN') #: = wavelengths (first,last,how many,how=LIN,INV,LOG)
+        #: Angular resolution for calculation of <cos>, etc. (number of angles is proportional to [(3+x)/ETASCA]^2 )
+        self.ETASCA=0.5
+        
+        #: Specify which output files to write (True: write ".sca" file for each target orient. False: suppress)
+        self.IWRKSC=True 
+        
+        #: Vacuum wavelengths (first,last,how many,how=LIN,INV,LOG)
+        self.wavelengths=ranges.How_Range(0.3500, 0.8000, 10, 'LIN') 
 
-        self.NAMBIENT=1.000 #: = NAMBIENT
-        self.scale_range=None #: define a range of scales for the particle geometry, None indicates a single size calc
+        #: Refractive index of ambient medium
+        self.NAMBIENT=1.000
+        
+        #: Define a range of scales for the particle geometry, None indicates a single size calc
+        self.scale_range=None 
 
-        self.Epol=pol_lV #:= Polarization state e01 (k along x axis)
-        self.IORTH=2 #:  (=1 to do only pol. state e01; =2 to also do orth. pol. state)
+        #: Define Incident Polarizations (Polarization state e01 (k along x axis)
+        self.Epol=pol_lV
+        
+        #: Specify whether to calculate orthogonal polarization state (True, False)
+        self.IORTH=2
 
-        self.beta=ranges.Lin_Range(0.,0.,1) #  = BETAMI, BETAMX, NBETA  (beta=rotation around a1)
-        self.theta=ranges.Lin_Range(0.,0.,1)#= THETMI, THETMX, NTHETA (theta=angle between a1 and k)
-        self.phi=ranges.Lin_Range(0.,0.,1)#  = PHIMIN, PHIMAX, NPHI (phi=rotation angle of a1 around k)
+        #: Prescribe Target Rotation beta (rotation around a1). (betamin, betamx, nbeta)
+        self.beta=ranges.Lin_Range(0.,0.,1)
 
-        #'**** Specify first IWAV, IRAD, IORI (normally 0 0 0) ****'
-        self.first_I=[0,   0,   0]#    = first IWAV, first IRAD, first IORI (0 0 0 to begin fresh)
+        #: Prescribe Target Rotation theta (angle between a1 and k). (thetamin, tetamx, ntheta)
+        self.theta=ranges.Lin_Range(0.,0.,1)
 
-        #'**** Select Elements of S_ij Matrix to Print ****'
-        #self.NSMELTS=6#	= NSMELTS = number of elements of S_ij to print (not more than 9)
-        self.S_INDICES=[11, 12, 13, 14, 21, 22, 31, 41, 44]#	= indices ij of elements to print
+        #: Prescribe Target Rotation phi (rotation of a1 around k). (phimin, phimax, nphi)
+        self.phi=ranges.Lin_Range(0.,0.,1)
 
-        #'**** Specify Scattered Directions ****'
-        self.CMDFRM='LFRAME'# = CMDFRM (LFRAME, TFRAME for Lab Frame or Target Frame)
+        #: Specify first IWAV, IRAD, IORI (0 0 0 to begin fresh)
+        self.first_I=[0,   0,   0]
+
+        #: Select Elements of S_ij Matrix to Print
+        self.S_INDICES=[11, 12, 13, 14, 21, 22, 31, 41, 44]
+
+        #: Specify reference frame for scattering ('LFRAME', 'TFRAME')
+        self.CMDFRM='LFRAME'
+
+        #: Specify Scattered Directions
         self.scat_planes=[ranges.Scat_Range(0,0,180,5), ranges.Scat_Range(90,0,180,5)]
 
-        #***** Specify if calculation is to be run with serial or parallel code
+        #: Specify if calculation is to be run with serial or parallel code
         self.serial=True
-        self.num_slots=(16, 32) #The number of processor slots to use for parallel calcs
-
-        #self.NPLANES=2# = NPLANES = number of scattering planes
-        #0.   0. 180.  5 = phi, thetan_min, thetan_max, dtheta (in deg) for plane 1
-        #90.  0. 180.  5 = phi, thetan_min, thetan_max, dtheta (in deg) for plane 2
+        
+        #: The number of processor slots to use for parallel calcs
+        self.num_slots=(16, 32) 
+        
 
     def copy(self):
+        """
+        Make a copy of these settings.
+        """
         return copy.deepcopy(self)
         
 
 class DDscat(object):
     """
-    A class for managing a DDscat run.
+    A class for managing a DDSCAT run.
     
     Loosely a DDscat object includes two parts: a settings file and a target.
     
-    Example:
-    #Build a target
-    t=Target_CYLNDRCAP(0.100, 0.030):        
+    All parameters are optional.
+    :param folder: The subfolder in which to store files.
+    :param settings: The :class:`Settings` object for this run.
+    :param target: The :class:`targets.Target` for this run. Defaults to a Au sphere.
+    
+    
+    Example::
+
+        # Build a target
+        t=Target_CYLNDRCAP(0.100, 0.030):        
         
-    #Initialize a DDscat run
-    d=DDscat(target=t)
+        # Initialize a DDscat run
+        d=DDscat(target=t)
     
-    #Modify run parameters as desired
-    d.settings.NAMBIEND=1.5
-    d.settings.Epol=np.array([0, 1j, 1])
+        # Modify run parameters as desired
+        d.settings.NAMBIEND=1.5
+        d.settings.Epol=np.array([0, 1j, 1])
 
-    #Write the output and run the simulation
-    d.calculate()
+        # Write the output and run the simulation
+        d.calculate()
 
-    #Load the results
-    r=results.FolderCollection()
+        # Load the results
+        r=results.FolderCollection()
     
-    #Plot them
-    r.plot()
+        # Plot them
+        r.plot()
     """
 
     def __init__(self, folder=None, settings=None, target=None):
-        """
-        Initialize the class.
-        
-        Arguments:
-            folder: is the folder where the ddscat.par file will be stored (default is CWD)
-                    A folder that does not yet exist will be created
-            target: optional target to use. Default is to create 200nm sphere.
-        """        
         
         if folder is None:
             self._folder='.'
@@ -147,22 +183,23 @@ class DDscat(object):
         #self.results=results.Results(folder=self.folder)
         
     def __str__(self):
-        """A string representation. This should be expanded"""
+        """
+        A string representation.
+        This should be expanded
+        """
         return 'DDScat Definition'
 
-#    def refresh(self):
-#        """Refresh the results from disk."""
-#        self.results.refresh()
-
     def copy(self):
+        """
+        Make a copy of this run.
+        """
         return copy.deepcopy(self)
 
     def write(self, write_sge=False):
-        """Write the .par file and target definition to file
+        """Write the .par file and target definitions to file.
         
-        Arguments:
-            write_sge: Use True to write a .sge file for submitting the job on 
-                       the landau cluster via qsub
+        :param write_sge: Use True to write a .sge file for submitting the job 
+                            to an SGE cluster via ```qsub```.
         
         """
 
@@ -227,7 +264,7 @@ class DDscat(object):
 
     @property
     def folder(self):
-        """The run's home folder"""
+        """This run's home folder"""
         return self._folder
     
     @folder.setter    
@@ -319,8 +356,9 @@ class DDscat(object):
     def calculate(self, silent=False):
         """Start local calculation of this run.
         
-        Arguments:
-            silent: If true suppresses output to the screen
+        This assumes that ```ddscat``` is in the path.
+        
+        :param silent: If true suppresses output to the screen
         """
 
         self.write()
@@ -351,7 +389,7 @@ class DDscat(object):
 
     def calltarget(self):
         '''
-        Executes calltarget to generate a target.ut file for builtin target geometries.
+        Executes ```calltarget``` to generate a target.ut file for builtin target geometries.
         '''
             
         self.write()

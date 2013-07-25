@@ -13,23 +13,19 @@ import numpy as np
 class How_Range():
     """
     A general range used for wavelength and aeff definitions.
+
+
+    :param first: The first value of the range.
+    :param last: The last value of the range.
+    :param num: The number of steps in the range.
+    :param how: An optional string defining the spacing of steps 'LIN', 'INV', 'LOG', 'TAB'.
+                Default is 'LIN'.
+    :param table: an optional list of table values that specify an arbitrary sequence.
     
-    The range can be used as an iterator.    
-    
+    The range can be used as an iterator.        
     """
     def __init__(self, first, last, num, how=None, table=None):
-        """
-        Initialize the range
-        
-        Arguments:
-            first: the first value of the range
-            last: the last value of the range
-            num: the number of steps in the range
-            how: an optional string defining the spacing of steps 'LIN', 'INV', 'LOG', 'TAB'
-                 default is 'LIN'
-            table: an optional list of table values that specify an arbitrary sequence
-        
-        """
+
         self.first=first
         self.last=last
         self.num=num
@@ -41,9 +37,11 @@ class How_Range():
         self.build_table()
 
     def __str__(self):
+        """ A string describing the range """
         return '%f  %f  %d  %s'%(self.first, self.last, self.num, self.how)
    
     def build_table(self):
+        """ Build the internal representation of the points in the range """
         if self.how=='LIN':
             self.table=np.linspace(self.first, self.last, self.num)
         if self.how=='INV':
@@ -71,20 +69,16 @@ class Lin_Range(How_Range):
     A specialized linear range used for specifying target rotations.
     
     The range can be used as an iterator.    
-    
+
+    :param first: The first value of the range.
+    :param last: The last value of the range.
+    :param num: The number of steps in the range.
     """
     def __init__(self, first, last, num):
-        """
-        Initialize the range
-        
-        Arguments:
-            first: the first value of the range
-            last: the last value of the range
-            num: the number of steps in the range
-        """
         How_Range.__init__(self, first, last, num, 'LIN')
 
     def __str__(self):
+        """ A string describing the range """
         return '%f  %f  %d'%(self.first, self.last, self.num)
 
      
@@ -92,18 +86,14 @@ class Scat_Range():
     '''
     A specialist range used for specifying scattering planes.
 
-    Does not yet include an iterator    
+    :param phi: The phi scattering angle.
+    :param theta_min: The smallest value of theta.
+    :param theta_max: The largest value of theta.
+    :param d_theta: The theta stepsize.
+
+    Cannot yet be used as an iterator    
     '''
     def __init__(self, phi, theta_min, theta_max, dtheta):
-        """
-        Initialize the range
-        
-        Arguments:
-            phi: the phi scattering angle
-            theta_min: the smallest value of theta
-            theta_max: the largest value of theta
-            d_theta: the theta stepsize
-        """
 
         self.phi=phi
         self.theta_min=theta_min
@@ -111,6 +101,7 @@ class Scat_Range():
         self.dtheta=dtheta
 
     def __str__(self):
+        """ A string describing the range """
         return '%f  %f  %f  %s'%(self.phi, self.theta_min, self.theta_max, self.dtheta)
 
 

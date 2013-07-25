@@ -1,7 +1,6 @@
 *.DS_Store
 [Tt]humbs.db
 *.pyc
-config.py
 .spyderproject
 doc/build
 MANIFEST

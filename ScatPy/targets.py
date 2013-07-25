@@ -13,7 +13,6 @@ import copy
 import results
 
 import utils
-from config import exec_settings
 
 #: Default spacing between dipoles (in um)
 default_d=0.015 

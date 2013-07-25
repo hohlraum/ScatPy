@@ -110,14 +110,7 @@ class Settings():
         self.CMDFRM='LFRAME'
 
         #: Specify Scattered Directions
-        self.scat_planes=[ranges.Scat_Range(0,0,180,5), ranges.Scat_Range(90,0,180,5)]
-
-        #: Specify if calculation is to be run with serial or parallel code
-        self.serial=True
-        
-        #: The number of processor slots to use for parallel calcs
-        self.num_slots=(16, 32) 
-        
+        self.scat_planes=[ranges.Scat_Range(0,0,180,5), ranges.Scat_Range(90,0,180,5)]        
 
     def copy(self):
         """
@@ -196,12 +189,23 @@ class DDscat(object):
         """
         return copy.deepcopy(self)
 
-    def write(self, write_sge=False):
+    def write_submit_script(self):
+        """
+        Write a script for submitting the job to SGE via qsub.
+        """        
+            
+                        
+    def write(self, *args, **kwargs):
         """Write the .par file and target definitions to file.
         
-        :param write_sge: Use True to write a .sge file for submitting the job 
+        :param args: Optional arguments and kwargs are passed to the profile_script
+
+        :param submit_script: Use True to write a .sge file for submitting the job 
                             to an SGE cluster via ```qsub```.
         
+        If the current profile has a ```write_script``` then it is run once
+        the ddscat.par has been written, and is called with any addition
+        arguments to write.        
         """
 
         s=fileio.build_ddscat_par(self.settings, self.target)
@@ -212,56 +216,10 @@ class DDscat(object):
         self.target.folder=self.folder
         self.target.write()
 
-        if write_sge:
-            with open(os.path.join(self.folder, 'submit.sge'), 'wb') as f:
-
-                f.write('#!/bin/csh\n' )
-                f.write('#\n#\n#\n')
-                f.write('# ---------------------------\n')
-                f.write('# our name \n')
-
-                if self.settings.serial:
-                    f.write('#$ -N ddscat_ser_PRE_\n')
-                else:
-                    f.write('#$ -N ddscat_mpi_PRE_\n#\n')
-                    f.write('# pe request\n')                    
-                    f.write('#$ -pe openmpi %d-%d\n' % tuple(self.settings.num_slots))
-
-                f.write('#\n')
-
-                if config.exec_settings['name']=='luna':
-                    f.write('# Priority\n')
-                    f.write('#$ -p -10\n')
-                    f.write('#\n')
-                    
-                f.write('# stderr >& stdout\n')
-                f.write('#$ -j y\n')
-                f.write('#\n')
-                f.write('# ---------------------------\n')
-                
-                
-                f.write('set hostname=`/bin/hostname`\n')
-
-                f.write('echo beginning `pwd`\n')
-                f.write('date\n')
-                if self.settings.serial:
-                    f.write('time /cluster/bin/ddscat\n')
-                else:
-                    mpi=posixpath.join(config.exec_settings['mpi_path'], 'mpirun')
-                    f.write('time %s -np $NSLOTS -machinefile $TMPDIR/machines /cluster/bin/ddscat_openmpi\n' % (mpi))
-                f.write('echo completed `pwd`\n')
-                f.write('echo \'------------------------------------------\'\n')
-                f.write('date\n')
-                
-                if self.settings.serial:
-                    f.write('foreach old (ddscat_ser_PRE_.*)\nmv $old "$old:gas/_PRE_//"".txt"\nend\n')
-                else:
-                    f.write('foreach old (ddscat_mpi_PRE_.*)\nmv $old "$old:gas/_PRE_//"".txt"\nend\n')
-#    def batch_str(self):
-#        
-#        folder=os.path.join('~', os.path.normpath(self.folder))
-#        return 'qsub -wd %s %s \n' % (folder, os.path.join(folder, 'submit.sge'))
-
+        try:
+            config.config['write_script'](self, *args, **kwargs)
+        except KeyError:
+            pass            
 
     @property
     def folder(self):
@@ -311,7 +269,7 @@ class DDscat(object):
     @property    
     def x(self):
         """Calculate the x-parameter (Userguide p8)."""
-        a=self.target.aeff()
+        a=self.target.aeff
         out=[]        
         for l in self.settings.wavelengths:
             out.append(2*np.pi*a/l)
@@ -364,7 +322,7 @@ class DDscat(object):
 
         self.write()
 
-        command=os.path.join(config.exec_settings['ddscat_path'], 'ddscat')
+        command=os.path.join(config.config['ddscat_path'], 'ddscat')
 
         try:
             __IPYTHON__
@@ -395,7 +353,7 @@ class DDscat(object):
             
         self.write()
 
-        subprocess.call(os.path.join(config.exec_settings['ddscat_path'], 'calltarget'), cwd=self.folder)
+        subprocess.call(os.path.join(config.config['ddscat_path'], 'calltarget'), cwd=self.folder)
 
 
 

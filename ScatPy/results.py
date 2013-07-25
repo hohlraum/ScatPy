@@ -110,7 +110,10 @@ class Table(dict):
     between result types.
 
     The fields available as table columns can be found with T.keys(). The other
-    attributes can be found with dir(T).    
+    attributes can be found with dir(T).   
+    
+    Tables have attributes ```x_field``` and ```y_fields``` which indicate the
+    default fields to use for the x axis and y axes when plotting.
     """
 
     def __init__(self):
@@ -413,7 +416,6 @@ class AVGTable(ResultTable):
 class AVGSummaryTable(Table):
     """
     A class for reading the summary section of AVGTables.
-
     """      
     def __init__(self, fname=None, folder=None, npol=None, zfile=None, **kwargs):
         if fname is None:
@@ -453,8 +455,7 @@ class AVGSummaryTable(Table):
 
     def refresh(self):
         """
-        Reload the data from the file.
-                
+        Reload the data from the file.                
         """ 
         if self.zfile:
             with zipfile.ZipFile(os.path.join(self.folder, self.zfile)) as z:
@@ -698,6 +699,10 @@ class SCASummaryTable(Table):
 class QTable(ResultTable):
     """
     A class for reading qtable output files.
+    
+    Fields are: aeff, wave, Q_ext, Q_abs, Q_sca, g(1)=<cos>, <cos^2>, Q_bk, Nsca
+
+    
     """
     def __init__(self, fname=None, num_mat=1, **kwargs):
         if fname==None:
@@ -711,6 +716,9 @@ class QTable(ResultTable):
 class QTable2(ResultTable):
     """
     A class for reading qtable2 output files.
+    
+    Fields are: aeff, wave, Q_pha, Q_pol, Q_cpol
+
     """
     def __init__(self, fname=None, **kwargs):
         if fname==None:
@@ -724,6 +732,7 @@ class MTable(ResultTable):
     """
     A class for reading mtables output by DDSCAT.
     
+    Fields are:  wave(um), f(cm-1), Re(m), Im(m), Re(eps), Im(eps)
     """
     def __init__(self, fname=None, **kwargs):
         if fname==None:
@@ -926,29 +935,23 @@ class TargetTable(ShapeTable):
 
 class EnTable(dict):
     """
-    
     Class for reading the .E1 and .E2 files from nearfield calcs.
 
-    AEFF             = effective radius of target (phys. units)
-!    NAMBIENT         = (real) refractive index of ambient medium
-!    WAVE             = wavelength in vacuo of incident wave (phys. units)
-!    DPHYS            = interdipole separation (phys. units)
-!    NAT0             = number of dipoles in physical target
-!    NX,NY,NZ         = dimensions/d of computational volume
-!                       (computational volume has NXYZ=NX*NY*NZ points)
-!    X0(1-3)          = (x/d,y/d,z/d) in Target frame for index I,J,K=0,0,0
-!                       thus (x,y,z)=[ x0(1,2,3) + (I,J,K) ]*d
-!    AKR(1-3)         = (k_x,k_y,k_z)*d in the Target Frame
-!    CXE0R(1-3)       = E_inc (complex) in the Target Frame
-!                       at (x_TF,y_TF,z_TF)=(0,0,0)
-!    CXEINC(1-3*NXYZ) = complex incident E field at all points
-!    CXESCA(1-3*NXYZ) = complex radiated E field at all points
-!    CXPOL(1-3*NXYZ)  = complex polarization/d^3 at all points
-!    CXADIA(1-3*NXYZ) = diagonal element of polarizability/d^3 at all pts
-!    ICOMP(1-3*NXYZ)  = composition identifier at all points
-!                     = 0 for vacuum
-!
+    :param fname: The name of the En file to load. Default is 'w000r000k000.E1'.
+    :param folder: The subfolder relative to CWD from which to load the table.
+    :param zfile: The zipfile from which to load the table.
 
+    Results are returned as a dictionary of complex 3D numpy arrays.
+    The key names corresponds to the following fields:
+        
+    Comp: composition identifier at all points (0 for vacuum)
+    Pol: polarization/d^3 at all points
+    Esca: complex radiated E field at all points
+    Einc: complex incident E field at all points
+    Pdia: diagonal element of polarizability/d^3 at all pts
+    Etot: The complex total E field at all points
+    Etot2: The magnitude squared of the E field at all points
+    
     """
 
     def __init__(self, fname=None, folder=None, zfile=None):  
@@ -1071,8 +1074,8 @@ class ResultCollection(OrderedDict):
         """
         A collection of several results together in one object.
     
-        Results are returned as a dictionary of dictionaries where key names correspond
-        to the folder names and the values are dictionaries of the requested fields
+        Results are returned as a dictionary of ```Table```s where the key names
+        for each Table corresponds to the folder from which it was loaded.
         """
         super(ResultCollection, self).__init__()    
 
@@ -1084,9 +1087,7 @@ class ResultCollection(OrderedDict):
     
     def plot(self, fields=None, label=None, normalize=False, lw=2, **kwargs):                
         """
-        Plot all of the tables in the collectin in one plot.
-
-
+        Plot all of the tables in the collection in one plot.
         """        
         
         for (key, table) in self.iteritems():
@@ -1135,17 +1136,16 @@ class ResultCollection(OrderedDict):
         """
         Calculate the dichroism between pairs of spectra.
         
-        Looks for spectra in folders that have names suffixed with _cL and _cR
-        and calculates the difference.
+        Spectra are considered to form a pair if they come from folders 
+        with identical names suffixed with _cL and _cR (e.g. 'sphere1_cL' and 
+        'sphere2_cR').
         """        
-        
         
         if fields==None:
             fields=['Q_ext']            
 
         else:
             fields=[fields]
-
 
         CD=ResultCollection()
         for L in self.keys():
@@ -1190,8 +1190,8 @@ class FolderCollection(ResultCollection):
         results files. If subfolders=False then only the current directory (or
         optionally the directory specified by path will be searched for files)
     
-        Results are returned as a dictionary of dictionaries where key names correspond
-        to the folder names and the values are dictionaries of the requested fields
+        Results are returned as a dictionary of ```Table```s where the key names
+        for each Table corresponds to the folder from which it was loaded.
         """
         if r_type is None:
             r_type='qtable'
@@ -1229,8 +1229,13 @@ class FileCollection(ResultCollection):
         """
         A collection of several results files.
     
-        :param r_type: a string denoting the type of result file to load from each folder
-        :param path: the root directory whose subfolders will be read        
+        :param r_type: a string denoting the type of result file to load from
+                       each folder. Valid options are 'avgsummary', 'avgtable',
+                       'fmltable', and 'scatable'. The default is 'avgsummary'.
+        :param path: the root directory whose subfolders will be read    
+        
+        Results are returned as a dictionary of ```Table```s where the key names
+        for each Table corresponds to the name of the file from which it was loaded.
         """
         if r_type is None:
             r_type='avgsummary'
@@ -1357,9 +1362,15 @@ class ZipCollection(FileCollection):
         """
         A collection of several results files archived into a single zip file.
     
-        Arguments:
-            r_type: a string denoting the type of result file to load from each folder
-            folder: the root directory whose subfolders will be read        
+        :param r_type: a string denoting the type of result file to load from each folder
+        :param folder: the root directory whose subfolders will be read        
+        
+        A ZipCollection works in the same manner as a FileCollection where instead
+        of several files being loaded from a folder (and its subfolders), they
+        are instead loaded from a .zip file.
+        
+        Results are returned as a dictionary of ```Table```s where the key names
+        for each Table corresponds to the name of the file from which it was loaded.
         """
         if r_type is None:
             r_type='avgsummary'

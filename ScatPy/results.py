@@ -2,7 +2,6 @@
 """
 For reading, manipulating and plotting the output files from DDSCAT
 
-
 Results from an individual file (e.g. qtable or shape.dat) are held within a
 dictionary-like object. The columns of the table (e.g. wavelength, Q_ext) are
 accessible as entires in the dictionary that can be accessed using the key 
@@ -10,8 +9,8 @@ name (e.g. T['wave'], T['Q_ext']). Other results parameters like polarization
 are available as attribute fields (eg. T.Epol). The available fields vary
 between result types.
 
-The fields available table columns can be found with T.keys(). The other
-attributes can be found with dir(T).)
+The fields available as table columns can be found with T.keys(). The other
+attributes can be found with dir(T).
 
 """
 
@@ -29,40 +28,14 @@ import pdb
 import tempfile
 import warnings
 
-try:
-    import matplotlib.pyplot as plt
-except ImportError, err:
-    warnings.warn(str(err))
-
-try:
-    from scipy.interpolate import interp1d, UnivariateSpline
-except ImportError, err:
-    warnings.warn(str(err))
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d, UnivariateSpline
 
 from collections import OrderedDict
 
 import utils
 
 
-#class Results():
-#    def __init__(self, **kwargs):
-#        self.log=Log()
-#        self.refresh()
-#        self.mtable=MTable(**kwargs)
-#        self.qtable=QTable(**kwargs)
-#        self.qtable2=QTable2(**kwargs)
-#
-#    def refresh(self):        
-#        self.log.refresh()
-#        self.mtable.refresh()
-#        self.qtable.refresh()
-#        self.qtable2.refresh()
-#
-#    def set_folder(self, newfolder):
-#        self.mtable.set_folder(newfolder)
-#        self.qtable.set_folder(newfolder)        
-#        self.qtable2.set_folder(newfolder)
-#    
 
 #def _dichroism_calculator(L,R):
 #    """
@@ -81,10 +54,10 @@ def molar_ellipticity(DeltaQ, a_eff, C, l=1):
     """
     Calculate the molar ellipticity
 
-    DeltaQ: Q difference spectra
-    a_eff: the effective radius (in um)
-    C: the concentration in mol/l
-    l: the pathlength in cm        
+    :param DeltaQ: Q difference spectra.
+    :param a_eff: the effective radius (in um).
+    :param C: the concentration in mol/l.
+    :param l: the pathlength in cm.        
     """
     
     return ellipticity(DeltaQ, a_eff, C, l) * 100./( C * l)
@@ -93,10 +66,10 @@ def ellipticity_vol(DeltaQ, a_eff, C, l=1):
     """
     Calculate the ellipticity in deg of a suspension
     
-    DeltaQ: Q difference spectra
-    a_eff: the effective radius (in um)
-    C: the concentration in mol/l
-    l: the pathlength in cm
+    :param DeltaQ: Q difference spectra.
+    :param a_eff: the effective radius (in um).
+    :param C: the concentration in mol/l.
+    :param l: the pathlength in cm.
     
     """
 
@@ -106,9 +79,9 @@ def ellipticity_surf(DeltaQ, a_eff, rho):
     """
     Calculate the ellipticity in deg of a suspension
     
-    DeltaQ: Q difference spectra
-    a_eff: the effective radius (in um)
-    rho: the surface density in number/um^2    
+    :param DeltaQ: Q difference spectra.
+    :param a_eff: the effective radius (in um).
+    :param rho: the surface density in number/um^2.    
     """
 
     return 45 * a_eff**2 * rho * DeltaQ
@@ -116,7 +89,7 @@ def ellipticity_surf(DeltaQ, a_eff, rho):
 
 def _dichroism_calculator(L,R):
     """
-    Calculates the difference spectrum of two spectra
+    Calculates the difference spectrum of two spectra.
     """
     
     return L-R
@@ -129,13 +102,22 @@ class Table(dict):
     """
     Base class for tables
     
+    Results from an individual file (e.g. qtable or shape.dat) are held within a
+    dictionary-like object. The columns of the table (e.g. wavelength, Q_ext) are
+    accessible as entires in the dictionary that can be accessed using the key 
+    name (e.g. T['wave'], T['Q_ext']). Other results parameters like polarization
+    are available as attribute fields (eg. T.Epol). The available fields vary
+    between result types.
+
+    The fields available as table columns can be found with T.keys(). The other
+    attributes can be found with dir(T).    
     """
 
     def __init__(self):
         dict.__init__(self)
         
         self.x_field=None
-        self.default_plot_fields=None
+        self.y_fields=None
 
 
     def plot(self, fields=None, normalize=False, smooth=False, x_field=None,
@@ -143,20 +125,19 @@ class Table(dict):
         """
         Plot the table contents.
         
-        Optional Arguments:
-            fields: list of field names to plot. If absent, plots the fields found
-                    in self.default_plot_fields
-            normalize: if True, set the maximum of all plots to 1
-            smooth: if True, applies a spline smooth to the plot
-            x_field: specify the name of the x_field. Default is self.x_field
-            label: a string giving a specific label for the y-axis
+        :param fields: list of field names to plot. If absent, plots the fields found
+                       in self.y_fields
+        :param normalize: if True, set the maximum of all plots to 1
+        :param smooth: if True, applies a spline smooth to the plot
+        :param x_field: specify the field to plot as the x axis. Default is self.x_field
+        :param label: a string giving a specific label for the y-axis
         
         """
         if x_field is None:
             x_field=self.x_field
 
         if fields is None:
-            fields=self.default_plot_fields
+            fields=self.y_fields
     
         ylbl=''
         for f in fields[0:]:
@@ -198,6 +179,8 @@ class Table(dict):
     def scale(self, c):
         """
         Scale all fields of table by value c
+        
+        :param c: The value by which to scale.
         """
         
         for (k,v) in self.iteritems():
@@ -209,7 +192,8 @@ class Table(dict):
         """
         Export the table as an ascii file
         
-        File is written to the current working directory.
+        :param fname: The name of the file to be created.
+        :param fields: The fields to save.
         """
 
         if self.x_field is not None:
@@ -234,6 +218,7 @@ class Table(dict):
             np.savetxt(f, table.transpose(), delimiter='\t')
 
     def copy(self):
+        """Make a copy of the table"""
         return copy.deepcopy(self)
 
 
@@ -303,32 +288,22 @@ class Table(dict):
 class ResultTable(Table):
     """
     Base class for results tables read from file.        
+
+    fname: the file name, resolved relative to the ```folder```
+    hdr_len: The number of header lines to ignore.
+    c_width: A list of column widths.            
+    folder: the subfolder from which to read the table. Default is
+            the CWD.
+    zfile: A zip archive from which to load the table.
+
+    Most DDscat output files have fixed column widths and cannot be relied upon 
+    to have whitespace between adjacent columns. Therefore the columns' width must
+    be provided in the c_width list.   
+
+    Field names are derived from the column headings in the result table. The
+    fields can be accessed like a Python dict, e.g. T['wave']                            
     """
     def __init__(self, fname, hdr_len, c_width, folder=None, zfile=None):
-        """
-        Initialize the result table.
-        
-        Arguments:
-            fname: the file name, resolved relative to the working folder
-            hdr_len: the number of header lines to ignore
-            c_width: a list of column widths
-            
-        Optional arguments:
-            folder: the working folder from which to read the table. Default is
-                    the cwd.
-
-
-        
-        
-        Most DDscat output files have fixed column widths and cannot be relied upon 
-        to have whitespace between adjacent columns. Therefore the columns' width must
-        be provided in the c_width list.   
-
-        Field names are derived from the column headings in the result table. The
-        fields can be accessed like a Python dict, e.g. T['wave']                            
-  
-                    
-        """
         Table.__init__(self)        
         
         if folder is None:
@@ -355,7 +330,7 @@ class ResultTable(Table):
 
     def refresh(self):
         """
-        Refresh the data from the file
+        Reload the data from the file.
                 
         """
         
@@ -401,7 +376,7 @@ class ResultTable(Table):
     
 class AVGTable(ResultTable):
     """
-    A class for reading .avg files output by DDscat
+    A class for reading .avg files.
     
     """
     def __init__(self, fname=None, folder=None, **kwargs):
@@ -429,7 +404,7 @@ class AVGTable(ResultTable):
             
         ResultTable.__init__(self, fname, hdr, c_widths, **kwargs)
         self.x_field='THETA'        
-        self.default_plot_fields=plot_fields
+        self.y_fields=plot_fields
         if hdr==32:
             self.summary=AVGSummaryTable(self.header)
         else:
@@ -477,7 +452,10 @@ class AVGSummaryTable(Table):
                 break
 
     def refresh(self):
- 
+        """
+        Reload the data from the file.
+                
+        """ 
         if self.zfile:
             with zipfile.ZipFile(os.path.join(self.folder, self.zfile)) as z:
                 f=z.open(self.fname, 'rU')
@@ -494,6 +472,9 @@ class AVGSummaryTable(Table):
    
 
     def _refresh_1pol(self, f):
+        """
+        Reload the data from the file in the case of single polarization calcs.                
+        """
                     
         hdr=''
 
@@ -515,7 +496,9 @@ class AVGSummaryTable(Table):
         self['Q_sca']=np.array(float(l[3]))
     
     def _refresh_2pol(self, f):
-                    
+        """
+        Reload the data from the file in the case of two polarization calcs.
+        """         
         hdr=''
         for i in range(37):
             hdr+=f.readline()
@@ -538,6 +521,9 @@ class AVGSummaryTable(Table):
         self['Q_sca']=np.array([float(l1[3]), float(l2[3])])
             
     def dichroism(self):
+        """
+        Calculate the dichroism
+        """
         
         if self.npol==1:
             raise (ValueError, 'Table has only one polarization state')
@@ -564,8 +550,7 @@ class AVGSummaryTable(Table):
 
 class SCASummaryTable(Table):
     """
-    A class for reading the summary section of SCATables.
-
+    A class for reading the summary section of .sca files.
     """      
     def __init__(self, fname=None, folder=None, npol=None, zfile=None, **kwargs):
         if fname is None:
@@ -619,6 +604,9 @@ class SCASummaryTable(Table):
    
 
     def _refresh_1pol(self, f):
+        """
+        Reload the data from the file in the case of one polarization calcs.
+        """         
                     
         hdr=''
 
@@ -647,6 +635,9 @@ class SCASummaryTable(Table):
         self['Q_sca']=np.array(float(l[3]))
     
     def _refresh_2pol(self, f):
+        """
+        Reload the data from the file in the case of two polarization calcs.
+        """         
                     
         hdr=''
         for i in range(43):
@@ -677,6 +668,9 @@ class SCASummaryTable(Table):
         self['Q_sca']=np.array([float(l1[3]), float(l2[3])])
             
     def dichroism(self):
+        """
+        Calculate the dichroism
+        """
         
         if self.npol==1:
             raise (ValueError, 'Table has only one polarization state')
@@ -703,8 +697,7 @@ class SCASummaryTable(Table):
 
 class QTable(ResultTable):
     """
-    A class for reading qtable output files from DDscat
-    
+    A class for reading qtable output files.
     """
     def __init__(self, fname=None, num_mat=1, **kwargs):
         if fname==None:
@@ -712,25 +705,24 @@ class QTable(ResultTable):
         hdr_lines=12+num_mat
         ResultTable.__init__(self, fname, hdr_lines, [10,11,11,11,11,12,11,11,6], **kwargs)
         self.x_field='wave'
-        self.default_plot_fields=['Q_ext']
+        self.y_fields=['Q_ext']
 
 
 class QTable2(ResultTable):
     """
-    A class for reading qtable2 output files from DDscat
-    
+    A class for reading qtable2 output files.
     """
     def __init__(self, fname=None, **kwargs):
         if fname==None:
             fname='qtable2'
         ResultTable.__init__(self, fname, 12, [10,11,12,12,12], **kwargs)
         self.x_field='wave'
-        self.default_plot_fields=['Q_pha']
+        self.y_fields=['Q_pha']
 
 
 class MTable(ResultTable):
     """
-    A class for reading mtables generated by DDscat
+    A class for reading mtables output by DDSCAT.
     
     """
     def __init__(self, fname=None, **kwargs):
@@ -738,16 +730,17 @@ class MTable(ResultTable):
             fname='mtable'
         ResultTable.__init__(self, fname, 7, [10,11,10,10,10,10], **kwargs)
         self.x_field='wave(um)'
-        self.default_plot_fields=['wave(um)', 'Re(m)', 'Im(m)']
+        self.y_fields=['wave(um)', 'Re(m)', 'Im(m)']
         
 class MInTable(ResultTable):
     """
-    A class for reading material input files used by DDscat.
+    A class for reading material input files.
     
     Simple file names are resolved relative to the default material_library path.
     
     This class can be called to return an interpolated value at a requested
-    wavelength. e.g.:
+    wavelength. e.g.::
+        
         M=MInTable('Gold.txt')
         refr_index=M(0.750)
     """
@@ -756,7 +749,7 @@ class MInTable(ResultTable):
             fname='mintable'
         ResultTable.__init__(self, fname, 2, None, **kwargs)
         self.x_field='wave'
-        self.default_plot_fields=['Re(m)', 'Im(m)']
+        self.y_fields=['Re(m)', 'Im(m)']
     
     def refresh(self):
         fname=utils.resolve_mat_file(posixpath.join(self.folder, self.fname))
@@ -806,7 +799,7 @@ class MInTable(ResultTable):
 
 class ShapeTable(dict):
     """
-    A class for reading the shape.dat files used by DDscat.
+    A class for reading shape.dat files.
         
     """
     def __init__(self, fname=None, folder=None):
@@ -891,7 +884,7 @@ class ShapeTable(dict):
 
 class TargetTable(ShapeTable):
     """
-    A class for reading the target.out files used by DDscat.
+    A class for reading target.out files.
         
     """
     def __init__(self, fname=None, folder=None):
@@ -934,7 +927,7 @@ class TargetTable(ShapeTable):
 class EnTable(dict):
     """
     
-    Table of nearfield results 
+    Class for reading the .E1 and .E2 files from nearfield calcs.
 
     AEFF             = effective radius of target (phys. units)
 !    NAMBIENT         = (real) refractive index of ambient medium
@@ -956,16 +949,9 @@ class EnTable(dict):
 !                     = 0 for vacuum
 !
 
-    On my mac:
-        int is 4-bytes
-        real is 4-bytes
-        complex is 8-bytes
     """
 
     def __init__(self, fname=None, folder=None, zfile=None):  
-        """
-        Initialize a new nearfield result table
-        """
         dict.__init__(self)
 
         if fname is None:
@@ -1083,7 +1069,7 @@ class ResultCollection(OrderedDict):
 
     def __init__(self):
         """
-        A collection of several results files together in one object.
+        A collection of several results together in one object.
     
         Results are returned as a dictionary of dictionaries where key names correspond
         to the folder names and the values are dictionaries of the requested fields
@@ -1105,7 +1091,7 @@ class ResultCollection(OrderedDict):
         
         for (key, table) in self.iteritems():
 #            if fields is None:
-#                flds=table.default_plot_fields
+#                flds=table.y_fields
 #            else:
 #                flds=fields
 
@@ -1122,7 +1108,7 @@ class ResultCollection(OrderedDict):
         
         ylbl=''
         if fields is None:
-            flds=table.default_plot_fields
+            flds=table.y_fields
         else:
             flds=fields
             
@@ -1180,7 +1166,7 @@ class ResultCollection(OrderedDict):
                     cd[x_field]=self[L][x_field]
                     
                     cd.x_field=x_field
-                    cd.default_plot_fields=fields
+                    cd.y_fields=fields
                 else:
                     print 'No complement found for %s' % L
 
@@ -1191,22 +1177,21 @@ class ResultCollection(OrderedDict):
 
 class FolderCollection(ResultCollection):
 
-    def __init__(self, r_type=None, path=None, recurse=True ,fields=None):
+    def __init__(self, r_type=None, path=None, recurse=True,fields=None):
 
         """
         A collection of several results files together in one object.
-    
+        
+        :param r_type: a string denoting the type of result file to load from each folder
+        :param path: the root directory whose subfolders will be read
+        :param recurse: True recurses all subdirectories, False loads only from the specified (or working folder)
+
         By default all subfolders from the current directory are scanned for
         results files. If subfolders=False then only the current directory (or
         optionally the directory specified by path will be searched for files)
     
         Results are returned as a dictionary of dictionaries where key names correspond
         to the folder names and the values are dictionaries of the requested fields
-
-        Arguments:
-            r_type: a string denoting the type of result file to load from each folder
-            path: the root directory whose subfolders will be read
-            recurse: True recurses all subdirectories, False loads only from the specified (or working folder)
         """
         if r_type is None:
             r_type='qtable'
@@ -1221,8 +1206,6 @@ class FolderCollection(ResultCollection):
         if path is None:
             path='.'
             
-#        folders=[i for i in os.listdir(path) if os.path.isdir(i)]
-
         super(FolderCollection, self).__init__()    
 
         folders=[]    
@@ -1246,9 +1229,8 @@ class FileCollection(ResultCollection):
         """
         A collection of several results files.
     
-        Arguments:
-            r_type: a string denoting the type of result file to load from each folder
-            path: the root directory whose subfolders will be read        
+        :param r_type: a string denoting the type of result file to load from each folder
+        :param path: the root directory whose subfolders will be read        
         """
         if r_type is None:
             r_type='avgsummary'
@@ -1303,7 +1285,7 @@ class FileCollection(ResultCollection):
             CD['CDsca']=np.asarray([t[3] for t in table])
         
         CD.x_field='wave'
-        CD.default_plot_fields=['CDext']
+        CD.y_fields=['CDext']
         
         return CD
 
@@ -1344,8 +1326,8 @@ class FileCollection(ResultCollection):
         P1.x_field='wave'
         P2.x_field='wave'
         
-        P1.default_plot_fields=['Q_ext']
-        P2.default_plot_fields=['Q_ext']
+        P1.y_fields=['Q_ext']
+        P2.y_fields=['Q_ext']
 
         C=ResultCollection()
         C['_'+utils.pol2str(P1.Epol)]=P1
@@ -1366,7 +1348,7 @@ class FileCollection(ResultCollection):
             cd=self[l].summary.dichroism()
             CD[l[:-3]]=cd
 
-        cd.default_plot_fields=fields
+        cd.y_fields=fields
         return CD
 
 
@@ -1428,7 +1410,7 @@ class SCAHyperSpace():
     In dichroism spectra there is no polarization dependance so the indices are:
         [lambda, aeff, beta, theta, phi, CD]
         
-    The array is addressed by integer indices. The wavelength/radius/amgle
+    The array is addressed by integer indices. The wavelength/radius/angle
     corresponding to a given index can be recoverred with he lists w_range,
     r_range, etc.
         
@@ -1601,10 +1583,6 @@ def clean_string(s):
         s=s.replace(c, '')
 
     return s        
-
-
-
-        
 
 
 def Esq(E):

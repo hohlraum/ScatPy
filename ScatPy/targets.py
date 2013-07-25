@@ -15,7 +15,7 @@ import results
 import utils
 from config import exec_settings
 
-#default spacing of btw dipoles (in um)
+#: Default spacing between dipoles (in um)
 default_d=0.015 
 
 
@@ -30,15 +30,15 @@ class Target(object):
         '''
         Initialize the Target
 
-        Arguments:
-            phys_shape: The physical shape of the object (in microns).
-            d: the dipole density
-            material: the material file to use for the target (currently limited to one)
-                      default is 'Au_Palik.txt'
-            folder: the target working directory
+        :param phys_shape: The physical shape of the object (in microns).
+        :param d: the dipole density
+        :param material: the material file to use for the target (currently limited to one)
+        :param default is 'Au_Palik.txt'
+        :param folder: the target working directory
         '''
 
 
+        #: The type of target as defined by DDSCAT
         self.directive=''
         self.NCOMP=1
         if folder is None:
@@ -76,7 +76,7 @@ class Target(object):
         return self.shape*self.d
         
     def save_str(self):
-        """Return the four line string of target definition for inclusion in the ddscat.par file"""
+        """Return the four line string of target definition for the ddscat.par file"""
         out='**** Target Geometry and Composition ****\n'
         out+=self.directive+'\n'
         out+=str(self.shape)[1:-1]+'\n'
@@ -142,21 +142,20 @@ class RCTGLPRISM(Target_Builtin):
         #self.d=0.015624983
 
 
-class CYLNDRCAP(Target):
-    """A target cylinder with hemispherical endcaps"""
-    
-    def __init__(self, length, radius, **kwargs):
-        """
-        Initialize the capped cylinder.
-        
-        Arguments:
-            length: the length of the cylinder in microns (not including endcaps)
-            rad: the radius of the cylinder
-            
-            **kwargs are passed to Target
+class CYLNDRCAP(Target_Builtin):
+    """A target cylinder with hemispherical endcaps
 
-        Total height of the structureis length+2*rad
-        """
+    :param length: the length of the cylinder in microns (not including endcaps)
+    :param rad: the radius of the cylinder    
+    :param **kwargs: are passed to :class:`Target`    
+
+    Total height of the structureis length+2*rad
+    
+    """
+    
+
+
+    def __init__(self, length, radius, **kwargs):
         Target_Builtin.__init__(self, np.asarray([length, radius*2, radius*2]), **kwargs)
         
         self.directive='CYLNDRCAP'
@@ -166,43 +165,30 @@ class CYLNDRCAP(Target):
         self.N=int(Vcyl+Vsph)
         self.length=length
         self.radius=radius
-        #self.d=0.015624983
         
 
-class ELLIPSOID(Target):        
+class ELLIPSOID(Target_Builtin):        
     """
     An Ellipsoid target
+
+    :param phys_shape: 3-tuple giving the lengths of the three semi-axes
+    :param **kwargs: are passed to Target
     """
     
-    def __init__(self, phys_shape, **kwargs):
-        """
-        Initialize the ellipsoid target.
-        
-        Arguments:
-            phys_shape: 3-tuple giving the lengths of the three semi-axes
-
-            **kwargs are passed to Target
-        """        
-        
+    def __init__(self, phys_shape, **kwargs):        
         Target_Builtin.__init__(self, np.asarray(phys_shape)*2, **kwargs)
         self.directive='ELLIPSOID'
         self.N=int(4/3*np.pi*(self.shape.prod()/8))
 
-class CYLINDER(Target):
-    """A target cylinder with hemispherical endcaps"""
+class CYLINDER(Target_Builtin):
+    """A target cylinder with hemispherical endcaps
     
-    def __init__(self, length, radius, ori,  **kwargs):
-        """
-        Initialize the cylinder.
-        
-        Arguments:
-            length: the length of the cylinder in microns (not including endcaps)
-            rad: the radius of the cylinder
-            
-            **kwargs are passed to Target
-
-        """
-        
+    :param length: the length of the cylinder in microns (not including endcaps)
+    :param rad: the radius of the cylinder
+    :param **kwargs: are passed to Target    
+    """
+    
+    def __init__(self, length, radius, ori,  **kwargs):        
         Target_Builtin.__init__(self, np.asarray([length, radius*2, ori]), **kwargs)
         
         self.directive='CYLINDER1'
@@ -227,17 +213,11 @@ class Sphere(ELLIPSOID):
     """
     A Sphere target.
 
+    :param radius: the radius of the sphere
+    :param **kwargs: are passed to Target
+
     """      
     def __init__(self, radius, **kwargs):
-        """
-        Initialize the sphere target.
-        
-        Arguments:
-            radius: the radius of the sphere
-
-            **kwargs are passed to Target
-            
-        """
         phys_shape=[radius]*3
         ELLIPSOID.__init__(self, phys_shape, **kwargs)
             
@@ -342,28 +322,20 @@ class Ellipsoid_FF(IsoHomo_FROM_FILE):
 
 class Helix(IsoHomo_FROM_FILE):
     """
-    A helix target
+    A helix target.
+
+    dimensions are physical, in um
+
+    :param height: the height of the helix (not counting it's thickness)
+    :param pitch: the helix pitch, um/turn
+    :param major_r: the radius of the helix sweep
+    :param minor_r: the radius of the wire that is swept to form the helix    
+    :param d: the dipole dipole spacing, if not specified default value is used
+    :param build: if False, delays building the helix until requested. default is True
+    :param **kwargs: are passed to Target
     
     """
     def __init__(self, height, pitch, major_r, minor_r, d=None, build=True, **kwargs):
-        '''
-        Build a Helix Target
-        
-        dimensions are physical, in um
-
-        Arguments:
-            height: the height of the helix (not counting it's thickness)
-            pitch: the helix pitch, um/turn
-            major_r: the radius of the helix sweep
-            minor_r: the radius of the wire that is swept to form the helix
-        
-        Optional Arguments:
-            d: the dipole dipole spacing, if not specified default value is used
-            build: if False, delays building the helix until requested. default is True
-            
-            **kwargs are passed to Target
-        '''
-
         if d is None:
             d=default_d
         shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
@@ -430,26 +402,18 @@ class SpheresHelix(IsoHomo_FROM_FILE):
     """
     A helix target composed of isolated spheres
     
+        
+    Dimensions are physical, in um
+    :param height: the height of the helix (not counting it's thickness)
+    :param pitch: the helix pitch, um/turn
+    :param major_r: the radius of the helix sweep
+    :param minor_r: the radius of the spheres that compose the helix
+    :param n_sphere: the number of spheres that compose the helix
+    :param d: the dipole dipole spacing, if not specified default value is used
+    :param build: if False, delays building the helix until requested. default is True
+        
     """
     def __init__(self, height, pitch, major_r, minor_r, n_sphere, d=None, build=True, **kwargs):
-        '''
-        Build a Sphere Helix Target
-        
-        dimensions are physical, in um
-
-        Arguments:
-            height: the height of the helix (not counting it's thickness)
-            pitch: the helix pitch, um/turn
-            major_r: the radius of the helix sweep
-            minor_r: the radius of the spheres that compose the helix
-            n_sphere: the number of spheres that compose the helix
-        
-        Optional Arguments:
-            d: the dipole dipole spacing, if not specified default value is used
-            build: if False, delays building the helix until requested. default is True
-            
-            **kwargs are passed to Target
-        '''
 
         if d is None:
             d=default_d
@@ -511,26 +475,20 @@ class SpheresHelix(IsoHomo_FROM_FILE):
 class Conical_Helix(IsoHomo_FROM_FILE):
     """
     A helix target
+
+    dimensions are physical, in um
+
+    :param height: the height of the helix (not counting it's thickness)
+    :param pitch1: the starting helix pitch, um/turn (if pitch1 is different from pitch2 will swipe between during the growth)
+    :param pitch2: the final helix pitch, um/turn (if pitch1 is different from pitch2 will swipe between during the growth)
+    :param major_r: the radius of the helix sweep
+    :param minor_r: the radius of the wire that is swept to form the helix
+    :param d: the dipole dipole spacing, if not specified default value is used
+    :param build: if False, delays building the helix until requested. default is True
+    :param **kwargs: are passed to Target
     
     """
     def __init__(self, height, pitch1, pitch2, major_r, minor_r, d=None, build=True, **kwargs):
-        '''
-        Build a Conical profile Helix Target
-        
-        dimensions are physical, in um
-
-        Arguments:
-            height: the height of the helix (not counting it's thickness)
-            pitch1,2: the helix pitch, um/turn (if pitch1 is different from pitch2 will swipe between during the growth)
-                        major_r: the radius of the helix sweep
-            minor_r: the radius of the wire that is swept to form the helix
-        
-        Optional Arguments:
-            d: the dipole dipole spacing, if not specified default value is used
-            build: if False, delays building the helix until requested. default is True
-            
-            **kwargs are passed to Target
-        '''
 
         if d is None:
             d=default_d

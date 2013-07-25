@@ -32,7 +32,8 @@ class Settings():
     DDSCAT execution parameters
     
     Most of the field names correspond to their definitions in the ddscat.par file.
-    
+    Details of the target are stored in the ```Target``` definition, not here.
+   
     '''
 
     def __init__(self, **kwargs):        
@@ -140,7 +141,7 @@ class DDscat(object):
     Example::
 
         # Build a target
-        t=Target_CYLNDRCAP(0.100, 0.030):        
+        t=CYLNDRCAP(0.100, 0.030):        
         
         # Initialize a DDscat run
         d=DDscat(target=t)
@@ -175,7 +176,7 @@ class DDscat(object):
             self.settings.folder=self._folder
         
         if target is None:
-            self._target=targets.Target_Sphere(0.2, folder=self._folder)
+            self._target=targets.Sphere(0.2, folder=self._folder)
         else:
             self._target=target
             self.target.folder=self._folder

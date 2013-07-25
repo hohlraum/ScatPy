@@ -70,9 +70,9 @@ def build_ddscat_par(settings, target):
     out+= '1\n' if settings.IWRKSC else '0\n'
 
     out+='**** Prescribe Target Rotations ****\n'
-    out+=settings.beta.__str__()+'
-    out+=settings.theta.__str__()+'
-    out+=settings.phi.__str__()+'
+    out+=settings.beta.__str__()+'\n'
+    out+=settings.theta.__str__()+'\n'
+    out+=settings.phi.__str__()+'\n'
 
     out+='**** Specify first IWAV, IRAD, IORI (normally 0 0 0) ****\n'
     out+=settings.first_I.__str__()[1:-1]+'\n'

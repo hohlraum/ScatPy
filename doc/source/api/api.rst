@@ -7,13 +7,13 @@ ScatPy is divided into several modules:
 .. currentmodule:: ScatPy
 
 .. autosummary::
-    config
     core
+    targets
+    results
+    utils
+    config
     fileio
     ranges
-    results
-    targets
-    utils
 
 Contents
 ========

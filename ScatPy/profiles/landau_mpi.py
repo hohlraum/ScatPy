@@ -4,6 +4,9 @@
 # The profile name
 name = 'landau'
 
+# The operating system
+os = 'unix'
+
 # The absolute path to the folder containing materials properties
 mat_library = '/home/guests/mark/mat_prop'
 
@@ -16,14 +19,11 @@ mpi_path = '/usr/mpi/gcc/openmpi-1.4.2/bin/'
 # The number of slots to use 
 num_slots = (16,32)
 
-# The operating system
-os = 'unix'
-
-
-def write_script(self, write_sge=False):
+def write_script(job):
     import posixpath
+    import os.path
     
-    with open(os.path.join(self.folder, 'submit.sge'), 'wb') as f:
+    with open(os.path.join(job.folder, 'submit.sge'), 'wb') as f:
  
         f.write('#!/bin/csh\n' )
         f.write('#\n#\n#\n')
@@ -45,7 +45,7 @@ def write_script(self, write_sge=False):
  
         f.write('echo beginning `pwd`\n')
         f.write('date\n')
-        mpi=posixpath.join(path, 'mpirun')
+        mpi=posixpath.join(mpi_path, 'mpirun')
         f.write('time %s -np $NSLOTS -machinefile $TMPDIR/machines /cluster/bin/ddscat_openmpi\n' % (mpi))
         f.write('echo completed `pwd`\n')
         f.write('echo \'------------------------------------------\'\n')

@@ -16,9 +16,13 @@ ddscat_path = '/opt/local/lib/ddscat/src'
 # The absolute path to the folder containing the mpi executable
 mpi_path = '/usr/mpi/gcc/openmpi-1.4.3/bin/'
 
-def write_script(job):
-    import os.path
+# The number of slots to use 
+num_slots = (16,32)
 
+
+def write_script(job):
+    import posixpath
+    import os.path
     with open(os.path.join(job.folder, 'submit.sge'), 'wb') as f:
  
         f.write('#!/bin/csh\n' )
@@ -26,9 +30,16 @@ def write_script(job):
         f.write('# ---------------------------\n')
         f.write('# our name \n')
  
-        f.write('#$ -N ddscat_ser_PRE_\n')
+        f.write('#$ -N ddscat_mpi_PRE_\n#\n')
+        f.write('# pe request\n')                    
+        f.write('#$ -pe openmpi %d-%d\n' % tuple(num_slots))
+ 
         f.write('#\n')
  
+        f.write('# Priority\n')
+        f.write('#$ -p -10\n')
+        f.write('#\n')
+             
         f.write('# stderr >& stdout\n')
         f.write('#$ -j y\n')
         f.write('#\n')
@@ -38,9 +49,10 @@ def write_script(job):
  
         f.write('echo beginning `pwd`\n')
         f.write('date\n')
-        f.write('time /cluster/bin/ddscat\n')
+        mpi=posixpath.path(mpi_path, 'mpirun')
+        f.write('time %s -np $NSLOTS -machinefile $TMPDIR/machines /cluster/bin/ddscat_openmpi\n' % (mpi))
         f.write('echo completed `pwd`\n')
         f.write('echo \'------------------------------------------\'\n')
         f.write('date\n')
          
-        f.write('foreach old (ddscat_ser_PRE_.*)\nmv $old "$old:gas/_PRE_//"".txt"\nend\n')
+        f.write('foreach old (ddscat_mpi_PRE_.*)\nmv $old "$old:gas/_PRE_//"".txt"\nend\n')

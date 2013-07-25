@@ -168,7 +168,7 @@ def resolve_mat_file(material):
     If it's only a filename, assume that file is found in the materials library
     
     '''
-    path=config.config['path']
+    path=config.config['path_style']
 
     if path.isabs(material):
         return material

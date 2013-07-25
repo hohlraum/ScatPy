@@ -19,7 +19,8 @@ def set_config(fname=None):
     :param fname: The name of the file that contains the configuration
                   If None then it try to load the default profile
                   
-    Profiles are stored in files ending in .conf
+    Profiles are stored in Python script files.
+    
     The search scheme is to first look for the file in the CWD, followed by
     the folder ~/.ScatPy/ and finally the subdiretory profiles/ relative to
     where the config.py module resides.
@@ -27,10 +28,10 @@ def set_config(fname=None):
     global config    
     
     if fname is None:
-        fname = 'default.conf'
+        fname = 'default.py'
         
-    if not fname.endswith('.conf'):
-        fname += '.conf'
+    if not fname.endswith('.py'):
+        fname += '.py'
         
     pkg_path = os.path.dirname(__file__)
 
@@ -46,14 +47,14 @@ def set_config(fname=None):
 
     execfile(full_name, config) 
 
-    del config['__builtins__']
+#    del config['__builtins__']
     config['file']=full_name
 
     # Associate the correct path style based on OS
     if config['os'].lower() == 'unix' or config['os'].lower() == 'mac':
-        config['path']=posixpath
+        config['path_style']=posixpath
     elif config['os'].lower() == 'windows':
-        config['path']=ntpath
+        config['path_style']=ntpath
     else:
         raise ValueError('Unknown OS: %s' % config['os'])
     

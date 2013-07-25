@@ -1,6 +1,6 @@
 v0.1.0, 25.07.13 -- Initial Release
     
 -Changed Target names so that they no longer are preceeded by 'Target_'.
--Different profiles can be saved as .conf files. config.set_config() can be used
+-Different profiles can be saved as .py script files. config.set_config() can be used
 to change the profile on the fly. Profiles are searched for in the CWD, the folder ~/.ScatPy,
 and the package directory.

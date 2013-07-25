@@ -19,7 +19,7 @@ import results
 import fileio
 import ranges
 
-from config import exec_settings
+import config
 
 #: DEFINE POLARIZATION STATES USING SPECTROSCOPIST'S CONVENTION
 pol_cR=np.array([0, 0+1j, 1+0j])    
@@ -228,7 +228,7 @@ class DDscat(object):
 
                 f.write('#\n')
 
-                if exec_settings['name']=='luna':
+                if config.exec_settings['name']=='luna':
                     f.write('# Priority\n')
                     f.write('#$ -p -10\n')
                     f.write('#\n')
@@ -246,7 +246,7 @@ class DDscat(object):
                 if self.settings.serial:
                     f.write('time /cluster/bin/ddscat\n')
                 else:
-                    mpi=posixpath.join(exec_settings['mpi_path'], 'mpirun')
+                    mpi=posixpath.join(config.exec_settings['mpi_path'], 'mpirun')
                     f.write('time %s -np $NSLOTS -machinefile $TMPDIR/machines /cluster/bin/ddscat_openmpi\n' % (mpi))
                 f.write('echo completed `pwd`\n')
                 f.write('echo \'------------------------------------------\'\n')
@@ -363,7 +363,7 @@ class DDscat(object):
 
         self.write()
 
-        command=os.path.join(exec_settings['ddscat_path'], 'ddscat')
+        command=os.path.join(config.exec_settings['ddscat_path'], 'ddscat')
 
         try:
             __IPYTHON__
@@ -394,7 +394,7 @@ class DDscat(object):
             
         self.write()
 
-        subprocess.call(os.path.join(exec_settings['ddscat_path'], 'calltarget'), cwd=self.folder)
+        subprocess.call(os.path.join(config.exec_settings['ddscat_path'], 'calltarget'), cwd=self.folder)
 
 
 

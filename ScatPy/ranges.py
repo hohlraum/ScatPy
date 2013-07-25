@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""@namespace ScatPy.ranges
+"""
 A collection of ranges found in ddscat.par
 
 

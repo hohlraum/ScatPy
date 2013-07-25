@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""@namespace ScatPy.utils
-A few utility functions.
+"""
+Utility functions.
 
 """
 
@@ -230,8 +230,6 @@ def MixMaterials(m1, m2, p1):
     """
     Approximate the index for alloys by a weighted average of the two components
     
-
-
     """    
     
     n=m1.copy()    

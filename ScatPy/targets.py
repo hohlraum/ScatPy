@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""@namespace ScatPy.targets
-
+"""
 Target definitions.
 
 """
@@ -119,7 +118,13 @@ class Target(object):
     def copy(self):
         return copy.deepcopy(self)
 
-class Target_RCTGLPRISM(Target):        
+class Target_Builtin(Target):
+    """Base class for target geometries that are built into DDSCAT"""
+    def __init__(self, *args, **kwargs):
+        Target.__init__(self, *args, **kwargs)
+    
+
+class RCTGLPRISM(Target_Builtin):        
     """A rectangular prism target"""
 
     def __init__(self, phy_shape, **kwargs):
@@ -131,13 +136,13 @@ class Target_RCTGLPRISM(Target):
         
         **kwargs are passed to Target
         """
-        Target.__init__(self, phy_shape, **kwargs)
+        Target_Builtin.__init__(self, phy_shape, **kwargs)
         self.directive='RCTGLPRSM'
         self.N=phy_shape[0]*phy_shape[1]*phy_shape[2]
         #self.d=0.015624983
 
 
-class Target_CYLNDRCAP(Target):
+class CYLNDRCAP(Target):
     """A target cylinder with hemispherical endcaps"""
     
     def __init__(self, length, radius, **kwargs):
@@ -152,7 +157,7 @@ class Target_CYLNDRCAP(Target):
 
         Total height of the structureis length+2*rad
         """
-        Target.__init__(self, np.asarray([length, radius*2, radius*2]), **kwargs)
+        Target_Builtin.__init__(self, np.asarray([length, radius*2, radius*2]), **kwargs)
         
         self.directive='CYLNDRCAP'
         
@@ -164,7 +169,7 @@ class Target_CYLNDRCAP(Target):
         #self.d=0.015624983
         
 
-class Target_ELLIPSOID(Target):        
+class ELLIPSOID(Target):        
     """
     An Ellipsoid target
     """
@@ -179,11 +184,11 @@ class Target_ELLIPSOID(Target):
             **kwargs are passed to Target
         """        
         
-        Target.__init__(self, np.asarray(phys_shape)*2, **kwargs)
+        Target_Builtin.__init__(self, np.asarray(phys_shape)*2, **kwargs)
         self.directive='ELLIPSOID'
         self.N=int(4/3*np.pi*(self.shape.prod()/8))
 
-class Target_CYLINDER(Target):
+class CYLINDER(Target):
     """A target cylinder with hemispherical endcaps"""
     
     def __init__(self, length, radius, ori,  **kwargs):
@@ -198,7 +203,7 @@ class Target_CYLINDER(Target):
 
         """
         
-        Target.__init__(self, np.asarray([length, radius*2, ori]), **kwargs)
+        Target_Builtin.__init__(self, np.asarray([length, radius*2, ori]), **kwargs)
         
         self.directive='CYLINDER1'
         self.ori=ori
@@ -218,7 +223,7 @@ class Target_CYLINDER(Target):
         
         return out
         
-class Target_Sphere(Target_ELLIPSOID):  
+class Sphere(ELLIPSOID):  
     """
     A Sphere target.
 
@@ -234,10 +239,10 @@ class Target_Sphere(Target_ELLIPSOID):
             
         """
         phys_shape=[radius]*3
-        Target_ELLIPSOID.__init__(self, phys_shape, **kwargs)
+        ELLIPSOID.__init__(self, phys_shape, **kwargs)
             
 
-class Target_IsoHomo_FROM_FILE(Target):
+class IsoHomo_FROM_FILE(Target):
     '''
     Base class for an arbitrary, isotropic and homogeneous target.
     
@@ -300,18 +305,14 @@ class Target_IsoHomo_FROM_FILE(Target):
         s=results.ShapeTable(fname)
         s.show(*args, **kwargs)
         
-class Target_FROM_FILE(Target):
+class FROM_FILE(Target):
     pass        
 
-class Target_Iso_FROM_FILE(Target_FROM_FILE):
-    pass        
-
-
-class Target_DecoratedHelix(Target_Iso_FROM_FILE):
+class Iso_FROM_FILE(FROM_FILE):
     pass        
 
 
-class Ellipsoid_FF(Target_IsoHomo_FROM_FILE):
+class Ellipsoid_FF(IsoHomo_FROM_FILE):
     """
     Build an ellipsoidal target to be loaded from file
     """
@@ -325,7 +326,7 @@ class Ellipsoid_FF(Target_IsoHomo_FROM_FILE):
         if d is None:
             d=default_d
         shape=np.int16(np.array(phys_shape) *2/d)
-        Target_IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+        IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
 
         #self.phys_shape=phys_shape
 
@@ -339,7 +340,7 @@ class Ellipsoid_FF(Target_IsoHomo_FROM_FILE):
         
         self.N=self.grid.sum()
 
-class Target_Helix(Target_IsoHomo_FROM_FILE):
+class Helix(IsoHomo_FROM_FILE):
     """
     A helix target
     
@@ -367,7 +368,7 @@ class Target_Helix(Target_IsoHomo_FROM_FILE):
             d=default_d
         shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
         shape+=1
-        Target_IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+        IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
 
         self.height=height
         self.pitch=pitch
@@ -425,7 +426,7 @@ class Target_Helix(Target_IsoHomo_FROM_FILE):
 
         self.update_N()
 
-class Target_SpheresHelix(Target_IsoHomo_FROM_FILE):
+class SpheresHelix(IsoHomo_FROM_FILE):
     """
     A helix target composed of isolated spheres
     
@@ -454,7 +455,7 @@ class Target_SpheresHelix(Target_IsoHomo_FROM_FILE):
             d=default_d
         shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
         shape+=1
-        Target_IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+        IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
 
         self.height=height
         self.pitch=pitch
@@ -506,12 +507,8 @@ class Target_SpheresHelix(Target_IsoHomo_FROM_FILE):
 
         self.update_N()
 
-class Target_Gap_Helix(Target_IsoHomo_FROM_FILE):
-    """
-    A target with two helical segments (of different pitches seperated by glass)
-    """
 
-class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
+class Conical_Helix(IsoHomo_FROM_FILE):
     """
     A helix target
     
@@ -539,7 +536,7 @@ class Target_Conical_Helix(Target_IsoHomo_FROM_FILE):
             d=default_d
         shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
         shape+=1
-        Target_IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+        IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
 
         self.height=height
         self.pitch1=pitch1

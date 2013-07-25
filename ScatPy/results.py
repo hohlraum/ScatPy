@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""@package ScatPy.results
+"""
 For reading, manipulating and plotting the output files from DDSCAT
 
 
@@ -31,12 +31,12 @@ import warnings
 
 try:
     import matplotlib.pyplot as plt
-except ImportError:
+except ImportError, err:
     warnings.warn(str(err))
 
 try:
     from scipy.interpolate import interp1d, UnivariateSpline
-except ImportError:
+except ImportError, err:
     warnings.warn(str(err))
 
 from collections import OrderedDict

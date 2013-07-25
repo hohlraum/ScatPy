@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""@namespace ScatPy.fileio
-
-Functions for reading an writing from files.
+"""
+Functions for reading and writing from files.
 
 """
 from __future__ import division

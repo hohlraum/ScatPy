@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""@namespace ScatPy.core
+"""
 A set of tools for setting up and working with the program DDScat.
 
 

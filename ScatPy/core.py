@@ -20,11 +20,18 @@ import ranges
 #: The configuration settings
 config={}
 
-#: DEFINE POLARIZATION STATES USING SPECTROSCOPIST'S CONVENTION
-pol_cR=np.array([0, 0+1j, 1+0j])    
+#: Define polarization states using the spectroscopists' convention
 pol_cL=np.array([0, 1+0j, 0+1j])            
-pol_lH=np.array([0, 0+0j, 1+0j])        
-pol_lV=np.array([0, 1+0j, 0+0j])    
+pol_cR=np.array([0, 0+1j, 1+0j])    
+pol_lH=np.array([0, 1+0j, 0+0j])        
+pol_lV=np.array([0, 0+0j, 1+0j])    
+
+##: Define polarization states using DDSCAT's convention
+#pol_cR=np.array([0, 1+0j, 0+1j])    
+#pol_cL=np.array([0, 0+1j, 1+0j])            
+#pol_lH=np.array([0, 1+0j, 0+0j])        
+#pol_lV=np.array([0, 0+0j, 1+0j])    
+
 
 class Settings():
     '''

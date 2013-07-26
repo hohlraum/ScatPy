@@ -56,7 +56,7 @@ class Target(object):
         else:
             self.d=d
 
-        self.shape=np.int32(np.ceil(np.asarray(phys_shape)/self.d))
+        self.d_shape=np.int32(np.ceil(np.asarray(phys_shape)/self.d))
             
         #self.aeff=0.246186 #How_Range(0.246186, 0.246186, 1, 'LIN')# = aeff (first,last,how many,how=LIN,INV,LOG)
         self.N=0
@@ -73,13 +73,13 @@ class Target(object):
         Returns the size of the bounding box that contains the target (in microns)
     
         '''
-        return self.shape*self.d
+        return self.d_shape*self.d
         
     def save_str(self):
         """Return the four line string of target definition for the ddscat.par file"""
         out='**** Target Geometry and Composition ****\n'
         out+=self.directive+'\n'
-        out+=str(self.shape)[1:-1]+'\n'
+        out+=str(self.d_shape)[1:-1]+'\n'
         out+=str(self.NCOMP)+'\n'
         for i in self.NCOMP:
             out+='\''+utils.resolve_mat_file(self.mat_file[i])+'\'\n'
@@ -161,8 +161,8 @@ class CYLNDRCAP(Target_Builtin):
         
         self.directive='CYLNDRCAP'
         
-        Vcyl=self.shape[0]*(np.pi*(self.shape[1]/2)**2)
-        Vsph=4/3*np.pi*(self.shape[1]/2)**3
+        Vcyl=self.d_shape[0]*(np.pi*(self.d_shape[1]/2)**2)
+        Vsph=4/3*np.pi*(self.d_shape[1]/2)**3
         self.N=int(Vcyl+Vsph)
         self.length=length
         self.radius=radius
@@ -179,7 +179,7 @@ class ELLIPSOID(Target_Builtin):
     def __init__(self, phys_shape, **kwargs):        
         Target_Builtin.__init__(self, np.asarray(phys_shape)*2, **kwargs)
         self.directive='ELLIPSOID'
-        self.N=int(4/3*np.pi*(self.shape.prod()/8))
+        self.N=int(4/3*np.pi*(self.d_shape.prod()/8))
 
 class CYLINDER(Target_Builtin):
     """A target cylinder with hemispherical endcaps
@@ -195,7 +195,7 @@ class CYLINDER(Target_Builtin):
         self.directive='CYLINDER1'
         self.ori=ori
         
-        Vcyl=self.shape[0]*(np.pi*(self.shape[1]/2)**2)
+        Vcyl=self.d_shape[0]*(np.pi*(self.d_shape[1]/2)**2)
         self.N=int(Vcyl)
         self.length=length
         self.radius=radius
@@ -204,7 +204,7 @@ class CYLINDER(Target_Builtin):
         """Return the four line string of target definition for inclusion in the ddscat.par file"""
         out='**** Target Geometry and Composition ****\n'
         out+=self.directive+'\n'
-        out+=str(self.shape[0:2])[1:-1]+' '+str(self.ori)+'\n'
+        out+=str(self.d_shape[0:2])[1:-1]+' '+str(self.ori)+'\n'
         out+=str(self.NCOMP)+'\n'
         for i in self.NCOMP:
             out+='\''+utils.resolve_mat_file(self.mat_file[i])+'\'\n'
@@ -234,20 +234,20 @@ class FROM_FILE(Target):
     :param shape: is in units of number of dipoles
     
     '''
-    def __init__(self, shape=(0,0,0), **kwargs):
-        Target.__init__(self, shape=(0,0,0), **kwargs)
+    def __init__(self, d_shape=(0,0,0), **kwargs):
+        Target.__init__(self, d_shape=(0,0,0), **kwargs)
         self.descrip=''
         self.directive='FROM_FILE'
         self.fname='shape.dat'
         self.descriptor='FROM_FILE'
     
-        self.shape=np.asarray(shape)
-        self.grid=np.zeros(tuple(shape)+(3,), dtype=int)
+        self.d_shape=np.asarray(d_shape)
+        self.grid=np.zeros(tuple(d_shape)+(3,), dtype=int)
         self.refresh_N()
         self.a1=np.array([1,0,0])
         self.a2=np.array([0,1,0])
         self.rel_d=np.array([1,1,1])
-        self.origin=self.shape/2           
+        self.origin=self.d_shape/2           
     
     def refresh_N(self):
         """Update the number of dipoles"""
@@ -300,9 +300,9 @@ class Iso_FROM_FILE(FROM_FILE):
     :param shape: is in units of number of dipoles
     
     '''
-    def __init__(self, shape=(0,0,0), **kwargs):
-        Target.__init__(self, shape=(0,0,0), **kwargs)
-        self.grid=np.zeros(shape, dtype=int)
+    def __init__(self, d_shape=(0,0,0), **kwargs):
+        Target.__init__(self, d_shape=(0,0,0), **kwargs)
+        self.grid=np.zeros(d_shape, dtype=int)
 
 
 class Ellipsoid_FF(Iso_FROM_FILE):
@@ -318,14 +318,14 @@ class Ellipsoid_FF(Iso_FROM_FILE):
         """
         if d is None:
             d=default_d
-        shape=np.int16(np.array(phys_shape) *2/d)
-        Iso_FROM_FILE.__init__(self, shape, **kwargs)
+        d_shape=np.int16(np.array(phys_shape) *2/d)
+        Iso_FROM_FILE.__init__(self, d_shape, **kwargs)
 
         #self.phys_shape=phys_shape
 
         self.descriptor='Ellipsoid_FF (%f, %f, %f, %f)'%(tuple(self.phys_shape)+(self.d,))            
         
-        (a,b,c) = tuple(shape)
+        (a,b,c) = tuple(d_shape)
         xx,yy,zz=np.mgrid[-a:a, -b:b, -c:c] 
         dist=(xx/a)**2 + (yy/b)**2 + (zz/c)**2
 
@@ -350,9 +350,9 @@ class Helix(Iso_FROM_FILE):
     def __init__(self, height, pitch, major_r, minor_r, d=None, build=True, **kwargs):
         if d is None:
             d=default_d
-        shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
-        shape+=1
-        Iso_FROM_FILE.__init__(self, shape, **kwargs)
+        d_shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
+        d_shape+=1
+        Iso_FROM_FILE.__init__(self, d_shape, **kwargs)
 
         self.height=height
         self.pitch=pitch
@@ -397,9 +397,9 @@ class Helix(Iso_FROM_FILE):
             else:
                 return 0
                 
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                for k in range(self.shape[2]):
+        for i in range(self.d_shape[0]):
+            for j in range(self.d_shape[1]):
+                for k in range(self.d_shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
 
         self.refresh_N()
@@ -423,9 +423,9 @@ class SpheresHelix(Iso_FROM_FILE):
 
         if d is None:
             d=default_d
-        shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
-        shape+=1
-        Iso_FROM_FILE.__init__(self, shape, **kwargs)
+        d_shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
+        d_shape+=1
+        Iso_FROM_FILE.__init__(self, d_shape, **kwargs)
 
         self.height=height
         self.pitch=pitch
@@ -470,9 +470,9 @@ class SpheresHelix(Iso_FROM_FILE):
             else:
                 return 0
                 
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                for k in range(self.shape[2]):
+        for i in range(self.d_shape[0]):
+            for j in range(self.d_shape[1]):
+                for k in range(self.d_shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
 
         self.refresh_N()
@@ -498,9 +498,9 @@ class Conical_Helix(Iso_FROM_FILE):
 
         if d is None:
             d=default_d
-        shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
-        shape+=1
-        Iso_FROM_FILE.__init__(self, shape, **kwargs)
+        d_shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
+        d_shape+=1
+        Iso_FROM_FILE.__init__(self, d_shape, **kwargs)
 
         self.height=height
         self.pitch1=pitch1
@@ -557,9 +557,9 @@ class Conical_Helix(Iso_FROM_FILE):
             else:
                 return 0
                 
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                for k in range(self.shape[2]):
+        for i in range(self.d_shape[0]):
+            for j in range(self.d_shape[1]):
+                for k in range(self.d_shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
         
         self.refresh_N()
@@ -580,14 +580,14 @@ def Holify(target, radius, posns=None, num=None, seed=None):
     seed: a seed value to use for the random number generator
     
     """
-    shape=target.grid.shape
+    d_shape=target.grid.shape
     
     if posns is None:
         if num is None:
             raise ValueError('Either posns or num must be specificed')
         
         posns=np.random.rand(num, 3)
-        for (p, s) in zip(posns.T, shape):
+        for (p, s) in zip(posns.T, d_shape):
             p *= s
 
     posns=np.asarray(posns, dtype=np.int16)
@@ -604,7 +604,7 @@ def Holify(target, radius, posns=None, num=None, seed=None):
     for p in posns:
         p=p[:, np.newaxis]
 #        print p            
-        mask_r=np.ravel_multi_index(mask+p, shape, mode='clip')
+        mask_r=np.ravel_multi_index(mask+p, d_shape, mode='clip')
         print mask_r[0]
 #        g_len=grid.sum()
         print grid[mask_r[0]]

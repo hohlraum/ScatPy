@@ -862,7 +862,10 @@ class ShapeTable(dict):
     
     def show(self, *args, **kwargs):
         """
-        Display the dipoles using Mayavi
+        Display the dipoles using Mayavi. 
+        
+        Currently does not distinguish between dipoles of different materials,
+        and does not display dipole anisotropy.
         """
         from mayavi import mlab
 

@@ -39,16 +39,17 @@ class Target(object):
 
         #: The type of target as defined by DDSCAT
         self.directive=''
-        self.NCOMP=1
         if folder is None:
             self._folder='.'
         else:
             self._folder=folder
             
         if material is None:
-            self.mat_file='Au_Palik.txt'
+            self.mat_file=['Au_Palik.txt']
         else:
-            self.mat_file=material
+            self.mat_file=list(material)
+
+        self.NCOMP = len(material)
 
         if d is None:    
             self.d=default_d #dipole grid spacing in um 
@@ -80,7 +81,8 @@ class Target(object):
         out+=self.directive+'\n'
         out+=str(self.shape)[1:-1]+'\n'
         out+=str(self.NCOMP)+'\n'
-        out+='\''+utils.resolve_mat_file(self.mat_file)+'\'\n'
+        for i in self.NCOMP:
+            out+='\''+utils.resolve_mat_file(self.mat_file[i])+'\'\n'
         
         return out
 
@@ -204,7 +206,8 @@ class CYLINDER(Target_Builtin):
         out+=self.directive+'\n'
         out+=str(self.shape[0:2])[1:-1]+' '+str(self.ori)+'\n'
         out+=str(self.NCOMP)+'\n'
-        out+='\''+utils.resolve_mat_file(self.mat_file)+'\'\n'
+        for i in self.NCOMP:
+            out+='\''+utils.resolve_mat_file(self.mat_file[i])+'\'\n'
         
         return out
         
@@ -221,38 +224,39 @@ class Sphere(ELLIPSOID):
         ELLIPSOID.__init__(self, phys_shape, **kwargs)
             
 
-class IsoHomo_FROM_FILE(Target):
+### Arbitrarily Shaped Targets
+
+        
+class FROM_FILE(Target):
     '''
-    Base class for an arbitrary, isotropic and homogeneous target.
+    Base class for targets of arbitrary geometry.
+
+    :param shape: is in units of number of dipoles
     
     '''
-    def __init__(self, shape, **kwargs):
-        """
-        Initialize a new target
-        
-        shape is in units of number of dipoles
-        """
-        Target.__init__(self, shape, **kwargs)
+    def __init__(self, shape=(0,0,0), **kwargs):
+        Target.__init__(self, shape=(0,0,0), **kwargs)
         self.descrip=''
         self.directive='FROM_FILE'
         self.fname='shape.dat'
         self.descriptor='FROM_FILE'
     
         self.shape=np.asarray(shape)
-        self.grid=np.zeros(shape, dtype=np.bool)    
-        self.update_N()
+        self.grid=np.zeros(tuple(shape)+(3,), dtype=int)
+        self.refresh_N()
         self.a1=np.array([1,0,0])
         self.a2=np.array([0,1,0])
         self.rel_d=np.array([1,1,1])
         self.origin=self.shape/2           
     
-    def update_N(self):
+    def refresh_N(self):
         """Update the number of dipoles"""
-        self.N=self.grid.sum()
+        flat = self.grid.sum(3).astype(np.bool)        
+        self.N = flat.sum()
     
     def write(self):
         """Write the shape file."""
-        self.update_N()
+        self.refresh_N()
         with open(os.path.join(self.folder, self.fname), 'wb') as f:
             f.write(self.descriptor+'\n') 
             f.write(str(self.N)+'\n')
@@ -262,12 +266,17 @@ class IsoHomo_FROM_FILE(Target):
             f.write(str(self.origin)[1:-1]+'\n')
             f.write('J JX JY JZ ICOMPX,ICOMPY,ICOMPZ'+'\n')
             
+            if len(self.grid.shape) == 3: # Isotropic case
+                grid = np.dstack((self.grid, self.grid, self.grid))
+            else:
+                grid = self.grid
+            
             n=1
-            for (ni, i) in enumerate(self.grid):
+            for (ni, i) in enumerate(grid):
                 for (nj, j) in enumerate(i):
                     for (nk, k) in enumerate(j):
-                        if k:
-                            f.write('%d %d  %d  %d  %d  %d  %d\n' % (n, ni, nj, nk, 1, 1, 1))
+                        if any(k):
+                            f.write('%d %d  %d  %d  %d  %d  %d\n' % ((n, ni, nj, nk)+tuple(k)))
                             n+=1
     
     def VTRconvert(self, outfile=None):
@@ -283,15 +292,20 @@ class IsoHomo_FROM_FILE(Target):
         fname=os.path.join(self.folder, self.fname)
         s=results.ShapeTable(fname)
         s.show(*args, **kwargs)
-        
-class FROM_FILE(Target):
-    pass        
 
 class Iso_FROM_FILE(FROM_FILE):
-    pass        
+    '''
+    Base class for targets of arbitrary geometry with isotropic materials.
+
+    :param shape: is in units of number of dipoles
+    
+    '''
+    def __init__(self, shape=(0,0,0), **kwargs):
+        Target.__init__(self, shape=(0,0,0), **kwargs)
+        self.grid=np.zeros(shape, dtype=int)
 
 
-class Ellipsoid_FF(IsoHomo_FROM_FILE):
+class Ellipsoid_FF(Iso_FROM_FILE):
     """
     Build an ellipsoidal target to be loaded from file
     """
@@ -305,7 +319,7 @@ class Ellipsoid_FF(IsoHomo_FROM_FILE):
         if d is None:
             d=default_d
         shape=np.int16(np.array(phys_shape) *2/d)
-        IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+        Iso_FROM_FILE.__init__(self, shape, **kwargs)
 
         #self.phys_shape=phys_shape
 
@@ -315,11 +329,10 @@ class Ellipsoid_FF(IsoHomo_FROM_FILE):
         xx,yy,zz=np.mgrid[-a:a, -b:b, -c:c] 
         dist=(xx/a)**2 + (yy/b)**2 + (zz/c)**2
 
-        self.grid = dist<1
-        
-        self.N=self.grid.sum()
+        self.grid = (dist<1).astype(int)
+        self.refresh_N()
 
-class Helix(IsoHomo_FROM_FILE):
+class Helix(Iso_FROM_FILE):
     """
     A helix target.
 
@@ -339,7 +352,7 @@ class Helix(IsoHomo_FROM_FILE):
             d=default_d
         shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
         shape+=1
-        IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+        Iso_FROM_FILE.__init__(self, shape, **kwargs)
 
         self.height=height
         self.pitch=pitch
@@ -365,12 +378,6 @@ class Helix(IsoHomo_FROM_FILE):
 
         #the sweep path
         t=np.linspace(0,1, self.height/abs(self.pitch)*360)
-#        x=np.int16(p_height*t + p_minor_r)
-#        y=np.int16(p_major_r * np.cos(2*np.pi* x/p_pitch) + self.origin[1])
-#        z=np.int16(p_major_r * np.sin(2*np.pi* x/p_pitch) + self.origin[2])
-#        
-#        p=np.vstack([x,y,z]).transpose()
-#        p=np.vstack([np.array(u) for u in set([tuple(l) for l in p])]) #remove duplicates
 
         x=p_height*t + p_minor_r
         y=p_major_r * np.cos(2*np.pi* x/p_pitch) + self.origin[1]
@@ -386,18 +393,18 @@ class Helix(IsoHomo_FROM_FILE):
             
             d=dist(np.array([i,j,k])-p)
             if np.any(d<=p_minor_r):
-                return True
+                return 1
             else:
-                return False
+                return 0
                 
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
                 for k in range(self.shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
 
-        self.update_N()
+        self.refresh_N()
 
-class SpheresHelix(IsoHomo_FROM_FILE):
+class SpheresHelix(Iso_FROM_FILE):
     """
     A helix target composed of isolated spheres
     
@@ -418,7 +425,7 @@ class SpheresHelix(IsoHomo_FROM_FILE):
             d=default_d
         shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
         shape+=1
-        IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+        Iso_FROM_FILE.__init__(self, shape, **kwargs)
 
         self.height=height
         self.pitch=pitch
@@ -459,19 +466,19 @@ class SpheresHelix(IsoHomo_FROM_FILE):
             
             d=dist(np.array([i,j,k])-p)
             if np.any(d<=p_minor_r):
-                return True
+                return 1
             else:
-                return False
+                return 0
                 
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
                 for k in range(self.shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
 
-        self.update_N()
+        self.refresh_N()
 
 
-class Conical_Helix(IsoHomo_FROM_FILE):
+class Conical_Helix(Iso_FROM_FILE):
     """
     A helix target
 
@@ -493,7 +500,7 @@ class Conical_Helix(IsoHomo_FROM_FILE):
             d=default_d
         shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
         shape+=1
-        IsoHomo_FROM_FILE.__init__(self, shape, **kwargs)
+        Iso_FROM_FILE.__init__(self, shape, **kwargs)
 
         self.height=height
         self.pitch1=pitch1
@@ -546,16 +553,16 @@ class Conical_Helix(IsoHomo_FROM_FILE):
             
             d=dist(np.array([i,j,k])-p)
             if np.any(d<=p_minor_r):
-                return True
+                return 1
             else:
-                return False
+                return 0
                 
         for i in range(self.shape[0]):
             for j in range(self.shape[1]):
                 for k in range(self.shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
         
-        self.update_N()
+        self.refresh_N()
 
 def Holify(target, radius, posns=None, num=None, seed=None):
     """

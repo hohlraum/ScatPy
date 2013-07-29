@@ -21,24 +21,31 @@ default_d=0.015
 class Target(object):
     """
     The base class for defining DDscat Target geometries.
-    
+    '''
+    Initialize the Target
+
+    :param directive: The type of target (e.g. CYLINDER1, FROM_FILE)
+    :param sh_param: The three shape parameters used by DDSCAT to describe the target
+    :param phys_shape: The physical shape of the target (in um)
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
+
+    This class must be subclassed to be useful. In particular, derived classes
+    must provide the following attributes:
+    * sh_param: The three values of the SHPAR definition used by DDSCAT 
+    * phys_shape: The x,y,z dimensions of the target in um
+
+
     """
 
+    def __init__(self, directive, sh_param=(0,0,0), phys_shape=(0,0,0), d=None, material=None, folder=None):
 
-    def __init__(self, phys_shape, d=None, material=None, folder=None):
-        '''
-        Initialize the Target
+        self.directive = directive
+        self.sh_param = sh_param
+        self.phys_shape = np.array(phys_shape)
 
-        :param phys_shape: The physical shape of the object (in microns).
-        :param d: the dipole density
-        :param material: the material file to use for the target (currently limited to one)
-        :param default is 'Au_Palik.txt'
-        :param folder: the target working directory
-        '''
-
-
-        #: The type of target as defined by DDSCAT
-        self.directive=''
         if folder is None:
             self._folder='.'
         else:
@@ -48,15 +55,12 @@ class Target(object):
             self.mat_file=['Au_Palik.txt']
         else:
             self.mat_file=list(material)
-
         self.NCOMP = len(material)
 
         if d is None:    
             self.d=default_d #dipole grid spacing in um 
         else:
             self.d=d
-
-        self.d_shape=np.int32(np.ceil(np.asarray(phys_shape)/self.d))
             
         #self.aeff=0.246186 #How_Range(0.246186, 0.246186, 1, 'LIN')# = aeff (first,last,how many,how=LIN,INV,LOG)
         self.N=0
@@ -67,19 +71,26 @@ class Target(object):
                     
         return (self.N*3/4/np.pi)**(1/3)*self.d
 
-    @property    
-    def phys_shape(self):
-        '''
-        Returns the size of the bounding box that contains the target (in microns)
-    
-        '''
-        return self.d_shape*self.d
+    @property
+    def d_shape(self):
+        """
+        The dimensions of the target in dipole units
+        """
+        return np.around(self.phys_shape/self.d).astype(int)
+
+#    @property    
+#    def phys_shape(self):
+#        '''
+#        Returns the size of the bounding box that contains the target (in microns)
+#    
+#        '''
+#        return self.d_shape*self.d
         
     def save_str(self):
         """Return the four line string of target definition for the ddscat.par file"""
         out='**** Target Geometry and Composition ****\n'
         out+=self.directive+'\n'
-        out+=str(self.d_shape)[1:-1]+'\n'
+        out+=str(self.SHPAR)[1:-1]+'\n'
         out+=str(self.NCOMP)+'\n'
         for i in self.NCOMP:
             out+='\''+utils.resolve_mat_file(self.mat_file[i])+'\'\n'
@@ -126,79 +137,123 @@ class Target_Builtin(Target):
     
 
 class RCTGLPRISM(Target_Builtin):        
-    """A rectangular prism target"""
+    """A rectangular prism target
+    
+    :param phys_shape: (length, width, height) of the prism in microns
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
+    """
 
-    def __init__(self, phy_shape, **kwargs):
-        """
-        Initialize the rectangular prism.
-        
-        Arguments:
-        phys_shape: 3-tuple defining the the physical shape of the prism in microns
-        
-        **kwargs are passed to Target
-        """
-        Target_Builtin.__init__(self, phy_shape, **kwargs)
-        self.directive='RCTGLPRSM'
-        self.N=phy_shape[0]*phy_shape[1]*phy_shape[2]
-        #self.d=0.015624983
+    def __init__(self, phys_shape, d=None, material=None, folder=None):
+
+        Target_Builtin.__init__(self, 'RCTGLPRSM', d=d, material=material, folder=folder)
+
+        self.phys_shape = phys_shape
+        d_shape = self.d_shape
+        self.sh_param = d_shape       
+        self.N=d_shape[0] * d_shape[1] * d_shape[2]
 
 
 class CYLNDRCAP(Target_Builtin):
-    """A target cylinder with hemispherical endcaps
+    """
+    Homogeneous, isotropic finite cylinder with hemispherical endcaps.
 
     :param length: the length of the cylinder in microns (not including endcaps)
-    :param rad: the radius of the cylinder    
-    :param **kwargs: are passed to :class:`Target`    
+    :param radius: the radius of the cylinder    
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
 
     Total height of the structureis length+2*rad
     
     """
-    
 
+    def __init__(self, length, radius,d=None, material=None, folder=None):
 
-    def __init__(self, length, radius, **kwargs):
-        Target_Builtin.__init__(self, np.asarray([length, radius*2, radius*2]), **kwargs)
-        
-        self.directive='CYLNDRCAP'
-        
-        Vcyl=self.d_shape[0]*(np.pi*(self.d_shape[1]/2)**2)
-        Vsph=4/3*np.pi*(self.d_shape[1]/2)**3
-        self.N=int(Vcyl+Vsph)
         self.length=length
         self.radius=radius
+
+        Target_Builtin.__init__(self, 'CYLNDRCAP', d=d, material=material, folder=folder)
+
+        self.phys_shape = np.array((2*radius, 2*radius, 2*(length+radius)))
+        d_shape = self.d_shape
+        self.sh_param = (int(round(self.length/self.d)),
+                         int(roud(2 * self.radius/self.d)),
+                         0)
+
+        Vcyl=d_shape[0]*(np.pi*(d_shape[1]/2)**2)
+        Vsph=4/3*np.pi*(d_shape[1]/2)**3
+        self.N=int(Vcyl+Vsph)
         
 
 class ELLIPSOID(Target_Builtin):        
     """
     An Ellipsoid target
 
-    :param phys_shape: 3-tuple giving the lengths of the three semi-axes
-    :param **kwargs: are passed to Target
+    :param semiaxes: 3-tuple giving the lengths of the three semiaxes
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
     """
     
-    def __init__(self, phys_shape, **kwargs):        
-        Target_Builtin.__init__(self, np.asarray(phys_shape)*2, **kwargs)
-        self.directive='ELLIPSOID'
+    def __init__(self, semiaxes, d=None, material=None, folder=None):
+                
+        Target_Builtin.__init__(self, 'ELLIPSOID', d=d, material=material, folder=folder)
+        self.phys_shape = 2*np.array(semiaxes)
+        self.sh_param = self.d_shape
         self.N=int(4/3*np.pi*(self.d_shape.prod()/8))
 
+class Sphere(ELLIPSOID):  
+    """
+    A Sphere target.
+
+    :param radius: the radius of the sphere
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
+    """      
+    def __init__(self, radius, d=None, material=None, folder=None):
+        ELLIPSOID.__init__(self, (radius,)*3, d=d, material=material, folder=folder)
+
+
 class CYLINDER(Target_Builtin):
-    """A target cylinder with hemispherical endcaps
-    
+    """
+    Homogeneous, isotropic finite cylinder    
+
     :param length: the length of the cylinder in microns (not including endcaps)
-    :param rad: the radius of the cylinder
-    :param **kwargs: are passed to Target    
+    :param radius: the radius of the cylinder
+    :param orient: the orientation of the cylinder
+                SHPAR3 = 1 for cylinder axis aˆ1 ∥ xˆTF: aˆ1 = (1, 0, 0)TF and aˆ2 = (0, 1, 0)TF;
+                SHPAR3 = 2 for cylinder axis aˆ1 ∥ yˆTF: aˆ1 = (0, 1, 0)TF and aˆ2 = (0, 0, 1)TF;
+                SHPAR3 = 3 for cylinder axis aˆ1 ∥ zˆTF: aˆ1 = (0, 0, 1)TF and aˆ2 = (1, 0, 0)TF in the TF.
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
+
     """
     
-    def __init__(self, length, radius, ori,  **kwargs):        
-        Target_Builtin.__init__(self, np.asarray([length, radius*2, ori]), **kwargs)
-        
-        self.directive='CYLINDER1'
-        self.ori=ori
-        
-        Vcyl=self.d_shape[0]*(np.pi*(self.d_shape[1]/2)**2)
-        self.N=int(Vcyl)
+    def __init__(self, length, radius, orient, d=None, material=None, folder=None):    
+
         self.length=length
         self.radius=radius
+        self.orient=orient
+        
+        Target_Builtin.__init__(self, 'CYLINDER1', d=d, material=material, folder=folder)
+        
+        self.phys_shape = np.array((2*radius, 2*radius, 2*length))
+        self.sh_param = (int(round(length/self.d)),
+                         int(round(2*radius/self.d)),
+                         self.orient)
+
+        d_shape = self.d_shape
+        Vcyl=d_shape[0]*(np.pi*(d_shape[1]/2)**2)
+        self.N=int(Vcyl)
 
     def save_str(self):
         """Return the four line string of target definition for inclusion in the ddscat.par file"""
@@ -211,17 +266,6 @@ class CYLINDER(Target_Builtin):
         
         return out
         
-class Sphere(ELLIPSOID):  
-    """
-    A Sphere target.
-
-    :param radius: the radius of the sphere
-    :param **kwargs: are passed to Target
-
-    """      
-    def __init__(self, radius, **kwargs):
-        phys_shape=[radius]*3
-        ELLIPSOID.__init__(self, phys_shape, **kwargs)
             
 
 ### Arbitrarily Shaped Targets
@@ -231,28 +275,43 @@ class FROM_FILE(Target):
     '''
     Base class for targets of arbitrary geometry.
 
-    :param shape: is in units of number of dipoles
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
+
+    If anisotropic, the “microcrystals” in the target are assumed to be aligned
+    with the principal axes of the dielectric tensor parallel to the TF axes.
     
     '''
-    def __init__(self, d_shape=(0,0,0), **kwargs):
-        Target.__init__(self, d_shape=(0,0,0), **kwargs)
+    def __init__(self, d=None, material=None, folder=None):    
+        Target.__init__(self, 'FROM_FILE', d=d, material=material, folder=folder)
+
         self.descrip=''
-        self.directive='FROM_FILE'
         self.fname='shape.dat'
         self.descriptor='FROM_FILE'
     
-        self.d_shape=np.asarray(d_shape)
-        self.grid=np.zeros(tuple(d_shape)+(3,), dtype=int)
-        self.refresh_N()
+        self.grid=np.zeros((0,0,0,3), dtype=int)
+
         self.a1=np.array([1,0,0])
         self.a2=np.array([0,1,0])
         self.rel_d=np.array([1,1,1])
-        self.origin=self.d_shape/2           
+        self.origin=np.array((0,0,0))           
+
+    @property
+    def d_shape(self):
+        return np.array(self.grid.shape[:3])
     
-    def refresh_N(self):
-        """Update the number of dipoles"""
+    @property
+    def N(self):
+        """The number of dipoles"""
         flat = self.grid.sum(3).astype(np.bool)        
-        self.N = flat.sum()
+        return flat.sum()
+        
+#    def refresh_N(self):
+#        """Update the number of dipoles"""
+#        flat = self.grid.sum(3).astype(np.bool)        
+#        self.N = flat.sum()
     
     def write(self):
         """Write the shape file."""
@@ -297,40 +356,106 @@ class Iso_FROM_FILE(FROM_FILE):
     '''
     Base class for targets of arbitrary geometry with isotropic materials.
 
-    :param shape: is in units of number of dipoles
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
     
     '''
-    def __init__(self, d_shape=(0,0,0), **kwargs):
-        Target.__init__(self, d_shape=(0,0,0), **kwargs)
-        self.grid=np.zeros(d_shape, dtype=int)
+
+    def __init__(self, d=None, material=None, folder=None):    
+        FROM_FILE.__init__(self, d=d, material=material, folder=folder)
+
+        self.grid=np.zeros((0,0,0), dtype=int)
 
 
+def triple(func):
+    """
+    Decorator to turn a function returning only one value into one that returns
+    a 3-tuple of that value.
+    """
+    
+    def triple_func(*args):
+        val =func(*args)
+        return (val,)*3
+        
+    return triple_func
+
+def index_space(func, d, offset):
+    """
+    Take a function that accepts coordinates in physical units and make it
+    accept units in dipole space.
+
+    :param func: a function that accepts three arguments (x,y,z) in um.
+    :param d: the dipole spacing.
+    :param offset: an offset, in dipole units.
+    """
+
+    def index_func(i,j,k):
+        pt = np.array((i,j,k)) * d + offset
+        return func(pt[0], pt[1], pt[2])
+
+    return index_func
+    
+
+def Target_fromfunction(func, pt1, pt2, origin=None, d=None, material=None, folder=None):
+    """
+    Generate a target from a function.
+    
+    :param func: The generating function. Returns integers corresponding to material
+                 index when evaluated at each point in the target volume
+    :param pt1: One corner of the target volume, (xmin, ymin, zmin), in um.
+    :param pt2: The opposite corner of the target volume, (xmax, ymax, zmax), in um.
+    :param origin: The origin of the target (in um)
+    The shape, in units of dipoles, of the 
+    
+    """
+
+    pt1=np.array(pt1)
+    pt2=np.array(pt2)
+    
+    if origin:
+        origin=np.array(origin)
+    else:
+        origin = 0.5 * (pt1+pt2)
+
+    val = func(origin)
+    
+    target = FROM_FILE(d=d, material=material, folder=folder)        
+    
+    target.phys_shape = pt2 - pt1
+
+    d_shape = np.ceil((pt2-pt1)/target.d).astype(int)
+    d_pt1 = np.around(pt1/target.d).astype(int)
+    target.
+    
+    
 class Ellipsoid_FF(Iso_FROM_FILE):
     """
     Build an ellipsoidal target to be loaded from file
+
+    :param semiaxes: is the length of the three semi-major axes in physical units
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
     """
 
-    def __init__(self, phys_shape, d=None, **kwargs):
+    def __init__(self, semiaxes, d=None, material=None, folder=None):
         """
         Create a new Ellipsoid Target
         
-        phys_shape is the length of the three semi-major axes in physical units
         """
-        if d is None:
-            d=default_d
-        d_shape=np.int16(np.array(phys_shape) *2/d)
-        Iso_FROM_FILE.__init__(self, d_shape, **kwargs)
+        Iso_FROM_FILE.__init__(self, d=d, material=material, folder=folder)
 
-        #self.phys_shape=phys_shape
-
+        self.phys_shape = 2 *np.array(semiaxes)
         self.descriptor='Ellipsoid_FF (%f, %f, %f, %f)'%(tuple(self.phys_shape)+(self.d,))            
         
-        (a,b,c) = tuple(d_shape)
+        (a,b,c) = tuple(self.d_shape)
         xx,yy,zz=np.mgrid[-a:a, -b:b, -c:c] 
         dist=(xx/a)**2 + (yy/b)**2 + (zz/c)**2
 
         self.grid = (dist<1).astype(int)
-        self.refresh_N()
 
 class Helix(Iso_FROM_FILE):
     """
@@ -342,30 +467,30 @@ class Helix(Iso_FROM_FILE):
     :param pitch: the helix pitch, um/turn
     :param major_r: the radius of the helix sweep
     :param minor_r: the radius of the wire that is swept to form the helix    
-    :param d: the dipole dipole spacing, if not specified default value is used
-    :param build: if False, delays building the helix until requested. default is True
-    :param **kwargs: are passed to Target
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is 'Au_Palik.txt'
+    :param folder: The target working directory. The default is the CWD.
     
     """
-    def __init__(self, height, pitch, major_r, minor_r, d=None, build=True, **kwargs):
-        if d is None:
-            d=default_d
-        d_shape=np.int16(np.asarray([height+2*minor_r, 2*(major_r+minor_r), 2*(major_r+minor_r)])/d)
-        d_shape+=1
-        Iso_FROM_FILE.__init__(self, d_shape, **kwargs)
+    def __init__(self, height, pitch, major_r, minor_r, d=None, material=None, folder=None):
+
+        Iso_FROM_FILE.__init__(self, d=d, material=material, folder=folder)
 
         self.height=height
         self.pitch=pitch
         self.major_r=major_r
         self.minor_r=minor_r
-        self.d=d
 
-        if build:
-            self.build_helix()
-        else:
-            self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
+        self._build_helix()
 
-    def build_helix(self):
+    def _build_helix(self):
+
+        d_shape=(np.asarray([height+2*minor_r,
+                            2*(major_r+minor_r),
+                            2*(major_r+minor_r)])/self.d).astype(np.int16)
+        d_shape+=1
+        self.grid=np.zeros(d_shape, dtype=int)
 
         self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
         
@@ -397,9 +522,9 @@ class Helix(Iso_FROM_FILE):
             else:
                 return 0
                 
-        for i in range(self.d_shape[0]):
-            for j in range(self.d_shape[1]):
-                for k in range(self.d_shape[2]):
+        for i in range(d_shape[0]):
+            for j in range(d_shape[1]):
+                for k in range(d_shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
 
         self.refresh_N()

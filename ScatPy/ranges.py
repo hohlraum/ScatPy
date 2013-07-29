@@ -130,7 +130,7 @@ class Scat_Range():
         split = string.split()
         return cls(float(split[0]), float(split[1]), float(split[2]), int(split[3]))
 
-class Scat_1dPBC_Range():
+class Scat_Range_1dPBC():
     '''
     A specialist range used for specifying scattering cones for 1D periodic targets.
 
@@ -156,16 +156,16 @@ class Scat_1dPBC_Range():
     @classmethod
     def fromstring(cls, string):
         """
-        Create a new Scat_Range based on a string of the form found in DDSCAT.par
+        Create a new Scat_Range_1dPBC based on a string of the form found in DDSCAT.par
         """
 
         split = string.split()
         return cls(float(split[0]), float(split[1]), float(split[2]), int(split[3]))
 
 
-class Scat_2dPBC_Range():
+class Scat_Range_2dPBC():
     '''
-    A specialist range used for specifying scattering cones for 1D periodic targets.
+    A specialist range used for specifying scattering diffraction order for 2D periodic targets.
 
     :param orderM: The scattering cone.
     :param orderN: The scattering cone.
@@ -184,7 +184,7 @@ class Scat_2dPBC_Range():
     @classmethod
     def fromstring(cls, string):
         """
-        Create a new Scat_2dPBC_Range based on a string of the form found in DDSCAT.par
+        Create a new Scat_Range_2dPBC based on a string of the form found in DDSCAT.par
         """
 
         split = string.split()

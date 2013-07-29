@@ -93,6 +93,90 @@ def build_ddscat_par(settings, target):
     return out
 
 
+def _parseline(line):
+    """
+    Process a line from the DDSCAT file.close
+    :param line: The input string to process
+    :returns: A string with extraneous characters removed
+    
+    Ignores any characters after a '='
+    Removes quote characters         
+    """
+    
+    # Strip characters after =
+    line = line[:line.find('=')]
+
+    # Remove ' and "
+    line = line.translate(None, '\'\"')    
+    
+    # Remove leading and trailing whitespace
+    line = line.strip()
+
+
+
+def read(folder=None, fname=None):
+    """
+    Reads a .par file and returns a DDscat object.
+    
+    """
+
+    if folder is None:
+        folder = '.'
+    
+    if fname is None:
+        fname = 'ddscat.par'
+        
+    f = open(os.path.join(folder, fname), 'Ur')
+    lines = [_parseline(l) for l in f.readlines()]
+    f.close()
+
+    #Process target
+    directive = lines[10] 
+    sh_param = tuple(map(int, lines[11].split))
+    n_mat = int(lines[12])
+    material = lines[13: 12+n_mat]
+    target = targets.Target(directive, sh_param, material=material)
+    del lines[9 : 13+n_mat]    
+    
+    
+    settings = core.Settings()    
+    settings.CMDTRQ = True if lines[2].upper == 'DOTORQ' else False 
+    settings.CMDSOL = lines[3]
+    settings.CMDFFT = lines[4]
+    settings.CALPHA = lines[5]
+    settings.CBINFLAG = lines[6]
+
+    settings.InitialMalloc = np.array(map(int, lines[8].split()))
+    settings.NRFLD = True if int(lines[10]) else False
+    settings.NRFLD_EXT = np.array(map(float, lines[11]))
+
+    settings.TOL = float(lines[13])
+    settings.MXITER = int(lines[15])
+    settings.GAMMA = float(lines[17])
+    settings.ETASCA = float(lines[19])
+    settings.wavelengths = ranges.How_Range.fromstring(lines[21])
+    
+    settings.NAMBIENT = float(lines[23])
+
+    settings.scale_range = None
+    
+    settings.Epol = utils.str2complexV(lines[27])
+    settings.IORTH = True if int(lines[28])==2 else False
+
+    settings.IWRKSC = True if int(lines[30]) else False
+    
+    settings.beta = ranges.Lin_Range.fromstring(lines[32])
+    settings.theta = ranges.Lin_Range.rofmstring(lines[33])
+    settings.phi = ranges.Lin_Range.rofmstring(lines[34])
+
+    settings.initial = map(int, lines[36].split())
+
+    settings.S_INDICES = map(int, lines[39].split())
+    
+    settings.CMDFRM = lines[41]
+    n_scat= int(lines[42])
+    settings.scat_planes = [ranges.Scat_Range.fromstring(l) for l in lines[43:43+n_scat]]
+    
 def read_Target_FROM_FILE(folder=None, fname=None, material=None):
 
     """

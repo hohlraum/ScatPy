@@ -129,3 +129,63 @@ class Scat_Range():
 
         split = string.split()
         return cls(float(split[0]), float(split[1]), float(split[2]), int(split[3]))
+
+class Scat_1dPBC_Range():
+    '''
+    A specialist range used for specifying scattering cones for 1D periodic targets.
+
+    :param order: The scattering cone.
+    :param zeta_min: The smallest value of zeta.
+    :param zeta_max: The largest value of zeta.
+    :param d_zeta: The zeta stepsize.
+
+    Cannot yet be used as an iterator    
+    '''
+    def __init__(self, order, zeta_min, zeta_max, d_zeta):
+
+        self.order=order
+        self.zeta_min=zeta_min
+        self.zeta_max=zeta_max
+        self.d_zeta=d_zeta
+
+    def __str__(self):
+        """ A string describing the range """
+        return '%f  %f  %f  %s'%(self.order, self.zeta_min, self.zeta_max, self.d_zeta)
+
+
+    @classmethod
+    def fromstring(cls, string):
+        """
+        Create a new Scat_Range based on a string of the form found in DDSCAT.par
+        """
+
+        split = string.split()
+        return cls(float(split[0]), float(split[1]), float(split[2]), int(split[3]))
+
+
+class Scat_2dPBC_Range():
+    '''
+    A specialist range used for specifying scattering cones for 1D periodic targets.
+
+    :param orderM: The scattering cone.
+    :param orderN: The scattering cone.
+
+    Cannot yet be used as an iterator    
+    '''
+    def __init__(self, orderM, orderN):
+
+        self.orderM=orderM
+        self.orderN=orderN
+
+    def __str__(self):
+        """ A string describing the range """
+        return '%d  %d'%(self.orderM, self.orderN)
+
+    @classmethod
+    def fromstring(cls, string):
+        """
+        Create a new Scat_2dPBC_Range based on a string of the form found in DDSCAT.par
+        """
+
+        split = string.split()
+        return cls(float(split[0]), float(split[1]))

@@ -179,7 +179,7 @@ def resolve_profile(fname):
     """
     Resolve the absolute file name of the requested profile file.
 
-    :param fname: The ame of the file to find
+    :param fname: The name of the file to find
     :returns: Absolute path to the file. None if not found.    
     
     The search scheme is to first look for the file in the CWD, followed by
@@ -197,8 +197,7 @@ def resolve_profile(fname):
         else:
             full_name = None
 
-    if full_name is None:
-        raise(IOError('Could not find configuration profile'))
+    return full_name
 
 
 def compress_files(folder=None, recurse=False):

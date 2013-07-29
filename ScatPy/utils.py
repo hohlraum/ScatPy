@@ -14,8 +14,7 @@ import zipfile
 
 from numpy.linalg import norm
 
-from core import (pol_cR, pol_cL, pol_lH, pol_lV)
-
+import core
 
 def gauss(x, sigma):
     
@@ -78,13 +77,13 @@ def str2pol(s):
 
     s=s.lower()
     if s=='cl':
-        return pol_cL
+        return core.pol_cL
     elif s=='cr':
-        return pol_cR
+        return core.pol_cR
     elif s=='lh':
-        return pol_lH    
+        return core.pol_lH    
     elif s=='lv':
-        return pol_lV
+        return core.pol_lV
     else:
         raise(ValueError, 'Unknown polarization string %s'%s)        
 

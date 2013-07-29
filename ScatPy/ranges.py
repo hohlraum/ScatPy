@@ -62,7 +62,14 @@ class How_Range():
         self.current+=1
         return self.table[self.current-1]
 
-    
+    @classmethod
+    def fromstring(cls, string):
+        """
+        Create a new How_Range based on a string of the form found in DDSCAT.par
+        """
+
+        split = string.split()
+        return cls(float(split[0]), float(split[1]), int(split[2]), split[3])
 
 class Lin_Range(How_Range):
     """
@@ -80,6 +87,15 @@ class Lin_Range(How_Range):
     def __str__(self):
         """ A string describing the range """
         return '%f  %f  %d'%(self.first, self.last, self.num)
+
+    @classmethod
+    def fromstring(cls, string):
+        """
+        Create a new Lin_Range based on a string of the form found in DDSCAT.par
+        """
+
+        split = string.split()
+        return cls(float(split[0]), float(split[1]), int(split[2]))
 
      
 class Scat_Range():
@@ -105,3 +121,11 @@ class Scat_Range():
         return '%f  %f  %f  %s'%(self.phi, self.theta_min, self.theta_max, self.dtheta)
 
 
+    @classmethod
+    def fromstring(cls, string):
+        """
+        Create a new Scat_Range based on a string of the form found in DDSCAT.par
+        """
+
+        split = string.split()
+        return cls(float(split[0]), float(split[1]), float(split[2]), int(split[3]))

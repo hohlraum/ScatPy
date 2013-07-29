@@ -33,7 +33,8 @@ class Target(object):
     :param folder: The target working directory. The default is the CWD.
 
     This class must be subclassed to be useful. In particular, derived classes
-    must provide the following attributes:
+    *must* provide the following attributes:
+    * N: the number of dipoles
     * sh_param: The three values of the SHPAR definition used by DDSCAT 
     * phys_shape: The x,y,z dimensions of the target in um
 
@@ -135,6 +136,14 @@ class Target_Builtin(Target):
     def __init__(self, *args, **kwargs):
         Target.__init__(self, *args, **kwargs)
     
+
+class Periodic1D(Target):
+    """Base class for 1D periodic targets"""
+    pass
+
+class Periodic2D(Target):
+    """Base class for 2D periodic targets"""
+    pass
 
 class RCTGLPRISM(Target_Builtin):        
     """A rectangular prism target
@@ -361,6 +370,9 @@ class Iso_FROM_FILE(FROM_FILE):
                      file(s) to use for the target. Default is 'Au_Palik.txt'
     :param folder: The target working directory. The default is the CWD.
     
+    The major difference is that the grid in this case has only one value
+    at each dipole.    
+    
     '''
 
     def __init__(self, d=None, material=None, folder=None):    
@@ -427,7 +439,8 @@ def Target_fromfunction(func, pt1, pt2, origin=None, d=None, material=None, fold
 
     d_shape = np.ceil((pt2-pt1)/target.d).astype(int)
     d_pt1 = np.around(pt1/target.d).astype(int)
-    target.
+
+    grid = np.fromfunction(index_func(func, d, ), d_shape)
     
     
 class Ellipsoid_FF(Iso_FROM_FILE):

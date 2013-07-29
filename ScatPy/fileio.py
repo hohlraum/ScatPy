@@ -37,7 +37,7 @@ def build_ddscat_par(settings, target):
     out+='**** Initial Memory Allocation ****'+'\n'
     out+=settings.InitialMalloc.__str__()[1:-1]+'\n'
     
-    out+=target.save_str()#Target def goes here
+    out+=target.save_str() #Target defst goes here
     
     out+='**** Additional Nearfield calculation? ****\n'
     out+='1\n' if settings.NRFLD else '0\n'
@@ -138,15 +138,15 @@ def read(folder=None, fname=None):
     lines = [_parseline(l) for l in f.readlines()]
     f.close()
 
-    #Process target
+    # Process target
     directive = lines[10] 
-    sh_param = tuple(map(int, lines[11].split))
+    sh_param = tuple(map(int, lines[11].split()))
     n_mat = int(lines[12])
     material = lines[13: 12+n_mat]
     target = targets.Target(directive, sh_param, material=material)
     del lines[9 : 13+n_mat]    
     
-    
+    # Process settings
     settings = core.Settings()    
     settings.CMDTRQ = True if lines[2].upper == 'DOTORQ' else False 
     settings.CMDSOL = lines[3]
@@ -156,7 +156,7 @@ def read(folder=None, fname=None):
 
     settings.InitialMalloc = np.array(map(int, lines[8].split()))
     settings.NRFLD = True if int(lines[10]) else False
-    settings.NRFLD_EXT = np.array(map(float, lines[11]))
+    settings.NRFLD_EXT = np.array(map(float, lines[11].split()[:6]))
 
     settings.TOL = float(lines[13])
     settings.MXITER = int(lines[15])

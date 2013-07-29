@@ -8,11 +8,13 @@ import subprocess
 import os
 import os.path
 import time
+import numpy as np
+import posixpath
 
+import core
 import utils
 import ranges
 import targets
-import posixpath
 
 def build_ddscat_par(settings, target):
     '''
@@ -99,12 +101,18 @@ def _parseline(line):
     :param line: The input string to process
     :returns: A string with extraneous characters removed
     
-    Ignores any characters after a '='
+    Ignores any characters after a '=' or '!'
     Removes quote characters         
     """
     
-    # Strip characters after =
-    line = line[:line.find('=')]
+    # Strip characters after = or '!'
+    pts=[]
+    for c in '=!':
+        if line.find(c) != -1:
+            pts.append(line.find(c))
+    
+    if pts:
+        line = line[:min(pts)]
 
     # Remove ' and "
     line = line.translate(None, '\'\"')    
@@ -112,7 +120,7 @@ def _parseline(line):
     # Remove leading and trailing whitespace
     line = line.strip()
 
-
+    return line
 
 def read(folder=None, fname=None):
     """

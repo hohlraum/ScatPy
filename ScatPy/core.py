@@ -11,6 +11,7 @@ import os
 import os.path
 import posixpath
 import copy
+import pdb
 
 import targets
 import results
@@ -34,7 +35,7 @@ pol_lV=np.array([0, 0+0j, 1+0j])
 #pol_lV=np.array([0, 0+0j, 1+0j])    
 
 
-class Settings():
+class Settings(object):
     '''
     DDSCAT execution parameters
     
@@ -43,81 +44,179 @@ class Settings():
    
     '''
 
-    def __init__(self, **kwargs):        
-        #: Either do or skip torque calculations (True:'DOTORQ', False:'NOTORQ')
-        self.CMDTRQ= False 
+    #: Either do or skip torque calculations (True:'DOTORQ', False:'NOTORQ')
+    CMDTRQ= False 
 
-        #: Solution method (PBCGS2, PBCGST, GPBICG, PETRKP, QMRCCG) 
-        self.CMDSOL='PBCGS2' #: = CMDSOL*6 (PBCGS2, PBCGST, GPBICG, PETRKP, QMRCCG) -- 
+    #: Solution method (PBCGS2, PBCGST, GPBICG, PETRKP, QMRCCG) 
+    CMDSOL='PBCGS2' #: = CMDSOL*6 (PBCGS2, PBCGST, GPBICG, PETRKP, QMRCCG) -- 
 
-        #: FFT method (GPFAFT, FFTMKL)
-        self.CMDFFT='GPFAFT'
+    #: FFT method (GPFAFT, FFTMKL)
+    CMDFFT='GPFAFT'
 
-        #: Prescription for polarizabilities (GKDLDR, LATTDR)
-        self.CALPHA='GKDLDR'
+    #: Prescription for polarizabilities (GKDLDR, LATTDR)
+    CALPHA='GKDLDR'
 
-        #: Specify binary output
-        self.CBINFLAG='NOTBIN'
+    #: Specify binary output
+    CBINFLAG='NOTBIN'
 
-        #: Initial Memory Allocation
-        self.InitialMalloc=np.array([100,100,100])
+    #: Initial Memory Allocation
+    InitialMalloc=np.array([100,100,100])
 
-        #: Either do or skip nearfield calculations (True, False)
-        self.NRFLD=False 
+    #: Either do or skip nearfield calculations (True, False)
+    NRFLD=False 
+    
+    #: Fractional extension of calculated volume in (-x,+x,-y,+y,-z,+z)
+    NRFLD_EXT=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) 
+
+    #: Error Tolerence. MAX ALLOWED (NORM OF |G>=AC|E>-ACA|X>)/(NORM OF AC|E>)    
+    TOL=1.00e-5
+    
+    #: Maximum number of iterations
+    MXITER=600  
+    
+    #: Interaction cutoff parameter for PBC calculations (1e-2 is normal, 3e-3 for greater accuracy)
+    GAMMA=1.00e-2 
+
+    #: Angular resolution for calculation of <cos>, etc. (number of angles is proportional to [(3+x)/ETASCA]^2 )
+    ETASCA=0.5
+    
+    #: Specify which output files to write (True: write ".sca" file for each target orient. False: suppress)
+    IWRKSC=True 
+    
+    #: Vacuum wavelengths (first,last,how many,how=LIN,INV,LOG)
+    wavelengths=ranges.How_Range(0.3500, 0.8000, 10, 'LIN') 
+
+    #: Refractive index of ambient medium
+    NAMBIENT=1.000
+    
+    #: Define a range of scales for the particle geometry, None indicates a single size calc
+    scale_range=None 
+
+    #: Define Incident Polarizations (Polarization state e01 (k along x axis)
+    Epol=pol_lV
+    
+    #: Specify whether to calculate orthogonal polarization state (True, False)
+    IORTH=True
+
+    #: Prescribe Target Rotation beta (rotation around a1). (betamin, betamx, nbeta)
+    beta=ranges.Lin_Range(0.,0.,1)
+
+    #: Prescribe Target Rotation theta (angle between a1 and k). (thetamin, tetamx, ntheta)
+    theta=ranges.Lin_Range(0.,0.,1)
+
+    #: Prescribe Target Rotation phi (rotation of a1 around k). (phimin, phimax, nphi)
+    phi=ranges.Lin_Range(0.,0.,1)
+
+    #: Specify first IWAV, IRAD, IORI (0 0 0 to begin fresh)
+    initial=[0,   0,   0]
+
+    #: Select Elements of S_ij Matrix to Print
+    S_INDICES=[11, 12, 13, 14, 21, 22, 31, 41, 44]
+
+    #: Specify reference frame for scattering ('LFRAME', 'TFRAME')
+    CMDFRM='LFRAME'
+
+    #: Specify Scattered Directions
+    scat_planes=[ranges.Scat_Range(0,0,180,5), ranges.Scat_Range(90,0,180,5)]        
+
+    
+    def __init__(self, folder=None, **kwargs):
+
+        # If available, settings come from default.par file       
+        default = utils.resolve_profile('default.par')
+        if default is not None: 
+            kwargs = dict(self._read_values(default).items() + kwargs.items())
+                          
+        for (key, val) in kwargs.iteritems():
+            if hasattr(self, key):
+                setattr(self, key, val)
+            else:
+                raise AttributeError('Settings has no attribute %s' % key)
+
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Create new Settings object with values loaded from the specified file.
+        """
+
+        obj = cls(**cls._read_values(fname))
+
+        return obj
+
+    @classmethod
+    def _read_values(self, fname):
+        """
+        Load the values for a new Settings object from the specified file. 
         
-        #: Fractional extension of calculated volume in (-x,+x,-y,+y,-z,+z)
-        self.NRFLD_EXT=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) 
-
-        #: Error Tolerence. MAX ALLOWED (NORM OF |G>=AC|E>-ACA|X>)/(NORM OF AC|E>)    
-        self.TOL=1.00e-5
+        :param fname: The filename of the ddscat.par file to loadfrom
+        :returns: A dict of the values
+        """
         
-        #: Maximum number of iterations
-        self.MXITER=600  
+        f = open(fname, 'Ur')
+        lines = [fileio._parseline(l) for l in f.readlines()]
+        f.close()
+    
+        # Process target.
+        # This is discarded, only needed to determine line spacing and
+        # style of scattering specifier
+        directive = lines[10] 
+        sh_param = tuple(map(int, lines[11].split()))
+        n_mat = int(lines[12])
+        material = lines[13: 13+n_mat]
+        target = targets.Target(directive, sh_param, material=material)
+        del lines[9 : 13+n_mat]    
         
-        #: Interaction cutoff parameter for PBC calculations (1e-2 is normal, 3e-3 for greater accuracy)
-        self.GAMMA=1.00e-2 
-
-        #: Angular resolution for calculation of <cos>, etc. (number of angles is proportional to [(3+x)/ETASCA]^2 )
-        self.ETASCA=0.5
+        # Process settings
+        settings = {}
+        settings['CMDTRQ'] = True if lines[2].upper == 'DOTORQ' else False 
+        settings['CMDSOL'] = lines[3]
+        settings['CMDFFT'] = lines[4]
+        settings['CALPHA'] = lines[5]
+        settings['CBINFLAG'] = lines[6]
+    
+        settings['InitialMalloc'] = np.array(map(int, lines[8].split()))
+        settings['NRFLD'] = True if int(lines[10]) else False
+        settings['NRFLD_EXT'] = np.array(map(float, lines[11].split()[:6]))
+    
+        settings['TOL'] = float(lines[13])
+        settings['MXITER'] = int(lines[15])
+        settings['GAMMA'] = float(lines[17])
+        settings['ETASCA'] = float(lines[19])
+        settings['wavelengths'] = ranges.How_Range.fromstring(lines[21])
         
-        #: Specify which output files to write (True: write ".sca" file for each target orient. False: suppress)
-        self.IWRKSC=True 
+        settings['NAMBIENT'] = float(lines[23])
+    
+        settings['scale_range'] = None
         
-        #: Vacuum wavelengths (first,last,how many,how=LIN,INV,LOG)
-        self.wavelengths=ranges.How_Range(0.3500, 0.8000, 10, 'LIN') 
-
-        #: Refractive index of ambient medium
-        self.NAMBIENT=1.000
+        settings['Epol'] = utils.str2complexV(lines[27])
+        settings['IORTH'] = True if int(lines[28])==2 else False
+    
+        settings['IWRKSC'] = True if int(lines[30]) else False
         
-        #: Define a range of scales for the particle geometry, None indicates a single size calc
-        self.scale_range=None 
-
-        #: Define Incident Polarizations (Polarization state e01 (k along x axis)
-        self.Epol=pol_lV
+        settings['beta'] = ranges.Lin_Range.fromstring(lines[32])
+        settings['theta'] = ranges.Lin_Range.fromstring(lines[33])
+        settings['phi'] = ranges.Lin_Range.fromstring(lines[34])
+    
+        if lines[36].find(',') != -1:
+            settings['initial'] = map(int, lines[36].split(','))
+        else:
+            settings['initial'] = map(int, lines[36].split())
+    
+        settings['S_INDICES'] = map(int, lines[39].split())
         
-        #: Specify whether to calculate orthogonal polarization state (True, False)
-        self.IORTH=True
+        settings['CMDFRM'] = lines[41]
+        n_scat= int(lines[42])
+        
+        if n_scat > 0:
+            if isinstance(target, targets.Periodic1D):
+                settings['scat_planes'] = [ranges.Scat_Range_1dPBC.fromstring(l) for l in lines[43:43+n_scat]]
+            elif isinstance(target, targets.Periodic2D):
+                settings['scat_planes'] = [ranges.Scat_Range_2dPBC.fromstring(l) for l in lines[43:43+n_scat]]
+            else: # Assume isolated finite target
+                settings['scat_planes'] = [ranges.Scat_Range.fromstring(l) for l in lines[43:43+n_scat]]
+        
+        return settings
 
-        #: Prescribe Target Rotation beta (rotation around a1). (betamin, betamx, nbeta)
-        self.beta=ranges.Lin_Range(0.,0.,1)
-
-        #: Prescribe Target Rotation theta (angle between a1 and k). (thetamin, tetamx, ntheta)
-        self.theta=ranges.Lin_Range(0.,0.,1)
-
-        #: Prescribe Target Rotation phi (rotation of a1 around k). (phimin, phimax, nphi)
-        self.phi=ranges.Lin_Range(0.,0.,1)
-
-        #: Specify first IWAV, IRAD, IORI (0 0 0 to begin fresh)
-        self.initial=[0,   0,   0]
-
-        #: Select Elements of S_ij Matrix to Print
-        self.S_INDICES=[11, 12, 13, 14, 21, 22, 31, 41, 44]
-
-        #: Specify reference frame for scattering ('LFRAME', 'TFRAME')
-        self.CMDFRM='LFRAME'
-
-        #: Specify Scattered Directions
-        self.scat_planes=[ranges.Scat_Range(0,0,180,5), ranges.Scat_Range(90,0,180,5)]        
 
     def copy(self):
         """

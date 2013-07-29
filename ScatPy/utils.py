@@ -175,6 +175,30 @@ def resolve_mat_file(material):
     else:
         return path.normpath(path.join(path.expanduser(config['mat_library']), material))
 
+def resolve_profile(fname):
+    """
+    Resolve the absolute file name of the requested profile file.
+
+    :param fname: The ame of the file to find
+    :returns: Absolute path to the file. None if not found.    
+    
+    The search scheme is to first look for the file in the CWD, followed by
+    the folder ~/.ScatPy/ and finally the subdiretory profiles/ relative to
+    where the utils.py module resides.
+
+    """
+
+    pkg_path = os.path.dirname(__file__)
+
+    for path in ['./', os.path.expanduser('~/.ScatPy/'), os.path.join(pkg_path, 'profiles')]:
+        full_name=os.path.join(path, fname)
+        if os.path.exists(full_name):            
+            break
+        else:
+            full_name = None
+
+    if full_name is None:
+        raise(IOError('Could not find configuration profile'))
 
 
 def compress_files(folder=None, recurse=False):

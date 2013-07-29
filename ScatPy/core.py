@@ -16,6 +16,7 @@ import targets
 import results
 import fileio
 import ranges
+import utils
 
 #: The configuration settings
 config={}
@@ -381,18 +382,11 @@ def set_config(fname=None):
         
     if not fname.endswith('.py'):
         fname += '.py'
-        
-    pkg_path = os.path.dirname(__file__)
 
-    for path in ['./', os.path.expanduser('~/.ScatPy/'), os.path.join(pkg_path, 'profiles')]:
-        full_name=os.path.join(path, fname)
-        if os.path.exists(full_name):            
-            break
-        else:
-            full_name = None
+    full_name = utils.resolve_profile(fname)   
 
     if full_name is None:
-        raise(IOError('Could not find configuration profile'))
+        raise(IOError('Could not find configuration profile'))    
 
     execfile(full_name, config) 
 

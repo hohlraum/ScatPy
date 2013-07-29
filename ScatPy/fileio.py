@@ -174,17 +174,31 @@ def read(folder=None, fname=None):
     settings.IWRKSC = True if int(lines[30]) else False
     
     settings.beta = ranges.Lin_Range.fromstring(lines[32])
-    settings.theta = ranges.Lin_Range.rofmstring(lines[33])
-    settings.phi = ranges.Lin_Range.rofmstring(lines[34])
+    settings.theta = ranges.Lin_Range.fromstring(lines[33])
+    settings.phi = ranges.Lin_Range.fromstring(lines[34])
 
-    settings.initial = map(int, lines[36].split())
+    if lines[36].find(',') != -1:
+        settings.initial = map(int, lines[36].split(','))
+    else:
+        settings.initial = map(int, lines[36].split())
 
     settings.S_INDICES = map(int, lines[39].split())
     
     settings.CMDFRM = lines[41]
     n_scat= int(lines[42])
-    settings.scat_planes = [ranges.Scat_Range.fromstring(l) for l in lines[43:43+n_scat]]
     
+    if n_scat > 0:
+        if isinstance(target, targets.Periodic1D):
+            settings.scat_planes = [ranges.Scat_Range_1dPBC.fromstring(l) for l in lines[43:43+n_scat]]
+        elif isinstance(target, targets.Periodic2D):
+            settings.scat_planes = [ranges.Scat_Range_2dPBC.fromstring(l) for l in lines[43:43+n_scat]]
+        else: # Assume isolated finite target
+            settings.scat_planes = [ranges.Scat_Range.fromstring(l) for l in lines[43:43+n_scat]]
+
+    return core.DDscat(folder=folder, settings=settings, target=target)
+
+  
+  
 def read_Target_FROM_FILE(folder=None, fname=None, material=None):
 
     """

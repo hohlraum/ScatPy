@@ -95,7 +95,7 @@ class Settings():
         self.Epol=pol_lV
         
         #: Specify whether to calculate orthogonal polarization state (True, False)
-        self.IORTH=2
+        self.IORTH=True
 
         #: Prescribe Target Rotation beta (rotation around a1). (betamin, betamx, nbeta)
         self.beta=ranges.Lin_Range(0.,0.,1)
@@ -107,7 +107,7 @@ class Settings():
         self.phi=ranges.Lin_Range(0.,0.,1)
 
         #: Specify first IWAV, IRAD, IORI (0 0 0 to begin fresh)
-        self.first_I=[0,   0,   0]
+        self.initial=[0,   0,   0]
 
         #: Select Elements of S_ij Matrix to Print
         self.S_INDICES=[11, 12, 13, 14, 21, 22, 31, 41, 44]

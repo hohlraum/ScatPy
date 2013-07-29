@@ -63,8 +63,8 @@ def build_ddscat_par(settings, target):
     out+=str(ranges.How_Range(target.aeff, target.aeff, 1))+'\n'
 
     out+='**** Define Incident Polarizations ****\n'
-    out+=utils.str_complex_v(settings.Epol)+'\n'
-    out+=str(settings.IORTH)+'\n'
+    out+=utils.complexV2str(settings.Epol)+'\n'
+    out+='2\n' if settings.IORTH else '1\n'
 
     out+='**** Specify which output files to write ****\n'
     out+= '1\n' if settings.IWRKSC else '0\n'
@@ -75,7 +75,7 @@ def build_ddscat_par(settings, target):
     out+=settings.phi.__str__()+'\n'
 
     out+='**** Specify first IWAV, IRAD, IORI (normally 0 0 0) ****\n'
-    out+=settings.first_I.__str__()[1:-1]+'\n'
+    out+=settings.initial.__str__()[1:-1]+'\n'
 
     out+='**** Select Elements of S_ij Matrix to Print ****'+'\n'
     out+=str(len(settings.S_INDICES))+'\n'

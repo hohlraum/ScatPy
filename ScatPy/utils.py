@@ -67,11 +67,12 @@ def weighted_gauss(c, parser, sigma):
 
 def str2pol(s):
     """
-    Convert a string into a complex trhee vector indicating the polarization
+    Convert a string into a complex three vector indicating the polarization
     
-    This now uses the convention for helicity described used by
-    spectroscopists as found in Barron. 
-    THIS IS THE OPPOSITE OF THAT USED BY THE DDSCAT DOCUMENTATION
+    Attempts to identify polarizations by name: 'cl', 'cr', 'lh', 'lv'
+    
+    The helicity convention used for named polarizations is determined by the
+    values of the polarization constants in core.
     
     """
 
@@ -83,7 +84,7 @@ def str2pol(s):
     elif s=='lh':
         return pol_lH    
     elif s=='lv':
-        return pol_lV        
+        return pol_lV
     else:
         raise(ValueError, 'Unknown polarization string %s'%s)        
 
@@ -111,10 +112,8 @@ def pol2str(v):
     """
     Convert a vector into a string
     
-    This now uses the convention for helicity described used by
-    spectroscopists as found in Barron. 
-    THIS IS THE OPPOSITE OF THAT USED BY THE DDSCAT DOCUMENTATION
-    
+    The helicity convention used for named polarizations is determined by the
+    values of the polarization constants in core.
     """
 
     threshold=1e-6
@@ -134,7 +133,7 @@ def pol2str(v):
 
 
 
-def str_complex_v(v):
+def complexV2str(v):
     '''
     Convert a complex three-vector into a string of three tuples
     '''

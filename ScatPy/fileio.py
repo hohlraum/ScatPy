@@ -94,10 +94,10 @@ def build_ddscat_par(settings, target):
     
     return out
 
-
 def _parseline(line):
     """
-    Process a line from the DDSCAT file.close
+    Process a line from the DDSCAT file.
+
     :param line: The input string to process
     :returns: A string with extraneous characters removed
     
@@ -121,6 +121,7 @@ def _parseline(line):
     line = line.strip()
 
     return line
+
 
 def read(folder=None, fname=None):
     """

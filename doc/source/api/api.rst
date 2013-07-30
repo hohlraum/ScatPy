@@ -11,7 +11,6 @@ ScatPy is divided into several modules:
     targets
     results
     utils
-    config
     fileio
     ranges
 
@@ -19,7 +18,6 @@ Contents
 ========
 .. toctree::
     
-    config_api.rst
     core_api.rst
     fileio_api.rst
     ranges_api.rst

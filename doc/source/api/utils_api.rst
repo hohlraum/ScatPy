@@ -11,7 +11,7 @@ Inheritance Diagram
     :parts: 2
 
 Function Summary
-=============
+================
 .. currentmodule:: ScatPy.utils
 
 .. autosummary::

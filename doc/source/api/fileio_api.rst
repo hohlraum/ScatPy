@@ -14,7 +14,7 @@ Function Summary
     QSub_Batchfile
 
 Function Definitions
-=================
+====================
 .. automodule:: ScatPy.fileio
    :members:
    :undoc-members:

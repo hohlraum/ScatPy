@@ -159,6 +159,21 @@ class Target(object):
 
         return values
 
+    @staticmethod
+    def _calc_size(aeff=None, N=None, d=None):
+        """
+        Takes two of (aeff, d, N) and returns the third.
+        """
+
+        if (aeff and d) and not N:
+            return (aeff/d)**3 * (4/3*np.pi)
+        elif (aeff and N) and not d:
+            return aeff / (N*3/4/np.pi)**(1/3)
+        elif (d and N) and not aeff:
+            return (N*3/4/np.pi)**(1/3) * d            
+        else:
+            raise ValueError('Requires two out of three parameters')
+
 class Target_Builtin(Target):
     """
     Base class for target geometries that are built into DDSCAT
@@ -194,20 +209,6 @@ class Target_Builtin(Target):
         return self._calc_size(N=self.N, d=self.d)           
         #return (self.N*3/4/np.pi)**(1/3)*self.d
 
-    @staticmethod
-    def _calc_size(aeff=None, N=None, d=None):
-        """
-        Takes two of (aeff, d, N) and returns the third.
-        """
-
-        if (aeff and d) and not N:
-            return (aeff/d)**3 * (4/3*np.pi)
-        elif (aeff and N) and not d:
-            return aeff / (N*3/4/np.pi)**(1/3)
-        elif (d and N) and not aeff:
-            return (N*3/4/np.pi)**(1/3) * d            
-        else:
-            raise ValueError('Requires two out of three parameters')
 
 
 class Periodic1D(Target):
@@ -449,14 +450,18 @@ class FROM_FILE(Target):
     it is not considered a builtin target.
     
     '''
-    def __init__(self, d=None, material=None, folder=None):    
-        Target.__init__(self, 'FROM_FILE', d=d, material=material, folder=folder)
+    def __init__(self, grid=None, d=None, material=None, folder=None):    
+        Target.__init__(self, 'FROM_FILE', material=material, folder=folder)
 
-        self.descrip=''
+        self.description=''
         self.fname='shape.dat'
-        self.descriptor='FROM_FILE'
+
+        self.d = d if d else default_d    
     
-        self.grid=np.zeros((0,0,0,3), dtype=int)
+        if grid is not None:
+            self.grid=grid
+        else:
+            self.grid=np.zeros((0,0,0,3), dtype=int)
 
         self.a1=np.array([1,0,0])
         self.a2=np.array([0,1,0])
@@ -481,17 +486,11 @@ class FROM_FILE(Target):
         """The number of dipoles"""
         flat = self.grid.sum(3).astype(np.bool)        
         return flat.sum()
-        
-#    def refresh_N(self):
-#        """Update the number of dipoles"""
-#        flat = self.grid.sum(3).astype(np.bool)        
-#        self.N = flat.sum()
-    
+            
     def write(self):
         """Write the shape file."""
-        self.refresh_N()
         with open(os.path.join(self.folder, self.fname), 'wb') as f:
-            f.write(self.descriptor+'\n') 
+            f.write(self.description+'\n') 
             f.write(str(self.N)+'\n')
             f.write(str(self.a1)[1:-1]+'\n')
             f.write(str(self.a2)[1:-1]+'\n')
@@ -499,32 +498,104 @@ class FROM_FILE(Target):
             f.write(str(self.origin)[1:-1]+'\n')
             f.write('J JX JY JZ ICOMPX,ICOMPY,ICOMPZ'+'\n')
             
-            if len(self.grid.shape) == 3: # Isotropic case
-                grid = np.dstack((self.grid, self.grid, self.grid))
-            else:
-                grid = self.grid
+            table = self._grid2table()
             
-            n=1
-            for (ni, i) in enumerate(grid):
-                for (nj, j) in enumerate(i):
-                    for (nk, k) in enumerate(j):
-                        if any(k):
-                            f.write('%d %d  %d  %d  %d  %d  %d\n' % ((n, ni, nj, nk)+tuple(k)))
-                            n+=1
-    
+            for (n, val) in enumerate(table):
+                f.write('%d %d  %d  %d  %d  %d  %d\n' % ((n+1, )+tuple(val)))
+
+
+    def _grid2table(self):
+        """
+        Returns a table similar to that found in shape.dat
+        """
+
+        if len(self.grid.shape) == 3: # Isotropic case
+            grid = np.dstack((self.grid, self.grid, self.grid))
+        else:
+            grid = self.grid
+
+        table = np.zeros((self.N, 6))
+
+        n=0
+        for (ni, i) in enumerate(grid):
+            for (nj, j) in enumerate(i):
+                for (nk, k) in enumerate(j):
+                    if any(k):
+                        table[n]=np.array((ni, nj, nk)+tuple(k))
+                        n+=1
+
+        return table
+
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Load target definition from the specified .par file.
+        """
+        vals = cls._read_values(fname)
+
+        aeff = vals['aeff'].first
+
+        h,_ = os.path.split(fname)
+        shape_file = os.path.join(h, 'shape.dat') 
+        shape = results.ShapeTable(fname=shape_file)
+        
+        x,y,z = shape['IX']-1, shape['IY']-1, shape['IZ']-1
+        nx, ny, nz = shape['ICOMPx'], shape['ICOMPy'], shape['ICOMPz']
+        ncomp = len(vals['material'])
+
+        shape = (max(x)+1, max(y)+1, max(z)+1, 3)
+        grid = np.zeros(shape, dtype=int)
+        for (comp, n) in enumerate((nx, ny, nz)):
+            comp = np.array((comp,)*len(x))
+            ind = np.ravel_multi_index((x,y,z, comp), shape)
+            grid.put(ind, n)
+
+        d = cls._calc_size(aeff=aeff, N=len(x))
+
+        if ncomp == 1:
+            return Iso_FROM_FILE(grid=grid, d=d, material=vals['material'])
+        else:
+            return cls(grid=grid, d=d, material=vals['material'])
+   
     def VTRconvert(self, outfile=None):
         """Execute VTRConvert to generate a model file viewable in Paraview"""
         Target.VTRconvert(self, outfile)
 
+
     def show(self, *args, **kwargs):
         """
-        Display the shape using mayavi
+        Display the dipoles using Mayavi. 
         
+        Currently does not distinguish between dipoles of different materials,
+        and does not display dipole anisotropy.
         """
-        self.write()
-        fname=os.path.join(self.folder, self.fname)
-        s=results.ShapeTable(fname)
-        s.show(*args, **kwargs)
+        from mayavi import mlab
+
+        max_points=20000
+        #This mask_point business shouldn't be necessary, but the builtin VTK
+        #implementation causes my computer to segfault
+        if 'mask_points' in kwargs:
+            mask_points=kwargs.pop('mask_points')
+        elif self.N>max_points:
+            print 'Warning! Large number of datapoints in target.'
+            print 'Plotting only a subset. Specify mask_points=None or an integer to force skipping value'
+            mask_points=int(self.N/max_points)
+        else:
+            mask_points=None
+        
+        table = self._grid2table()        
+        
+        if mask_points is None:
+            X=table[:, 0]
+            Y=table[:, 1]
+            Z=table[:, 2]
+        else:
+            X=table[:, 0][::mask_points]
+            Y=table[:, 1][::mask_points]
+            Z=table[:, 2][::mask_points]
+            
+        mlab.points3d(X, Y, Z, *args, **kwargs)
+        mlab.show()
 
 class Iso_FROM_FILE(FROM_FILE):
     '''
@@ -540,10 +611,13 @@ class Iso_FROM_FILE(FROM_FILE):
     
     '''
 
-    def __init__(self, d=None, material=None, folder=None):    
-        FROM_FILE.__init__(self, d=d, material=material, folder=folder)
+    def __init__(self, grid=None, d=None, material=None, folder=None):    
 
-        self.grid=np.zeros((0,0,0), dtype=int)
+        if grid is None:
+            grid=np.zeros((0,0,0), dtype=int)
+
+        FROM_FILE.__init__(self, grid, d=d, material=material, folder=folder)
+
 
 
 def triple(func):
@@ -627,7 +701,7 @@ class Ellipsoid_FF(Iso_FROM_FILE):
         Iso_FROM_FILE.__init__(self, d=d, material=material, folder=folder)
 
         self.phys_shape = 2 *np.array(semiaxes)
-        self.descriptor='Ellipsoid_FF (%f, %f, %f, %f)'%(tuple(self.phys_shape)+(self.d,))            
+        self.description='Ellipsoid_FF (%f, %f, %f, %f)'%(tuple(self.phys_shape)+(self.d,))            
         
         (a,b,c) = tuple(self.d_shape)
         xx,yy,zz=np.mgrid[-a:a, -b:b, -c:c] 
@@ -670,7 +744,7 @@ class Helix(Iso_FROM_FILE):
         d_shape+=1
         self.grid=np.zeros(d_shape, dtype=int)
 
-        self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
+        self.description='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
         
         print 'Generating Helix...'
         #the helix dimensions in pixels
@@ -740,11 +814,11 @@ class SpheresHelix(Iso_FROM_FILE):
         if build:
             self.build_helix()
         else:
-            self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
+            self.description='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
 
     def build_helix(self):
 
-        self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
+        self.description='FROM_FILE_Helix (%f, %f, %f, %f, %f)'%(self.height, self.pitch, self.major_r, self.minor_r, self.d)            
         
         print 'Generating Helix...'
         #the helix dimensions in pixels
@@ -815,11 +889,11 @@ class Conical_Helix(Iso_FROM_FILE):
         if build:
             self.build_helix()
         else:
-            self.descriptor='FROM_FILE_Helix (%f, %f, %f, %f, %f, %f)'%(self.height, self.pitch1, self.pitch2, self.major_r, self.minor_r, self.d)            
+            self.description='FROM_FILE_Helix (%f, %f, %f, %f, %f, %f)'%(self.height, self.pitch1, self.pitch2, self.major_r, self.minor_r, self.d)            
 
     def build_helix(self):
 
-        self.descriptor='FROM_FILE_Helix (%f, %f,%f, %f, %f, %f)'%(self.height, self.pitch1, self.pitch2, self.major_r, self.minor_r, self.d)            
+        self.description='FROM_FILE_Helix (%f, %f,%f, %f, %f, %f)'%(self.height, self.pitch1, self.pitch2, self.major_r, self.minor_r, self.d)            
         
         print 'Generating Helix...'
         #the helix dimensions in pixels

@@ -28,7 +28,6 @@ Contents
 
     userguide.rst
     examples.rst
-    api/api.rst
     versions.rst
 
 Installation

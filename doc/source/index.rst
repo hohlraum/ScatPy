@@ -29,6 +29,7 @@ Contents
     userguide.rst
     examples.rst
     versions.rst
+    api/api.rst
 
 Installation
 ============

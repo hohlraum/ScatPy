@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # ScatPy documentation build configuration file, created by
-# sphinx-quickstart on Tue Jul  2 09:54:41 2013.
+# sphinx-quickstart on Tue Jul 30 17:42:43 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
 #
@@ -13,13 +13,22 @@
 
 import sys, os
 
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../'))
+sys.path.append('/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/')
 
-# This is a hack to try to get sphinx to recognize scipy.interpolate
-sys.path.append('/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/scipy/')
+for p in sys.path:
+    print p
+    
+import mock
+ 
+MOCK_MODULES = ['numpy', 'numpy.linalg', 'scipy', 'matplotlib', 'matplotlib.pyplot', 'scipy.interpolate']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
+
 
 # -- General configuration -----------------------------------------------------
 
@@ -28,9 +37,11 @@ sys.path.append('/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.viewcode',
-              'sphinx.ext.graphviz',  'sphinx.ext.inheritance_diagram',
-              'sphinx.ext.autosummary', 'matplotlib.sphinxext.plot_directive']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.viewcode']
+
+#extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.viewcode',
+#              'sphinx.ext.graphviz',  'sphinx.ext.inheritance_diagram',
+#              'sphinx.ext.autosummary', 'matplotlib.sphinxext.plot_directive']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -53,7 +64,7 @@ copyright = u'2013, Andrew G. Mark'
 # built documents.
 #
 # The short X.Y version.
-version = '0.1'
+version = '0.1.0'
 # The full version, including alpha/beta/rc tags.
 release = '0.1.0'
 
@@ -218,7 +229,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'ScatPy', u'ScatPy Documentation',
+    ('index', 'scatpy', u'ScatPy Documentation',
      [u'Andrew G. Mark'], 1)
 ]
 
@@ -232,7 +243,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'ScatPy', u'ScatPy Documentation'
+  ('index', 'ScatPy', u'ScatPy Documentation',
    u'Andrew G. Mark', 'ScatPy', 'One line description of project.',
    'Miscellaneous'),
 ]

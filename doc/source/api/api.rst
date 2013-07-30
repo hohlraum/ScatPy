@@ -7,6 +7,7 @@ ScatPy is divided into several modules:
 .. currentmodule:: ScatPy
 
 .. autosummary::
+
     core
     targets
     results
@@ -16,6 +17,7 @@ ScatPy is divided into several modules:
 
 Contents
 ========
+Hi there.
 .. toctree::
     
     core_api.rst

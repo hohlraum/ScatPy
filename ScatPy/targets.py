@@ -672,15 +672,29 @@ def Target_fromfunction(func, pt1, pt2, origin=None, d=None, material=None, fold
 
     val = func(origin)
     
-    target = FROM_FILE(d=d, material=material, folder=folder)        
+    try:
+        len(val)
+    except TypeError:
+        target = Iso_FROM_FILE(d=d, material=material, folder=folder)        
+    else:      
+        target = FROM_FILE(d=d, material=material, folder=folder)        
+    
+    d=target.d
     
     target.phys_shape = pt2 - pt1
 
     d_shape = np.ceil((pt2-pt1)/target.d).astype(int)
     d_pt1 = np.around(pt1/target.d).astype(int)
 
-    grid = np.fromfunction(index_func(func, d, ), d_shape)
+    target.grid = np.zeros(d_shape)
     
+    for i in range(d_shape[0]):
+        for j in range(d_shape[1]):
+            for k in range(d_shape[2]):
+                p = (np.array([i,j,k])+d_pt1)*d
+                target.grid[i,j,k] = func(p)
+
+    return target    
     
 class Ellipsoid_FF(Iso_FROM_FILE):
     """

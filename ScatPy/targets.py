@@ -11,9 +11,12 @@ import os
 import os.path
 import copy
 import results
+import warnings
+import pdb
 
 import utils
 import fileio
+import ranges
 
 #: Default spacing between dipoles (in um)
 default_d=0.015 
@@ -26,22 +29,24 @@ class Target(object):
 
     :param directive: The type of target (e.g. CYLINDER1, FROM_FILE)
     :param sh_param: The three shape parameters used by DDSCAT to describe the target
-    :param phys_shape: The physical shape of the target (in um)
-    :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
                      file(s) to use for the target. Default is 'Au_Palik.txt'
     :param folder: The target working directory. The default is the CWD.
 
-    This class must be subclassed to be useful. In particular, derived classes
+    As it is this class only creates generic targets, which contain only
+    a directive, sh_param, material and aeff: the bare minimum to be useful.
+
+    Thypically this class will be subclassed to create more useful target objects
+    be useful. Derived classes
     *must* provide the following attributes:
     * N: the number of dipoles
     * sh_param: The three values of the SHPAR definition used by DDSCAT 
     * phys_shape: The x,y,z dimensions of the target in um
-
+    * fromfile: A class method to generate a working object from a ddscat.par file
 
     """
 
-    def __init__(self, directive=None, sh_param=(0,0,0), phys_shape=(0,0,0), d=None, material=None, folder=None, aeff=None):
+    def __init__(self, directive=None, sh_param=(0,0,0), material=None, aeff=None, folder=None):
 
         if (directive is None) or (material is None):
             # If available, settings come from default.par file       
@@ -56,24 +61,21 @@ class Target(object):
                 elif material is None:
                     material = vals['material']
             
-
         self.directive = directive
         self.sh_param = sh_param
-        self.phys_shape = np.array(phys_shape)
         self.material=list(material)
 
+        if aeff is not None:
+            if isinstance(aeff, ranges.How_Range):
+                self.aeff = aeff.first
+            else:
+                self.aeff = aeff
+                
         if folder is None:
             self._folder='.'
         else:
             self._folder=folder
             
-        if d is None:    
-            self.d=default_d #dipole grid spacing in um 
-        else:
-            self.d=d
-
-        self.N=0
-
     def save_str(self):
         """Return the four line string of target definition for the ddscat.par file"""
         out='**** Target Geometry and Composition ****\n'
@@ -119,16 +121,27 @@ class Target(object):
         return copy.deepcopy(self)
 
     @classmethod
-    def fromfile(cls, fname, aeff=None):
+    def fromfile(cls, fname):
         """
-        Load target definition from the specified file.        
-        """
-
-        return cls(**cls._read_values(fname, aeff))
+        Load target definition from the specified file.
         
+        If the target directive matches the name of an existing target class 
+        then object creation is delegated to that class.
+        """
+        t_vals = cls._read_values(fname)
+
+        directive = t_vals['directive']
+        if directive in globals():
+            subclass = globals()[directive]
+            try:
+                return subclass.fromfile(fname)
+            except NotImplementedError:
+                warnings.warn('Class %s has no fromfile method. Returning a generic Target' % subclass)
+
+        return cls(**t_vals)
 
     @classmethod
-    def _read_values(cls, fname, aeff=None):
+    def _read_values(cls, fname):
         """
         Load target definition from the specified file.        
         """
@@ -143,15 +156,30 @@ class Target(object):
         n_mat = int(lines[12])
         values['material'] = lines[13: 13+n_mat]
 
-        if aeff:
-            values['aeff']=aeff
+        values['aeff'] = ranges.How_Range.fromstring(lines[29+n_mat])
 
         return values
 
 class Target_Builtin(Target):
-    """Base class for target geometries that are built into DDSCAT"""
-    def __init__(self, *args, **kwargs):
-        Target.__init__(self, *args, **kwargs)
+    """
+    Base class for target geometries that are built into DDSCAT
+    
+    :param phys_shape: The physical shape of the target (in um)
+    :param d: The dipole density. Default is taken from targets.default_d.        
+    """
+    def __init__(self, directive, phys_shape=(0,0,0), d=None, *args, **kwargs):
+        Target.__init__(self, directive, *args, **kwargs)
+        
+        self.d = d if d else default_d
+        self.phys_shape = phys_shape
+
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Dummy method for loading target from file. Subclasses must implement
+        this themselves.
+        """
+        raise NotImplementedError('Subclasses should implement this method')
         
     @property
     def aeff(self):
@@ -165,9 +193,22 @@ class Target_Builtin(Target):
         The dimensions of the target in dipole units
         """
         return np.around(self.phys_shape/self.d).astype(int)
-        
+  
+    @staticmethod
+    def _calc_size(aeff=None, N=None, d=None):
+        """
+        Takes two of (aeff, d, N) and returns the third.
+        """
 
-    
+        if (aeff and d) and not N:
+            return (aeff/d)**3 * (4/3*np.pi)
+        elif (aeff and N) and not d:
+            return aeff / (N*3/4/np.pi)**(1/3)
+        elif (d and N) and not aeff:
+            return (N*3/4/np.pi)**(1/3) * d            
+        else:
+            raise ValueError('Requires two out of three parameters')
+
 
 class Periodic1D(Target):
     """Base class for 1D periodic targets"""
@@ -177,7 +218,7 @@ class Periodic2D(Target):
     """Base class for 2D periodic targets"""
     pass
 
-class RCTGLPRISM(Target_Builtin):        
+class RCTGLPRSM(Target_Builtin):        
     """A rectangular prism target
     
     :param phys_shape: (length, width, height) of the prism in microns
@@ -194,8 +235,19 @@ class RCTGLPRISM(Target_Builtin):
         self.phys_shape = phys_shape
         d_shape = self.d_shape
         self.sh_param = d_shape       
-        self.N=d_shape[0] * d_shape[1] * d_shape[2]
+        self.N = np.array(d_shape).prod()
 
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Load target definition from the specified file.
+        """
+        vals = cls._read_values(fname)
+        N = np.array(vals['sh_param']).prod()
+        aeff = vals['aeff'].first
+        d = cls._calc_size(aeff=aeff, N=N)
+        phys_shape = np.array(vals['sh_param']) * d
+        return cls(phys_shape, d, vals['material'])
 
 class CYLNDRCAP(Target_Builtin):
     """

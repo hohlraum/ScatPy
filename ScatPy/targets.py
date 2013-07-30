@@ -38,11 +38,11 @@ class Target(object):
     necessary to write a ddscat.par file.
 
     Typically, this class will be subclassed to create more useful and feature-
-    rich targets. Derived classes *must* provide the following attributes:
-    * N: the number of dipoles
-    * sh_param: The three values of the SHPAR definition used by DDSCAT 
-    * phys_shape: The x,y,z dimensions of the target in um
-    * fromfile: A class method to generate a working object from a ddscat.par file
+    rich targets. Derived classes *must* provide the following attributes and
+    methods:
+    * sh_param(): A property that returns the three values of the SHPAR definition used by DDSCAT 
+    * _calc_N(): A static method to calculate the number of dipoles based on the shape parameters
+    * fromfile(): A class method to generate a working object from a ddscat.par file
 
     """
 
@@ -164,14 +164,12 @@ class Target_Builtin(Target):
     """
     Base class for target geometries that are built into DDSCAT
     
-    :param phys_shape: The physical shape of the target (in um)
     :param d: The dipole density. Default is taken from targets.default_d.        
     """
-    def __init__(self, directive, phys_shape=(0,0,0), d=None, *args, **kwargs):
+    def __init__(self, directive, d=None, *args, **kwargs):
         Target.__init__(self, directive, *args, **kwargs)
         
         self.d = d if d else default_d
-        self.phys_shape = phys_shape
 
     @classmethod
     def fromfile(cls, fname):
@@ -185,19 +183,18 @@ class Target_Builtin(Target):
         raise NotImplementedError('Subclasses should implement this method')
         
     @property
+    def N(self):
+        """Calculate the numner of dipoles in the target"""
+    
+        return self._calc_N(self.sh_param)
+        
+    @property
     def aeff(self):
         """Calculate the effective diameter of the target"""
-        
+    
         return self._calc_size(N=self.N, d=self.d)           
         #return (self.N*3/4/np.pi)**(1/3)*self.d
 
-    @property
-    def d_shape(self):
-        """
-        The dimensions of the target in dipole units
-        """
-        return np.around(self.phys_shape/self.d).astype(int)
-  
     @staticmethod
     def _calc_size(aeff=None, N=None, d=None):
         """
@@ -235,11 +232,13 @@ class RCTGLPRSM(Target_Builtin):
     def __init__(self, phys_shape, d=None, material=None, folder=None):
 
         Target_Builtin.__init__(self, 'RCTGLPRSM', d=d, material=material, folder=folder)
-
         self.phys_shape = phys_shape
-        d_shape = self.d_shape
-        self.sh_param = d_shape       
-        self.N = self._calc_N(self.sh_param)
+
+    @property
+    def sh_param(self):
+        """Calculate the shape parameters based on the physical shape"""
+        
+        return np.around(self.phys_shape/self.d).astype(int)
 
     @staticmethod
     def _calc_N(sh_param):
@@ -278,17 +277,17 @@ class CYLNDRCAP(Target_Builtin):
 
     def __init__(self, length, radius, d=None, material=None, folder=None):
 
+        Target_Builtin.__init__(self, 'CYLNDRCAP', d=d, material=material, folder=folder)
         self.length=length
         self.radius=radius
 
-        Target_Builtin.__init__(self, 'CYLNDRCAP', d=d, material=material, folder=folder)
-
-        self.phys_shape = np.array((2*radius, 2*radius, 2*(length+radius)))
+    @property
+    def sh_param(self):
+        """Calculate the shape parameters"""
         self.sh_param = (int(round(self.length/self.d)),
                          int(round(2 * self.radius/self.d)),
                          0)
-        self.N=self._calc_N(self.sh_param)
-
+                                 
     @staticmethod
     def _calc_N(sh_param):
         """Calculate the number of dipoles
@@ -330,10 +329,14 @@ class ELLIPSOID(Target_Builtin):
     def __init__(self, semiaxes, d=None, material=None, folder=None):
                 
         Target_Builtin.__init__(self, 'ELLIPSOID', d=d, material=material, folder=folder)
-        self.phys_shape = 2*np.array(semiaxes)
-        self.sh_param = self.d_shape
-        self.N = self._calc_N(self.sh_param)
+        self.semiaxes = np.array(semiaxes)
 
+    @property
+    def sh_param(self):
+        """Calculate the shape parameters"""
+
+        return 2 * np.around(self.semiaxes/self.d).astype(int)
+        
     @staticmethod
     def _calc_N(sh_param):
         """Calculate the number of dipoles
@@ -396,12 +399,13 @@ class CYLINDER(Target_Builtin):
         
         Target_Builtin.__init__(self, 'CYLINDER1', d=d, material=material, folder=folder)
         
-        self.phys_shape = np.array((2*radius, 2*radius, 2*length))
-        self.sh_param = (int(round(length/self.d)),
-                         int(round(2*radius/self.d)),
-                         self.orient)
+    @property
+    def sh_param(self):
+        """Calculate the shape parameters"""
 
-        self.N=self._calc_N(self.sh_param)
+        return (int(round(self.length/self.d)),
+                int(round(2*self.radius/self.d)),
+                          self.orient)
 
     @staticmethod
     def _calc_N(sh_param):

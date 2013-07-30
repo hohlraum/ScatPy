@@ -12,6 +12,7 @@ import os.path
 import posixpath
 import copy
 import pdb
+import inspect
 
 import targets
 import results
@@ -489,10 +490,14 @@ def set_config(fname=None):
     if full_name is None:
         raise(IOError('Could not find configuration profile'))    
 
-    execfile(full_name, config) 
+    execfile(full_name, {} , config)
 
-#    del config['__builtins__']
-    config['file']=full_name
+    # Remove any modules from config
+    for (k,v) in config.items():
+        if inspect.ismodule(v):
+            del config[k]
+        
+    config['profile']=os.path.abspath(full_name)
 
     # Associate the correct path style based on OS
     if config['os'].lower() == 'unix' or config['os'].lower() == 'mac':
@@ -503,7 +508,7 @@ def set_config(fname=None):
         raise ValueError('Unknown OS: %s' % config['os'])
     
 
-# ON importe set the configuration to default
+# ON import set the configuration to default
 set_config(None)
 
 

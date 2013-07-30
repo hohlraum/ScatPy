@@ -183,7 +183,6 @@ class Settings(object):
         settings['wavelengths'] = ranges.How_Range.fromstring(lines[21])
         
         settings['NAMBIENT'] = float(lines[23])
-        ranges.How_Range()
     
         scale = ranges.How_Range.fromstring(lines[25])
         scale.last /= scale.first
@@ -284,7 +283,15 @@ class DDscat(object):
         else:
             self._target=target
             self.target.folder=self._folder
-            
+   
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Create new DDscat object with values loaded from the specified file.
+        """
+        settings = Settings.fromfile(fname)
+        target = targets.Target.fromfile(fname)
+        return cls(settings=settings, target=target)
         
     def __str__(self):
         """
@@ -297,13 +304,7 @@ class DDscat(object):
         """
         Make a copy of this run.
         """
-        return copy.deepcopy(self)
-
-    def write_submit_script(self):
-        """
-        Write a script for submitting the job to SGE via qsub.
-        """        
-            
+        return copy.deepcopy(self)      
                         
     def write(self, *args, **kwargs):
         """Write the .par file and target definitions to file.
@@ -389,7 +390,7 @@ class DDscat(object):
     @property    
     def mkd(self):
         """Calculate m*k*d (Userguide p8)."""
-        m_dat=results.MInTable(self.target.mat_file)
+        m_dat=results.MInTable(self.target.material[0])
         out=[]
         for l in self.settings.wavelengths:
             m=m_dat(l)
@@ -401,7 +402,7 @@ class DDscat(object):
     def alpha(self):
         """Calculate the alpha parameter (Userguide Eqn 8, p8)."""
         N=self.target.N
-        m_dat=results.MInTable(self.target.mat_file)
+        m_dat=results.MInTable(self.target.material[0])
         out=[]
         for l in self.settings.wavelengths:
             m=m_dat(l)
@@ -413,7 +414,7 @@ class DDscat(object):
     def beta(self):
         """Calculateth beta parameter (Userguide Eqn 8, p8)."""
         N=self.target.N
-        m_dat=results.MInTable(self.target.mat_file)
+        m_dat=results.MInTable(self.target.material[0])
         out=[]
         for l in self.settings.wavelengths:
             m=m_dat(l)

@@ -13,10 +13,10 @@ import copy
 import results
 
 import utils
+import fileio
 
 #: Default spacing between dipoles (in um)
 default_d=0.015 
-
 
 class Target(object):
     """
@@ -41,60 +41,47 @@ class Target(object):
 
     """
 
-    def __init__(self, directive, sh_param=(0,0,0), phys_shape=(0,0,0), d=None, material=None, folder=None):
+    def __init__(self, directive=None, sh_param=(0,0,0), phys_shape=(0,0,0), d=None, material=None, folder=None, aeff=None):
+
+        if (directive is None) or (material is None):
+            # If available, settings come from default.par file       
+            default = utils.resolve_profile('default.par')
+            if default is not None: 
+                vals = self._read_values(default)
+                if directive is None:
+                    directive= vals['directive']
+                    sh_param = vals['sh_param']
+                    material = vals['material']
+                    self.aeff = aeff
+                elif material is None:
+                    material = vals['material']
+            
 
         self.directive = directive
         self.sh_param = sh_param
         self.phys_shape = np.array(phys_shape)
+        self.material=list(material)
 
         if folder is None:
             self._folder='.'
         else:
             self._folder=folder
             
-        if material is None:
-            self.mat_file=['Au_Palik.txt']
-        else:
-            self.mat_file=list(material)
-        self.NCOMP = len(material)
-
         if d is None:    
             self.d=default_d #dipole grid spacing in um 
         else:
             self.d=d
-            
-        #self.aeff=0.246186 #How_Range(0.246186, 0.246186, 1, 'LIN')# = aeff (first,last,how many,how=LIN,INV,LOG)
+
         self.N=0
 
-    @property
-    def aeff(self):
-        """Calculate the effective diameter of the target"""
-                    
-        return (self.N*3/4/np.pi)**(1/3)*self.d
-
-    @property
-    def d_shape(self):
-        """
-        The dimensions of the target in dipole units
-        """
-        return np.around(self.phys_shape/self.d).astype(int)
-
-#    @property    
-#    def phys_shape(self):
-#        '''
-#        Returns the size of the bounding box that contains the target (in microns)
-#    
-#        '''
-#        return self.d_shape*self.d
-        
     def save_str(self):
         """Return the four line string of target definition for the ddscat.par file"""
         out='**** Target Geometry and Composition ****\n'
         out+=self.directive+'\n'
-        out+=str(self.SHPAR)[1:-1]+'\n'
-        out+=str(self.NCOMP)+'\n'
-        for i in self.NCOMP:
-            out+='\''+utils.resolve_mat_file(self.mat_file[i])+'\'\n'
+        out+=str(self.sh_param)[1:-1]+'\n'
+        out+=str(len(self.material))+'\n'
+        for mat in self.material:
+            out+='\''+utils.resolve_mat_file(mat)+'\'\n'
         
         return out
 
@@ -131,10 +118,55 @@ class Target(object):
     def copy(self):
         return copy.deepcopy(self)
 
+    @classmethod
+    def fromfile(cls, fname, aeff=None):
+        """
+        Load target definition from the specified file.        
+        """
+
+        return cls(**cls._read_values(fname, aeff))
+        
+
+    @classmethod
+    def _read_values(cls, fname, aeff=None):
+        """
+        Load target definition from the specified file.        
+        """
+
+        f = open(fname, 'Ur')
+        lines = [fileio._parseline(l) for l in f.readlines()]
+        f.close()
+    
+        values = {}
+        values['directive'] = lines[10] 
+        values['sh_param'] = tuple(map(int, lines[11].split()))
+        n_mat = int(lines[12])
+        values['material'] = lines[13: 13+n_mat]
+
+        if aeff:
+            values['aeff']=aeff
+
+        return values
+
 class Target_Builtin(Target):
     """Base class for target geometries that are built into DDSCAT"""
     def __init__(self, *args, **kwargs):
         Target.__init__(self, *args, **kwargs)
+        
+    @property
+    def aeff(self):
+        """Calculate the effective diameter of the target"""
+                    
+        return (self.N*3/4/np.pi)**(1/3)*self.d
+
+    @property
+    def d_shape(self):
+        """
+        The dimensions of the target in dipole units
+        """
+        return np.around(self.phys_shape/self.d).astype(int)
+        
+
     
 
 class Periodic1D(Target):
@@ -180,7 +212,7 @@ class CYLNDRCAP(Target_Builtin):
     
     """
 
-    def __init__(self, length, radius,d=None, material=None, folder=None):
+    def __init__(self, length, radius, d=None, material=None, folder=None):
 
         self.length=length
         self.radius=radius
@@ -262,19 +294,7 @@ class CYLINDER(Target_Builtin):
 
         d_shape = self.d_shape
         Vcyl=d_shape[0]*(np.pi*(d_shape[1]/2)**2)
-        self.N=int(Vcyl)
-
-    def save_str(self):
-        """Return the four line string of target definition for inclusion in the ddscat.par file"""
-        out='**** Target Geometry and Composition ****\n'
-        out+=self.directive+'\n'
-        out+=str(self.d_shape[0:2])[1:-1]+' '+str(self.ori)+'\n'
-        out+=str(self.NCOMP)+'\n'
-        for i in self.NCOMP:
-            out+='\''+utils.resolve_mat_file(self.mat_file[i])+'\'\n'
-        
-        return out
-        
+        self.N=int(Vcyl)        
             
 
 ### Arbitrarily Shaped Targets
@@ -308,7 +328,16 @@ class FROM_FILE(Target):
         self.origin=np.array((0,0,0))           
 
     @property
+    def aeff(self):
+        """Calculate the effective diameter of the target"""
+                    
+        return (self.N*3/4/np.pi)**(1/3)*self.d
+
+    @property
     def d_shape(self):
+        """
+        The dimensions of the target in dipole units
+        """
         return np.array(self.grid.shape[:3])
     
     @property
@@ -754,3 +783,4 @@ def Holify(target, radius, posns=None, num=None, seed=None):
     print grid.sum()
     new_target.N = new_target.grid.sum()
     return new_target
+    

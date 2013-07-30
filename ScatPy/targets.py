@@ -44,7 +44,7 @@ class Target(object):
 
     """
 
-    def __init__(self, directive=None, sh_param=(0,0,0), material=None, aeff=None, folder=None):
+    def __init__(self, directive=None, sh_param=None, material=None, aeff=None, folder=None):
 
         if (directive is None) or (material is None):
             # If available, settings come from default.par file       
@@ -60,8 +60,9 @@ class Target(object):
                     material = vals['material']
             
         self.directive = directive
-        self.sh_param = sh_param
         self.material=list(material)
+        if sh_param:
+            self.sh_param = sh_param
 
         if aeff is not None:
             if isinstance(aeff, ranges.How_Range):

@@ -33,12 +33,12 @@ class Target(object):
                      file(s) to use for the target. Default is 'Au_Palik.txt'
     :param folder: The target working directory. The default is the CWD.
 
-    As it is this class only creates generic targets, which contain only
-    a directive, sh_param, material and aeff: the bare minimum to be useful.
+    As it is, this class only creates generic targets, which contain only
+    a directive, sh_param, material and aeff: the bare minimum to be useful
+    necessary to write a ddscat.par file.
 
-    Thypically this class will be subclassed to create more useful target objects
-    be useful. Derived classes
-    *must* provide the following attributes:
+    Typically, this class will be subclassed to create more useful and feature-
+    rich targets. Derived classes *must* provide the following attributes:
     * N: the number of dipoles
     * sh_param: The three values of the SHPAR definition used by DDSCAT 
     * phys_shape: The x,y,z dimensions of the target in um
@@ -176,16 +176,20 @@ class Target_Builtin(Target):
     @classmethod
     def fromfile(cls, fname):
         """
-        Dummy method for loading target from file. Subclasses must implement
-        this themselves.
+        Dummy method for loading target from file.
+        
+        Subclasses must implement this themselves. The form is to load the 
+        target information from the par file using _read_values(). Then parse
+        those values into the form used by the class's initializer..
         """
         raise NotImplementedError('Subclasses should implement this method')
         
     @property
     def aeff(self):
         """Calculate the effective diameter of the target"""
-                    
-        return (self.N*3/4/np.pi)**(1/3)*self.d
+        
+        return self._calc_size(N=self.N, d=self.d)           
+        #return (self.N*3/4/np.pi)**(1/3)*self.d
 
     @property
     def d_shape(self):
@@ -235,15 +239,23 @@ class RCTGLPRSM(Target_Builtin):
         self.phys_shape = phys_shape
         d_shape = self.d_shape
         self.sh_param = d_shape       
-        self.N = np.array(d_shape).prod()
+        self.N = self._calc_N(self.sh_param)
+
+    @staticmethod
+    def _calc_N(sh_param):
+        """Calculate the number of dipoles
+        
+        :param sh_param: size in dipoles
+        """
+        return np.array(sh_param).prod()        
 
     @classmethod
     def fromfile(cls, fname):
         """
-        Load target definition from the specified file.
+        Load target definition from the specified .par file.
         """
         vals = cls._read_values(fname)
-        N = np.array(vals['sh_param']).prod()
+        N = cls._calc_N(vals['sh_param'])
         aeff = vals['aeff'].first
         d = cls._calc_size(aeff=aeff, N=N)
         phys_shape = np.array(vals['sh_param']) * d
@@ -272,14 +284,36 @@ class CYLNDRCAP(Target_Builtin):
         Target_Builtin.__init__(self, 'CYLNDRCAP', d=d, material=material, folder=folder)
 
         self.phys_shape = np.array((2*radius, 2*radius, 2*(length+radius)))
-        d_shape = self.d_shape
         self.sh_param = (int(round(self.length/self.d)),
-                         int(roud(2 * self.radius/self.d)),
+                         int(round(2 * self.radius/self.d)),
                          0)
+        self.N=self._calc_N(self.sh_param)
 
-        Vcyl=d_shape[0]*(np.pi*(d_shape[1]/2)**2)
-        Vsph=4/3*np.pi*(d_shape[1]/2)**3
-        self.N=int(Vcyl+Vsph)
+    @staticmethod
+    def _calc_N(sh_param):
+        """Calculate the number of dipoles
+        
+        :param sh_param: size in dipoles
+        """
+        length = sh_param[0]
+        diam = sh_param[1]
+        Vcyl=length*(np.pi*(diam/2)**2)
+        Vsph=4/3*np.pi*(diam/2)**3
+        return int(Vcyl+Vsph)        
+    
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Load target definition from the specified .par file.
+        """
+        vals = cls._read_values(fname)
+        sh_param = vals['sh_param']
+        N = cls._calc_N(sh_param)
+        aeff = vals['aeff'].first
+        d = cls._calc_size(aeff=aeff, N=N)
+        phys_shape = np.array(sh_param) * d
+        length , radius = phys_shape[0], phys_shape[1]/2
+        return cls(length, radius, d, vals['material'])
         
 
 class ELLIPSOID(Target_Builtin):        
@@ -298,7 +332,30 @@ class ELLIPSOID(Target_Builtin):
         Target_Builtin.__init__(self, 'ELLIPSOID', d=d, material=material, folder=folder)
         self.phys_shape = 2*np.array(semiaxes)
         self.sh_param = self.d_shape
-        self.N=int(4/3*np.pi*(self.d_shape.prod()/8))
+        self.N = self._calc_N(self.sh_param)
+
+    @staticmethod
+    def _calc_N(sh_param):
+        """Calculate the number of dipoles
+        
+        :param sh_param: size in dipoles
+        """
+
+        return int(4/3*np.pi*(sh_param.prod()/8))
+    
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Load target definition from the specified .par file.
+        """
+        vals = cls._read_values(fname)
+        sh_param = vals['sh_param']
+        N = cls._calc_N(sh_param)
+        aeff = vals['aeff'].first
+        d = cls._calc_size(aeff=aeff, N=N)
+        semiaxes = np.array(sh_param) * d / 2
+        return cls(semiaxes, d, vals['material'])
+
 
 class Sphere(ELLIPSOID):  
     """
@@ -344,9 +401,30 @@ class CYLINDER(Target_Builtin):
                          int(round(2*radius/self.d)),
                          self.orient)
 
-        d_shape = self.d_shape
-        Vcyl=d_shape[0]*(np.pi*(d_shape[1]/2)**2)
-        self.N=int(Vcyl)        
+        self.N=self._calc_N(self.sh_param)
+
+    @staticmethod
+    def _calc_N(sh_param):
+        """Calculate the number of dipoles
+        
+        :param sh_param: size in dipoles
+        """
+        return int(sh_param[0]*(np.pi*(sh_param[1]/2)**2))
+    
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Load target definition from the specified .par file.
+        """
+        vals = cls._read_values(fname)
+        sh_param = vals['sh_param']
+        N = cls._calc_N(sh_param)
+        aeff = vals['aeff'].first
+        d = cls._calc_size(aeff=aeff, N=N)
+        phys_shape = np.array(sh_param) * d
+        length , radius = phys_shape[0], phys_shape[1]*2
+        return cls(length, radius, d, vals['material'])
+        
             
 
 ### Arbitrarily Shaped Targets
@@ -363,6 +441,9 @@ class FROM_FILE(Target):
 
     If anisotropic, the “microcrystals” in the target are assumed to be aligned
     with the principal axes of the dielectric tensor parallel to the TF axes.
+
+    FROM_FILE does not inherit from Target_Builtin so for the purposes of inheritence
+    it is not considered a builtin target.
     
     '''
     def __init__(self, d=None, material=None, folder=None):    

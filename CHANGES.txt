@@ -5,3 +5,5 @@ v0.1.0, 25.07.13 -- Initial Release
 to change the profile on the fly. Profiles are searched for in the CWD, the folder ~/.ScatPy,
 and the package directory.
 -Settings.IORTH is now a boolean: True calculates second polarization state.
+-Default job configurations are now loaded from a file default.par, found in the same
+search path as profiles.

@@ -231,7 +231,8 @@ class DDscat(object):
     
     Loosely a DDscat object includes two parts: a settings file and a target.
     
-    All parameters are optional.
+    All parameters are optional. If they are not specified, DDscat defaults
+    to the settings found in the file default.par.
     :param folder: The subfolder in which to store files.
     :param settings: The :class:`Settings` object for this run.
     :param target: The :class:`targets.Target` for this run. Defaults to a Au sphere.
@@ -269,18 +270,19 @@ class DDscat(object):
             self._folder=folder
         
         if settings is None:
-            self.settings=Settings(folder=self._folder)
+            self.settings=Settings()
+            self.settings.folder=self._folder
         else:
             self.settings=settings.copy()
             self.settings.folder=self._folder
         
         if target is None:
-            self._target=targets.Sphere(0.2, folder=self._folder)
+            self.target = targets.Target()
+            self.target.folder= self._folder
         else:
             self._target=target
             self.target.folder=self._folder
             
-        #self.results=results.Results(folder=self.folder)
         
     def __str__(self):
         """
@@ -466,7 +468,7 @@ def set_config(fname=None):
     Select which configuration profile to use for ScatPy
 
     :param fname: The name of the file that contains the configuration
-                  If None then it try to load the default profile
+                  If None then load the default profile
                   
     Profiles are stored in Python script files.
     

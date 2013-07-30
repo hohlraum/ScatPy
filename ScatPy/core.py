@@ -91,7 +91,7 @@ class Settings(object):
     NAMBIENT=1.000
     
     #: Define a range of scales for the particle geometry, None indicates a single size calc
-    scale_range=None 
+    scale=ranges.How_Range(1, 1, 1) 
 
     #: Define Incident Polarizations (Polarization state e01 (k along x axis)
     Epol=pol_lV
@@ -160,16 +160,13 @@ class Settings(object):
         # Process target.
         # This is discarded, only needed to determine line spacing and
         # style of scattering specifier
-        directive = lines[10] 
-        sh_param = tuple(map(int, lines[11].split()))
         n_mat = int(lines[12])
-        material = lines[13: 13+n_mat]
-        target = targets.Target(directive, sh_param, material=material)
+        target = targets.Target.fromfile(fname)
         del lines[9 : 13+n_mat]    
         
         # Process settings
         settings = {}
-        settings['CMDTRQ'] = True if lines[2].upper == 'DOTORQ' else False 
+        settings['CMDTRQ'] = True if lines[2] == 'DOTORQ' else False 
         settings['CMDSOL'] = lines[3]
         settings['CMDFFT'] = lines[4]
         settings['CALPHA'] = lines[5]
@@ -186,8 +183,12 @@ class Settings(object):
         settings['wavelengths'] = ranges.How_Range.fromstring(lines[21])
         
         settings['NAMBIENT'] = float(lines[23])
+        ranges.How_Range()
     
-        settings['scale_range'] = None
+        scale = ranges.How_Range.fromstring(lines[25])
+        scale.last /= scale.first
+        scale.first = 1.0
+        settings['scale'] = scale
         
         settings['Epol'] = utils.str2complexV(lines[27])
         settings['IORTH'] = True if int(lines[28])==2 else False
@@ -492,7 +493,7 @@ def set_config(fname=None):
 
     execfile(full_name, {} , config)
 
-    # Remove any modules from config
+    # Remove any imported modules from config
     for (k,v) in config.items():
         if inspect.ismodule(v):
             del config[k]

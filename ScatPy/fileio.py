@@ -62,7 +62,10 @@ def build_ddscat_par(settings, target):
     out+=str(settings.NAMBIENT)+'\n'
     
     out+='**** Effective Radii (micron) **** \n'
-    out+=str(ranges.How_Range(target.aeff, target.aeff, 1))+'\n'
+    aeff = settings.scale
+    aeff.first *= target.aeff
+    aeff.last *= target.aeff
+    out+=str(aeff)+'\n'
 
     out+='**** Define Incident Polarizations ****\n'
     out+=utils.complexV2str(settings.Epol)+'\n'

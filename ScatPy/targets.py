@@ -24,8 +24,6 @@ default_d=0.015
 class Target(object):
     """
     The base class for defining DDscat Target geometries.
-    '''
-    Initialize the Target
 
     :param directive: The type of target (e.g. CYLINDER1, FROM_FILE)
     :param sh_param: The three shape parameters used by DDSCAT to describe the target

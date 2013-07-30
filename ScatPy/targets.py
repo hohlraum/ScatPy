@@ -484,7 +484,11 @@ class FROM_FILE(Target):
     @property
     def N(self):
         """The number of dipoles"""
-        flat = self.grid.sum(3).astype(np.bool)        
+        if len(self.grid.shape)==4:
+            flat = self.grid.sum(3).astype(np.bool)        
+        else:
+            flat = self.grid.astype(np.bool)
+            
         return flat.sum()
             
     def write(self):
@@ -510,7 +514,7 @@ class FROM_FILE(Target):
         """
 
         if len(self.grid.shape) == 3: # Isotropic case
-            grid = np.dstack((self.grid, self.grid, self.grid))
+            grid = np.concatenate((self.grid[...,np.newaxis], )*3, axis=3)
         else:
             grid = self.grid
 
@@ -556,7 +560,65 @@ class FROM_FILE(Target):
             return Iso_FROM_FILE(grid=grid, d=d, material=vals['material'])
         else:
             return cls(grid=grid, d=d, material=vals['material'])
-   
+
+    @classmethod
+    def fromfunction(cls, func, pt1, pt2, origin=None, d=None, material=None, folder=None):
+        """
+        Generate a target from a function.
+        
+        :param func: The generating function. Returns integers corresponding to material
+                     index when evaluated at each point in the target volume
+        :param pt1: One corner of the target volume, (xmin, ymin, zmin), in um.
+        :param pt2: The opposite corner of the target volume, (xmax, ymax, zmax), in um.
+        :param origin: The origin of the target (in um)
+        
+        See numpy.fronfunction for details on the function func.        
+        
+        """
+    
+        pt1=np.array(pt1)
+        pt2=np.array(pt2)
+        
+        if origin:
+            origin=np.array(origin)
+        else:
+            origin = 0.5 * (pt1+pt2)
+    
+        val = func(*origin)
+        
+        try:
+            len(val)
+        except TypeError:
+            target = Iso_FROM_FILE(d=d, material=material, folder=folder)        
+        else:      
+            target = FROM_FILE(d=d, material=material, folder=folder)        
+        
+        target.phys_shape = pt2 - pt1
+    
+        d_shape = np.ceil((pt2-pt1)/target.d).astype(int)
+        d_pt1 = np.around(pt1/target.d).astype(int)
+
+        def index_space(func, d, offset):
+            """
+            Take a function that accepts coordinates in physical units and make it
+            accept units in dipole space.
+        
+            :param func: a function that accepts three arguments (x,y,z) in um.
+            :param d: the dipole spacing.
+            :param offset: an offset, in dipole units.
+            """
+
+            def index_func(i,j,k):
+                x,y,z = (i + offset[0])*d , (j + offset[1])*d, (k + offset[2])*d
+                return func(x, y, z)
+        
+            return index_func
+    
+        i_func = index_space(func, target.d, d_pt1)
+        target.grid = np.fromfunction(i_func, d_shape)
+        
+        return target
+
     def VTRconvert(self, outfile=None):
         """Execute VTRConvert to generate a model file viewable in Paraview"""
         Target.VTRconvert(self, outfile)
@@ -632,69 +694,8 @@ def triple(func):
         
     return triple_func
 
-def index_space(func, d, offset):
-    """
-    Take a function that accepts coordinates in physical units and make it
-    accept units in dipole space.
-
-    :param func: a function that accepts three arguments (x,y,z) in um.
-    :param d: the dipole spacing.
-    :param offset: an offset, in dipole units.
-    """
-
-    def index_func(i,j,k):
-        pt = np.array((i,j,k)) * d + offset
-        return func(pt[0], pt[1], pt[2])
-
-    return index_func
     
 
-def Target_fromfunction(func, pt1, pt2, origin=None, d=None, material=None, folder=None):
-    """
-    Generate a target from a function.
-    
-    :param func: The generating function. Returns integers corresponding to material
-                 index when evaluated at each point in the target volume
-    :param pt1: One corner of the target volume, (xmin, ymin, zmin), in um.
-    :param pt2: The opposite corner of the target volume, (xmax, ymax, zmax), in um.
-    :param origin: The origin of the target (in um)
-    The shape, in units of dipoles, of the 
-    
-    """
-
-    pt1=np.array(pt1)
-    pt2=np.array(pt2)
-    
-    if origin:
-        origin=np.array(origin)
-    else:
-        origin = 0.5 * (pt1+pt2)
-
-    val = func(origin)
-    
-    try:
-        len(val)
-    except TypeError:
-        target = Iso_FROM_FILE(d=d, material=material, folder=folder)        
-    else:      
-        target = FROM_FILE(d=d, material=material, folder=folder)        
-    
-    d=target.d
-    
-    target.phys_shape = pt2 - pt1
-
-    d_shape = np.ceil((pt2-pt1)/target.d).astype(int)
-    d_pt1 = np.around(pt1/target.d).astype(int)
-
-    target.grid = np.zeros(d_shape)
-    
-    for i in range(d_shape[0]):
-        for j in range(d_shape[1]):
-            for k in range(d_shape[2]):
-                p = (np.array([i,j,k])+d_pt1)*d
-                target.grid[i,j,k] = func(p)
-
-    return target    
     
 class Ellipsoid_FF(Iso_FROM_FILE):
     """

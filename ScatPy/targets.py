@@ -25,20 +25,22 @@ class Target(object):
     """
     The base class for defining DDscat Target geometries.
 
-    :param directive: The type of target (e.g. CYLINDER1, FROM_FILE)
+    :param directive: The type of target (e.g. 'CYLINDER1', 'FROM_FILE')
     :param sh_param: The three shape parameters used by DDSCAT to describe the target
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
 
-    As it is, this class only creates generic targets, which contain only
-    a directive, sh_param, material and aeff: the bare minimum to be useful
-    necessary to write a ddscat.par file.
+    As it is, this class creates generic targets, which contain only
+    a ``directive``, ``sh_param``, ``material`` and ``aeff``: the bare minimum necessary to
+    write a ddscat.par file. It is intended to provide an interface as close as
+    possible to bare DDSCAT target definitions. It uses dipole units rather than
+    subclasses which should use physical units.
 
     Typically, this class will be subclassed to create more useful and feature-
     rich targets. Derived classes *must* provide the following attributes and
     methods:
-    * sh_param(): A property that returns the three values of the SHPAR definition used by DDSCAT 
+    * sh_param: A property that returns the three values of the SHPAR definition used by DDSCAT 
     * _calc_N(): A static method to calculate the number of dipoles based on the shape parameters
     * fromfile(): A class method to generate a working object from a ddscat.par file
 
@@ -76,7 +78,7 @@ class Target(object):
             self._folder=folder
             
     def save_str(self):
-        """Return the four line string of target definition for the ddscat.par file"""
+        """Return the multi-line target definition string for the ddscat.par file"""
         out='**** Target Geometry and Composition ****\n'
         out+=self.directive+'\n'
         out+=str(self.sh_param)[1:-1]+'\n'
@@ -274,7 +276,7 @@ class RCTGLPRSM(Target_Builtin):
     :param phys_shape: (length, width, height) of the prism in microns
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
     """
 
@@ -285,7 +287,7 @@ class RCTGLPRSM(Target_Builtin):
 
     @property
     def sh_param(self):
-        """Calculate the shape parameters based on the physical shape"""
+        """The shape parameters based on the physical shape"""
         
         return np.around(self.phys_shape/self.d).astype(int)
 
@@ -330,7 +332,7 @@ class CYLNDRCAP(Target_Builtin):
     :param radius: the radius of the cylinder    
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
 
     Total height of the structureis length+2*rad
@@ -384,7 +386,7 @@ class ELLIPSOID(Target_Builtin):
     :param semiaxes: 3-tuple giving the lengths of the three semiaxes
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
     """
     
@@ -429,12 +431,11 @@ class Sphere(ELLIPSOID):
     :param radius: the radius of the sphere
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
     """      
     def __init__(self, radius, d=None, material=None, folder=None):
         ELLIPSOID.__init__(self, (radius,)*3, d=d, material=material, folder=folder)
-
 
 class CYLINDER(Target_Builtin):
     """
@@ -448,7 +449,7 @@ class CYLINDER(Target_Builtin):
                 SHPAR3 = 3 for cylinder axis aˆ1 ∥ zˆTF: aˆ1 = (0, 0, 1)TF and aˆ2 = (1, 0, 0)TF in the TF.
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
 
     """
@@ -502,7 +503,7 @@ class FROM_FILE(Target):
 
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
 
     If anisotropic, the “microcrystals” in the target are assumed to be aligned
@@ -745,7 +746,7 @@ class Iso_FROM_FILE(FROM_FILE):
 
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
     
     The major difference is that the grid in this case has only one value
@@ -784,7 +785,7 @@ class Ellipsoid_FF(Iso_FROM_FILE):
     :param semiaxes: is the length of the three semi-major axes in physical units
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
     """
 
@@ -816,7 +817,7 @@ class Helix(Iso_FROM_FILE):
     :param minor_r: the radius of the wire that is swept to form the helix    
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
-                     file(s) to use for the target. Default is 'Au_Palik.txt'
+                     file(s) to use for the target. Default is taken from default.par.
     :param folder: The target working directory. The default is the CWD.
     
     """
@@ -879,9 +880,9 @@ class Helix(Iso_FROM_FILE):
 class SpheresHelix(Iso_FROM_FILE):
     """
     A helix target composed of isolated spheres
+            
+    Dimensions are physical, in um.
     
-        
-    Dimensions are physical, in um
     :param height: the height of the helix (not counting it's thickness)
     :param pitch: the helix pitch, um/turn
     :param major_r: the radius of the helix sweep

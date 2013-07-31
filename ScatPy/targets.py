@@ -657,7 +657,7 @@ class FROM_FILE(Target):
             return cls(grid=grid, d=d, material=vals['material'])
 
     @classmethod
-    def fromfunction(cls, func, pt1, pt2, origin=None, d=None, material=None, folder=None):
+    def fromfunction(cls, func, pt1, pt2, origin=None, d=None, material=None, folder=None, **kwargs):
         """
         Generate a target from a function.
         
@@ -666,6 +666,7 @@ class FROM_FILE(Target):
         :param pt1: One corner of the target volume, (xmin, ymin, zmin), in um.
         :param pt2: The opposite corner of the target volume, (xmax, ymax, zmax), in um.
         :param origin: The origin of the target (in um)
+        :param kwargs: Further kwargs are passed to func
         
         See numpy.fronfunction for details on the function func.        
         
@@ -693,7 +694,7 @@ class FROM_FILE(Target):
         d_shape = np.ceil((pt2-pt1)/target.d).astype(int)
         d_pt1 = np.around(pt1/target.d).astype(int)
 
-        def index_space(func, d, offset):
+        def index_space(func, d, offset, **kwargs):
             """
             Take a function that accepts coordinates in physical units and make it
             accept units in dipole space.
@@ -703,13 +704,13 @@ class FROM_FILE(Target):
             :param offset: an offset, in dipole units.
             """
 
-            def index_func(i,j,k):
+            def index_func(i,j,k, **kwargs):
                 x,y,z = (i + offset[0])*d , (j + offset[1])*d, (k + offset[2])*d
-                return func(x, y, z)
+                return func(x, y, z, **kwargs)
         
             return index_func
     
-        i_func = index_space(func, target.d, d_pt1)
+        i_func = index_space(func, target.d, d_pt1, **kwargs)
         target.grid = np.fromfunction(i_func, d_shape)
         
         return target

@@ -839,14 +839,15 @@ class Helix(Iso_FROM_FILE):
         self.pitch=pitch
         self.major_r=major_r
         self.minor_r=minor_r
+        self.origin = np.array((height + minor_r, minor_r+major_r, minor_r+major_r))
 
         self._build_helix()
 
     def _build_helix(self):
 
-        d_shape=(np.asarray([height+2*minor_r,
-                            2*(major_r+minor_r),
-                            2*(major_r+minor_r)])/self.d).astype(np.int16)
+        d_shape=(np.asarray([self.height+2*self.minor_r,
+                            2*(self.major_r+self.minor_r),
+                            2*(self.major_r+self.minor_r)])/self.d).astype(np.int16)
         d_shape+=1
         self.grid=np.zeros(d_shape, dtype=int)
 
@@ -886,7 +887,6 @@ class Helix(Iso_FROM_FILE):
                 for k in range(d_shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
 
-        self.refresh_N()
 
 class SpheresHelix(Iso_FROM_FILE):
     """

@@ -8,3 +8,4 @@ ScatPy.egg-info/
 dist/
 !MANIFEST.in
 ScatPy/testing
+doc/examples/tmp/

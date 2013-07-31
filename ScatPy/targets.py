@@ -569,7 +569,7 @@ class FROM_FILE(Target):
             f.write(str(self.a1)[1:-1]+'\n')
             f.write(str(self.a2)[1:-1]+'\n')
             f.write(str(self.rel_d)[1:-1]+'\n')
-            f.write(str(self.origin)[1:-1]+'\n')
+            f.write(str(self.origin/self.d)[1:-1]+'\n')
             f.write('J JX JY JZ ICOMPX,ICOMPY,ICOMPZ'+'\n')
             
             table = self._grid2table()
@@ -855,13 +855,14 @@ class Helix(Iso_FROM_FILE):
         p_pitch=-self.pitch/self.d
         p_major_r=self.major_r/self.d
         p_minor_r=self.minor_r/self.d        
+        p_origin = self.origin/self.d
 
         #the sweep path
         t=np.linspace(0,1, self.height/abs(self.pitch)*360)
 
         x=p_height*t + p_minor_r
-        y=p_major_r * np.cos(2*np.pi* x/p_pitch) + self.origin[1]
-        z=p_major_r * np.sin(2*np.pi* x/p_pitch) + self.origin[2]
+        y=p_major_r * np.cos(2*np.pi* x/p_pitch) + p_origin[1]
+        z=p_major_r * np.sin(2*np.pi* x/p_pitch) + p_origin[2]
         
         p=np.vstack([x,y,z]).transpose()
 #        p=np.vstack([np.array(u) for u in set([tuple(l) for l in p])]) #remove duplicates

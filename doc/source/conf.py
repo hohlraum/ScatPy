@@ -37,11 +37,9 @@ for mod_name in MOCK_MODULES:
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.viewcode']
-
-#extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.viewcode',
-#              'sphinx.ext.graphviz',  'sphinx.ext.inheritance_diagram',
-#              'sphinx.ext.autosummary', 'matplotlib.sphinxext.plot_directive']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.viewcode',
+              'sphinx.ext.todo',
+              'sphinx.ext.graphviz',  'sphinx.ext.inheritance_diagram']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -17,8 +17,11 @@ ScatPy is divided into several modules:
 
 Contents
 ========
+
 Hi there.
+
 .. toctree::
+    :maxdepth: 2
     
     core_api.rst
     fileio_api.rst

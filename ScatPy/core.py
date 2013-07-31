@@ -69,7 +69,7 @@ class Settings(object):
     #: Fractional extension of calculated volume in (-x,+x,-y,+y,-z,+z)
     NRFLD_EXT=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]) 
 
-    #: Error Tolerence. MAX ALLOWED (NORM OF |G>=AC|E>-ACA|X>)/(NORM OF AC|E>)    
+    #: Error Tolerence. 
     TOL=1.00e-5
     
     #: Maximum number of iterations

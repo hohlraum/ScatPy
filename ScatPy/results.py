@@ -134,6 +134,7 @@ class Table(dict):
         :param smooth: if True, applies a spline smooth to the plot
         :param x_field: specify the field to plot as the x axis. Default is self.x_field
         :param label: a string giving a specific label for the y-axis
+        :returns: the axes of the plot        
         
         """
         if x_field is None:
@@ -178,6 +179,8 @@ class Table(dict):
                 spline=UnivariateSpline(self[x_field], y/maxy, s=smooth)
                 ynew=spline(xnew)                
                 plt.plot(xnew, ynew, label=l_text, lw=lw, **kwargs)
+        
+        return plt.gca()
 
     def scale(self, c):
         """
@@ -292,12 +295,11 @@ class ResultTable(Table):
     """
     Base class for results tables read from file.        
 
-    fname: the file name, resolved relative to the ```folder```
-    hdr_len: The number of header lines to ignore.
-    c_width: A list of column widths.            
-    folder: the subfolder from which to read the table. Default is
-            the CWD.
-    zfile: A zip archive from which to load the table.
+    :param fname: the file name, resolved relative to the ```folder```
+    :param hdr_len: The number of header lines to ignore.
+    :param c_width: A list of column widths.            
+    :param folder: the subfolder from which to read the table. Default is the CWD.
+    :param zfile: A zip archive from which to load the table.
 
     Most DDscat output files have fixed column widths and cannot be relied upon 
     to have whitespace between adjacent columns. Therefore the columns' width must

@@ -19,15 +19,14 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.append('/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/')
+sys.path.append('/opt/local/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/matplotlib-1.4.x-py2.7-macosx-10.8-x86_64.egg/')
 
-for p in sys.path:
-    print p
-    
 import mock
+
  
-MOCK_MODULES = ['numpy', 'numpy.linalg', 'scipy', 'matplotlib', 'matplotlib.pyplot', 'scipy.interpolate']
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
+MOCK_MODULES = ['numpy', 'numpy.linalg', 'scipy', 'scipy.interpolate']
+#for mod_name in MOCK_MODULES:
+#    sys.modules[mod_name] = mock.Mock()
 
 
 # -- General configuration -----------------------------------------------------
@@ -38,8 +37,14 @@ for mod_name in MOCK_MODULES:
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'sphinx.ext.viewcode',
-              'sphinx.ext.todo',
-              'sphinx.ext.graphviz',  'sphinx.ext.inheritance_diagram']
+              'sphinx.ext.todo', 
+              'sphinx.ext.graphviz',  'sphinx.ext.inheritance_diagram',
+              'matplotlib.sphinxext.plot_directive'
+              ]
+
+import matplotlib.sphinxext.plot_directive
+
+print matplotlib.sphinxext.plot_directive.__file__
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

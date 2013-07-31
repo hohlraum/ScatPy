@@ -8,7 +8,7 @@ Inheritance Diagram
 ===================
 
 .. inheritance-diagram:: ScatPy.targets
-    :parts: 2
+    :parts: 1
 
 Class Summary
 =============
@@ -17,15 +17,15 @@ Class Summary
 .. autosummary::
     Target
     Target_Builtin
-    RCTGLPRISM
+    RCTGLPRSM
     CYLNDRCAP
     ELLIPSOID
     CYLINDER
     Sphere
-    IsoHomo_From_File
+    Cube
     FROM_FILE
     Iso_FROM_FILE
-    Ellipsod_FF
+    Ellipsoid_FF
     Helix
     SpheresHelix
     Conical_Helix

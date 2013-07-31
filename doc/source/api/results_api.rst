@@ -8,7 +8,7 @@ Inheritance Diagram
 ===================
 
 .. inheritance-diagram:: ScatPy.results
-    :parts: 2
+    :parts: 1
 
 .. currentmodule:: ScatPy.results
 

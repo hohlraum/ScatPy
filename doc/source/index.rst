@@ -5,7 +5,19 @@ Welcome to ScatPy's documentation!
 Introduction
 ============
 
-ScatPy is ...
+ScatPy is a Python package for interfacing to the popular scattering simulator
+`DDSCAT <http://www.astro.princeton.edu/~draine/DDSCAT.html>`_. ScatPy provides a rich toolset to:
+
+* Create standard DDSCAT scattering targets based on physical (rather than dipole) dimensions
+* Construct and visualize complex custom scattering targets
+* Manage the job parameters found in the ddscat.par file
+* Organize iterative jobs requiring multiple targets or input parameters
+* Script job submission to cluster queue managers
+* Maintain profiles and defaults for deployment on platforms other than the local machine
+* Load, plot and manipulate DDSCAT output tables
+* Manage the output from multiple jobs through results collections
+* Work with and visualize nearfield results as multidimensional numpy arrays
+* Suitable for interactive or scripted use
 
 Gallery
 =======
@@ -19,6 +31,9 @@ A Simple Example
 
 An example
 
+.. plot:: ../examples/example1.py
+   :include-source:
+
 
 Contents
 ========
@@ -26,7 +41,7 @@ Contents
 .. toctree::
     :maxdepth: 2
 
-    userguide.rst
+    userguide/userguide.rst
     examples.rst
     versions.rst
     api/api.rst
@@ -60,6 +75,13 @@ Getting Started
 Once you have ``ScatPy`` installed, start by reading the :doc:`userguide`
 and reviewing the :doc:`examples`. More advanced use will benefit from referring
 to the :doc:`api/api`. 
+
+Acknowledgements
+================
+Initial work on ScatPy was carried out at the Max Planck Institute for
+Intelligent Systems, under funding provided by the DPG.
+
+Sahand Eslami provided numerous bug reports.
 
 
 License

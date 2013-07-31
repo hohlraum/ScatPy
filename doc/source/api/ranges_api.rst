@@ -8,7 +8,7 @@ Inheritance Diagram
 ===================
 
 .. inheritance-diagram:: ScatPy.ranges
-    :parts: 2
+    :parts: 1
 
 Class Summary
 =============

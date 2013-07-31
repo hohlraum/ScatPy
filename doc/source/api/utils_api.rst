@@ -4,12 +4,6 @@
 
 .. automodule:: ScatPy.utils
 
-Inheritance Diagram
-===================
-
-.. inheritance-diagram:: ScatPy.utils
-    :parts: 2
-
 Function Summary
 ================
 .. currentmodule:: ScatPy.utils
@@ -23,9 +17,10 @@ Function Summary
     normalize
     n_dist
     pol2str
-    str_compex_v
+    compexV2str
     str2complexV
     resolve_mat_file
+    resolve_profile
     compress_files
     MixMaterials
 

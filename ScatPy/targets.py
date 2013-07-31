@@ -219,7 +219,7 @@ class Target_Builtin(Target):
 
         Subclasses must implement this themselves. The method should take
         the internally stored physical dimensions (e.g. self.radius, self.length)
-        and translate them into the three shape parameters DDSCAT expects for
+        and translate them into the shape parameters DDSCAT expects for
         this target type.
         
         This would be a good application for ABCs.

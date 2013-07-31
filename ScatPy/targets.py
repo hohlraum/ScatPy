@@ -260,6 +260,19 @@ class RCTGLPRSM(Target_Builtin):
         phys_shape = np.array(vals['sh_param']) * d
         return cls(phys_shape, d, vals['material'])
 
+class Cube(RCTGLPRSM):  
+    """
+    A Cube target.
+
+    :param length: the edge length of the cube
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is taken from default.par.
+    :param folder: The target working directory. The default is the CWD.
+    """      
+    def __init__(self, length, d=None, material=None, folder=None):
+        RCTGLPRSM.__init__(self, (length,)*3, d=d, material=material, folder=folder)
+
 class CYLNDRCAP(Target_Builtin):
     """
     Homogeneous, isotropic finite cylinder with hemispherical endcaps.

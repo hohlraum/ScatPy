@@ -572,42 +572,41 @@ class FROM_FILE(Target):
 
     def _grid2table(self):
         """
-        Returns a table similar to that found in shape.dat
+        Convert grid into a table similar to that found in shape.dat
         """
 
-        if len(self.grid.shape) == 3: # Isotropic case
-            grid = np.concatenate((self.grid[...,np.newaxis], )*3, axis=3)
+        if len(self.grid.shape) == 4: # Anisotropic case
+            grid = self.grid.sum(3)
         else:
             grid = self.grid
 
         table = np.zeros((self.N, 6))
 
-        n=0
-        for (ni, i) in enumerate(grid):
-            for (nj, j) in enumerate(i):
-                for (nk, k) in enumerate(j):
-                    if any(k):
-                        table[n]=np.array((ni, nj, nk)+tuple(k))
-                        n+=1
+        entries = np.transpose(grid.nonzero())
+        
+        for (n, pt) in enumerate(entries):
+
+            val = self.grid[tuple(pt)]
+            if len(val) == 1:
+                table[n] = np.hstack((pt,) + (val,)*3)
+            else:
+                table[n] = np.hstack((pt, val))
 
         return table
 
-    @classmethod
-    def fromfile(cls, fname):
+    @staticmethod
+    def _table2grid(table):
         """
-        Load target definition from the specified .par file.
+        Convert a table representation of the shape into a grid representation.
+
+        Always returns a grid with shape (x,y,z,3) suitable for aniosotropic
+        targets.
+        Tables are assumed to be 1-based (i.e. the lowest index is 1)
         """
-        vals = cls._read_values(fname)
-
-        aeff = vals['aeff'].first
-
-        h,_ = os.path.split(fname)
-        shape_file = os.path.join(h, 'shape.dat') 
-        shape = results.ShapeTable(fname=shape_file)
         
-        x,y,z = shape['IX']-1, shape['IY']-1, shape['IZ']-1
-        nx, ny, nz = shape['ICOMPx'], shape['ICOMPy'], shape['ICOMPz']
-        ncomp = len(vals['material'])
+        x,y,z = table[:,0]-1, table[:,1]-1, table[:,2]-1
+        nx, ny, nz = table[:,3], table[:,4], table[:,5]
+#        ncomp = len(set(nx), set(ny), set(nz))
 
         shape = (max(x)+1, max(y)+1, max(z)+1, 3)
         grid = np.zeros(shape, dtype=int)
@@ -616,7 +615,31 @@ class FROM_FILE(Target):
             ind = np.ravel_multi_index((x,y,z, comp), shape)
             grid.put(ind, n)
 
-        d = cls._calc_size(aeff=aeff, N=len(x))
+        return grid
+
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Load target definition from the specified .par file.
+        
+        Assumes that the accompanying shape.dat file is in the same folder.
+
+        This function currently assumes that the target basis vectors are
+        orthonormal.        
+        """
+        vals = cls._read_values(fname)
+
+        aeff = vals['aeff'].first
+
+        h,_ = os.path.split(fname)
+        shape_file = os.path.join(h, 'shape.dat') 
+        shape = results.ShapeTable(fname=shape_file)
+
+        grid = cls._table2grid(shape.data[:,1:])        
+
+        d = cls._calc_size(aeff=aeff, N=len(shape))
+
+        ncomp = len(vals['material'])
 
         if ncomp == 1:
             return Iso_FROM_FILE(grid=grid, d=d, material=vals['material'])
@@ -705,18 +728,13 @@ class FROM_FILE(Target):
             print 'Plotting only a subset. Specify mask_points=None or an integer to force skipping value'
             mask_points=int(self.N/max_points)
         else:
-            mask_points=None
+            mask_points=1
         
         table = self._grid2table()        
         
-        if mask_points is None:
-            X=table[:, 0]
-            Y=table[:, 1]
-            Z=table[:, 2]
-        else:
-            X=table[:, 0][::mask_points]
-            Y=table[:, 1][::mask_points]
-            Z=table[:, 2][::mask_points]
+        X=table[:, 0][::mask_points]
+        Y=table[:, 1][::mask_points]
+        Z=table[:, 2][::mask_points]
             
         mlab.points3d(X, Y, Z, *args, **kwargs)
         mlab.show()

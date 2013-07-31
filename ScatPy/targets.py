@@ -62,7 +62,14 @@ class Target(object):
                     material = vals['material']
             
         self.directive = directive
-        self.material=list(material)
+        
+        if isinstance(material, (list, tuple)):
+            self.material = list(material)
+        elif isinstance(material, str):
+            self.material = [material]
+        else:
+            raise TypeError('Material must be a string or list of strings')
+            
         if sh_param:
             self.sh_param = sh_param
 
@@ -348,9 +355,9 @@ class CYLNDRCAP(Target_Builtin):
     @property
     def sh_param(self):
         """Calculate the shape parameters"""
-        self.sh_param = (int(round(self.length/self.d)),
-                         int(round(2 * self.radius/self.d)),
-                         0)
+        return (int(round(self.length/self.d)),
+                int(round(2 * self.radius/self.d)),
+                0)
                                  
     @staticmethod
     def _calc_N(sh_param):
@@ -964,7 +971,6 @@ class Conical_Helix(Iso_FROM_FILE):
     :param minor_r: the radius of the wire that is swept to form the helix
     :param d: the dipole dipole spacing, if not specified default value is used
     :param build: if False, delays building the helix until requested. default is True
-    :param **kwargs: are passed to Target
     
     """
     def __init__(self, height, pitch1, pitch2, major_r, minor_r, d=None, build=True, **kwargs):

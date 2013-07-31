@@ -176,23 +176,72 @@ class Target(object):
 
 class Target_Builtin(Target):
     """
-    Base class for target geometries that are built into DDSCAT
+    Base class for the standard target geometries that are built into DDSCAT.
     
+    :param directive: The type of target (e.g. 'CYLINDER1', 'ELLIPSOID')
     :param d: The dipole density. Default is taken from targets.default_d.        
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is taken from default.par.
+    :param folder: The target working directory. The default is the CWD.
+
+    Typically, this class will be subclassed to create more useful and feature-
+    rich targets. Classes should take their names from the name used by DDSCAT
+    (e.g. RCTGLPRSM, ELLIPSOID). 
+    
+    Target subclasses constructed with :class:``Target_Builtin``
+    are intended to work with physical units rather than dipole units used in 
+    :class:``Target``. Therefore, derived classes *must* provide the following
+    attributes and methods for converting between physical dimensions and the
+    internal representation understood by DDSCAT:
+    * sh_param: A property that returns the three values of the SHPAR definition used by DDSCAT 
+    * _calc_N(): A static method to calculate the number of dipoles based on the shape parameters
+    * fromfile(): A class method to generate a working object from a ddscat.par file
     """
-    def __init__(self, directive, d=None, *args, **kwargs):
-        Target.__init__(self, directive, *args, **kwargs)
+    def __init__(self, directive, d=None, material=None, folder=None):
+
+        Target.__init__(self, directive, material=material, folder=folder)
         
         self.d = d if d else default_d
+    
+    @property
+    def sh_param(self):
+        """
+        Unimplemented method for calculating the shape parameters.
+
+        Subclasses must implement this themselves. The method should take
+        the internally stored physical dimensions (e.g. self.radius, self.length)
+        and translate them into the three shape parameters DDSCAT expects for
+        this target type.
+        
+        This would be a good application for ABCs.
+        """
+        raise NotImplementedError('Subclasses should implement this method')
+
+    @staticmethod
+    def _calc_N(sh_param):
+        """
+        Unimplemented method for calculating the number of dipoles.
+
+        Subclasses must implement this themselves. The method should accept
+        DDSCAT shape parameters and return the number of dipoles for the 
+        target they describe. It is a staticmethod because it must be
+        accessible by the classmethod fromfile() before the new object is
+        instantiated. For convenience it is wrapped by the property obj.N.
+        
+        This would be a good application for ABCs.
+        """
+        raise NotImplementedError('Subclasses should implement this method')
 
     @classmethod
     def fromfile(cls, fname):
         """
-        Dummy method for loading target from file.
+        Unimplemented method for loading target from file.
         
         Subclasses must implement this themselves. The form is to load the 
         target information from the par file using _read_values(). Then parse
-        those values into the form used by the class's initializer..
+        those values and pass them to the class's initializer.
+        
+        This would be a good application for ABCs.
         """
         raise NotImplementedError('Subclasses should implement this method')
         

@@ -595,11 +595,13 @@ class FROM_FILE(Target):
         for (n, pt) in enumerate(entries):
 
             val = self.grid[tuple(pt)]
-            if len(val) == 1:
+            try:
+                len(val)
+            except TypeError:
                 table[n] = np.hstack((pt,) + (val,)*3)
-            else:
+            else: # Anisotropic case
                 table[n] = np.hstack((pt, val))
-
+                
         return table
 
     @staticmethod

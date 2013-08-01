@@ -15,9 +15,6 @@ mat_library = '~/Documents/Analysis/ddscat/mp/'
 # The absolute path to the folder containing the DDSCAT executable
 ddscat_path = '/usr/local/bin/'
 
-# The absolute path to the folder containing the mpi executable
-#mpi_path = '/usr/mpi/gcc/openmpi-1.4.3/bin/'
-
 
 # An optional script that is run when the job is written
 

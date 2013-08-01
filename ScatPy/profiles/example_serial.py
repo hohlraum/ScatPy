@@ -2,19 +2,13 @@
 # For running luna in serial on SGE via qsub
 
 # The profile name
-name = 'luna'
+name = 'luna_serial'
 
 # The operating system
 os = 'unix'
 
 # The absolute path to the folder containing materials properties
 mat_library = '/home/guests/mark/mat_prop'
-
-# The absolute path to the folder containing the DDSCAT executable
-ddscat_path = '/opt/local/lib/ddscat/src'
-
-# The absolute path to the folder containing the mpi executable
-mpi_path = '/usr/mpi/gcc/openmpi-1.4.3/bin/'
 
 def write_script(job):
     import os.path
@@ -38,7 +32,7 @@ def write_script(job):
  
         f.write('echo beginning `pwd`\n')
         f.write('date\n')
-        f.write('time /cluster/bin/ddscat\n')
+        f.write('time /cluster/bin/ddscat\n' % ddscat_path)
         f.write('echo completed `pwd`\n')
         f.write('echo \'------------------------------------------\'\n')
         f.write('date\n')

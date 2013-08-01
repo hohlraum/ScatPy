@@ -381,9 +381,8 @@ class DDscat(object):
     def x(self):
         """Calculate the x-parameter (Userguide p8)."""
         a=self.target.aeff
-        out=[]        
-        for l in self.settings.wavelengths:
-            out.append(2*np.pi*a/l)
+        
+        out=[2*np.pi*a/l for l in self.settings.wavelength]        
 
         return np.asarray(out)
     
@@ -391,10 +390,9 @@ class DDscat(object):
     def mkd(self):
         """Calculate m*k*d (Userguide p8)."""
         m_dat=results.MInTable(self.target.material[0])
-        out=[]
-        for l in self.settings.wavelengths:
-            m=m_dat(l)
-            out.append(m*2*np.pi/l*self.target.d)
+
+        k = 2*np.pi*self.target.d
+        out=[ k/l*m_dat(l) for l in self.settings.wavelength]        
             
         return np.asarray(out)
 
@@ -403,10 +401,12 @@ class DDscat(object):
         """Calculate the alpha parameter (Userguide Eqn 8, p8)."""
         N=self.target.N
         m_dat=results.MInTable(self.target.material[0])
-        out=[]
+
+        out = []
         for l in self.settings.wavelengths:
             m=m_dat(l)
-            out.append(9.88*l/np.abs(m['Rem']+1j*m['Imm'])*(N/10**6)**(1/3))
+            k = 9.88*l*(N/10**6)**(1/3)
+            out.append( k / np.abs(m['Rem']+1j*m['Imm']))
 
         return np.asarray(out)
 

@@ -392,28 +392,37 @@ class AVGTable(ResultTable):
             folder=''
             
         print fname
-        with open(os.path.join(folder, fname), 'Ur') as f:
-            
-            for i in range(37):
-                line=f.readline()
-                if line.find('1 incident polarizations') <> -1:
-                    hdr=32
-                    c_widths=[3, 6, 6, 10, 10, 11, 11]
-                    plot_fields=['THETA', '<|f11|^2>']
-                    break
-                if line.find('2 incident polarizations') <> -1:
-                    hdr=37
-                    c_widths=[6, 7,9,12,12,11,11,11,11,11,11,11]
-                    plot_fields=['S_11']
-                    break
+
+        if 'zfile' in kwargs:
+            z=zipfile.ZipFile(os.path.join(folder, kwargs['zfile']))
+            f=z.open(fname, 'rU')            
+        else:
+            z=None
+            f=open(os.path.join(folder, fname), 'Ur')
+
+        for i in range(37):
+            line=f.readline()
+            if line.find('1 incident polarizations') <> -1:
+                hdr=32
+                c_widths=[3, 6, 6, 10, 10, 11, 11]
+                plot_fields=['THETA', '<|f11|^2>']
+                break
+            if line.find('2 incident polarizations') <> -1:
+                hdr=37
+                c_widths=[6, 7,9,12,12,11,11,11,11,11,11,11]
+                plot_fields=['S_11']
+                break
+
+        f.close()
+        if z: z.close()
             
         ResultTable.__init__(self, fname, hdr, c_widths, **kwargs)
         self.x_field='THETA'        
         self.y_fields=plot_fields
         if hdr==32:
-            self.summary=AVGSummaryTable(self.header)
+            self.summary=AVGSummaryTable(fname, folder, npol=1, **kwargs)
         else:
-            self.summary=AVGSummaryTable(self.header)
+            self.summary=AVGSummaryTable(fname, folder, npol=2, **kwargs)
 
 class AVGSummaryTable(Table):
     """

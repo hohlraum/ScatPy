@@ -88,13 +88,12 @@ class Target(object):
         """Return the multi-line target definition string for the ddscat.par file"""
         out='**** Target Geometry and Composition ****\n'
         out+=self.directive+'\n'
-        out+=str(self.sh_param)[1:-1]+'\n'
+        out+=str(tuple(self.sh_param)).translate(None, '(),')+'\n'
         out+=str(len(self.material))+'\n'
         for mat in self.material:
             out+='\''+utils.resolve_mat_file(mat)+'\'\n'
         
         return out
-
     
     def write(self):
         pass
@@ -160,7 +159,7 @@ class Target(object):
     
         values = {}
         values['directive'] = lines[10] 
-        values['sh_param'] = tuple(map(int, lines[11].split()))
+        values['sh_param'] = tuple(map(int, lines[11].split(' ')))
         n_mat = int(lines[12])
         values['material'] = lines[13: 13+n_mat]
 
@@ -526,6 +525,8 @@ class FROM_FILE(Target):
         self.description=''
         self.fname='shape.dat'
 
+        self.sh_param = (0,0,0) # Unused for FROM_FILE
+
         self.d = d if d else default_d    
     
         if grid is not None:
@@ -536,7 +537,7 @@ class FROM_FILE(Target):
         self.a1=np.array([1,0,0])
         self.a2=np.array([0,1,0])
         self.rel_d=np.array([1,1,1])
-        self.origin=np.array((0,0,0))           
+        self.origin=np.array((0,0,0))        
 
     @property
     def aeff(self):
@@ -647,7 +648,7 @@ class FROM_FILE(Target):
 
         grid = cls._table2grid(shape.data[:,1:])        
 
-        d = cls._calc_size(aeff=aeff, N=len(shape))
+        d = cls._calc_size(aeff=aeff, N=len(shape.data))
 
         ncomp = len(vals['material'])
 

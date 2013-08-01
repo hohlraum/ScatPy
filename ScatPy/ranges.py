@@ -12,7 +12,7 @@ import numpy as np
 
 class How_Range():
     """
-    A general range used for wavelength and scale(aeff) definitions.
+    A general range used for wavelength and scale_range (aeff) definitions.
 
 
     :param first: The first value of the range.

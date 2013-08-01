@@ -791,7 +791,8 @@ class MInTable(ResultTable):
             self.interps={}
             for l in self.col_lbl[1:]:
                 l=clean_string(l)
-                self.interps[l]=interp1d(self.wave[::-1], getattr(self, l)[::-1])                
+                step = 1 if self.wave[0]<self.wave[-1] else -1
+                self.interps[l]=interp1d(self.wave[::step], getattr(self, l)[::step])                
 
     def __call__(self, wave):
         out={}

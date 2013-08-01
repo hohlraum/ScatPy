@@ -2,7 +2,7 @@
 Creating Targets
 ****************
 
-Making target creation simple is one of the goals of ScatPy. Target class definitions
+Making target creation simple is one of the central goals of ScatPy. Target class definitions
 reside in the module :mod:`targets`. One important distinction between the way
 that targets in ScatPy behave vs. DDSCAT is that in ScatPy targets always
 have a defined physical size (either through ``aeff`` or physical dimensions).
@@ -22,11 +22,11 @@ An empty call to :class:`targets.Target` returns a default target.
 
 Generic Targets
 ===============
-A generic target, based on the class :class:`targets.Target` is the one that
+A generic target, one of the class :class:`targets.Target`, is the type that
 most closely mimics the internal DDSCAT
 representation. It is created by simply specifying the same four pieces of
 information used by DDSCAT: a shape directive, the shape parameters, the composition,
-and the ``aeff``.::
+and the ``aeff``.:
 
 >>> t = targets.Target('TRNGLPRSM', (10, 1, 1, 10), 'Au_evap', 0.100) 
 >>> print t

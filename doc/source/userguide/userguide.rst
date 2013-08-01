@@ -41,6 +41,5 @@ The general workflow for ScatPy is to:
     targets_ug.rst
     settings_ug.rst
     jobs_ug.rst
-    config_ug.rst
     table_ug.rst
     collections_ug.rst

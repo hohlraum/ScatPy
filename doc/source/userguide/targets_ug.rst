@@ -9,6 +9,17 @@ have a defined physical size (either through ``aeff`` or physical dimensions).
 Different size targets can be computed in one run by scaling the target through
 a range of values. More on this in the section on Settings.
 
+The Simplest Case
+=================
+An empty call to :class:`targets.Target` returns a default target. 
+
+>>> from ScatPy import *
+>>> t = targets.Target()
+>>> print t
+<ScatPy.targets.Target at 0x13fa2fd50>
+>>> t.directive
+'RCTGLPRSM'
+
 Generic Targets
 ===============
 A generic target, based on the class :class:`targets.Target` is the one that
@@ -17,15 +28,14 @@ representation. It is created by simply specifying the same four pieces of
 information used by DDSCAT: a shape directive, the shape parameters, the composition,
 and the ``aeff``.::
 
->>> from ScatPy import *
 >>> t = targets.Target('TRNGLPRSM', (10, 1, 1, 10), 'Au_evap', 0.100) 
-
-
+>>> print t
+<ScatPy.targets.Target object at 0x13fa2ff50>
 
 Builtin Targets
 ===============
 Builtin targets are ones that correspond to the standard target types defined
-by DDSCAT internally. Dedicated classes exist for these target types which use
+by DDSCAT internally. Dedicated classes exist for these target types with 
 the same name as the corresponding DDSCAT directive. An important feature of these
 targets is that they work in physical units, so again, targets have well defined
 sizes. 
@@ -37,10 +47,10 @@ a rod with spherical endcaps with the same overall length.
 >>> rod = targets.CYLNDRCAP(0.8, 0.1)
 
 In DDSCAT the physical size of the target is determined by the number of dipoles
-and a_eff. The dipole spacing is inferred from these two. ScatPy does this the
+and a_eff. The dipole spacing is inferred from these two. ScatPy works the
 other way around: target geometry is defined according to physical dimensions,
 and the effective radius is calculated based on those dimensions and the dipole
-spacing. So, for example::
+spacing. So, for example:
 
 >>> sphere = targets.ELLIPSOID((1,1,1), d=0.010)
 >>> sphere.d
@@ -100,11 +110,11 @@ and minor radii: ``major_r`` and ``minor_r``.::
 
 .. image:: 3Dhelix.png
 
-It is possible to write your own custom class derived from :class:`FROM_FILE`.
+It is straightforward to write your own custom class derived from :class:`FROM_FILE`.
 The heart of such a class is a 3D grid representing possible dipole positions.
 The value at each grid point indicates the material (a 3-tuple for each point
 can be used for anisotropic compositions). The class must translate between the
-physical units used to define the object, and the dipole units used to define
+physical units used to define the object and the dipole units used to define
 the grid. Here's a simple example that creates a class for building three
 crossing wires resembling toy `jacks <http://en.wikipedia.org/wiki/Jacks_(game)>`_::
 
@@ -128,3 +138,28 @@ crossing wires resembling toy `jacks <http://en.wikipedia.org/wiki/Jacks_(game)>
     target.show()
 
 .. image:: 3Djack.png
+
+Loading a Target from a File
+============================
+Targets previously saved to disk can be loaded using ``Target.fromfile(fname)``
+where ``fname`` is the name of the ``ddscat.par`` which includes the desired target.
+If a bulitin class corresponding to the directive exists then ``fromfile`` will
+delegate and return an instance of that class. If no matching class is found then
+it returns a generic ``Target``.
+
+>>> t = targets.Target.fromfile('./2372/ddscat.par')
+>>> print t
+<ScatPy.targets.Iso_FROM_FILE object at 0x11df95b90>>>>
+>>> t.N
+13290
+>>> t.aeff
+0.29112538896800289
+
+
+The Future
+==========
+Future versions of ScatPy aim to implement simple geometric transformations
+for targets like ``scale``, ``translate``, ``rotate`` and ``reflect``. It is
+also planned to add the capability for boolean operations on targets. This would, 
+for instance, allow two seperately created targets to be merged together, or subtracted
+from one another.

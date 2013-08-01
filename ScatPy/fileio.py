@@ -37,7 +37,7 @@ def build_ddscat_par(settings, target):
     out+='**** Initial Memory Allocation ****'+'\n'
     out+=settings.InitialMalloc.__str__()[1:-1]+'\n'
     
-    out+=target.save_str() #Target defst goes here
+    out+=target.save_str() #Target defn goes here
     
     out+='**** Additional Nearfield calculation? ****\n'
     out+='1\n' if settings.NRFLD else '0\n'
@@ -62,7 +62,12 @@ def build_ddscat_par(settings, target):
     out+=str(settings.NAMBIENT)+'\n'
     
     out+='**** Effective Radii (micron) **** \n'
-    aeff = settings.scale
+    if isinstance(settings.scale_range, ranges.How_Range):
+        scale = settings.scale_range
+    else:
+        scale = ranges.How_Range(settings.scale_range, settings.scale_range, 1)
+
+    aeff = scale
     aeff.first *= target.aeff
     aeff.last *= target.aeff
     out+=str(aeff)+'\n'

@@ -90,8 +90,8 @@ class Settings(object):
     #: Refractive index of ambient medium
     NAMBIENT=1.000
     
-    #: Define a range of scales for the particle geometry, None indicates a single size calc
-    scale=ranges.How_Range(1, 1, 1) 
+    #: Define a range of scales for the particle geometry. A number indicates a single size calc.
+    scale_range=ranges.How_Range(1, 1, 1) 
 
     #: Define Incident Polarizations (Polarization state e01 (k along x axis)
     Epol=pol_lV
@@ -187,7 +187,7 @@ class Settings(object):
         scale = ranges.How_Range.fromstring(lines[25])
         scale.last /= scale.first
         scale.first = 1.0
-        settings['scale'] = scale
+        settings['scale_range'] = scale
         
         settings['Epol'] = utils.str2complexV(lines[27])
         settings['IORTH'] = True if int(lines[28])==2 else False

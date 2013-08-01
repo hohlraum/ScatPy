@@ -360,20 +360,14 @@ class DDscat(object):
     def info(self):
         """Print some basic run info"""
         wave=self.settings.wavelengths.table
-        N=self.target.N
         
-        alpha=self.alpha()
-        beta=self.beta()
-        x=self.x()
-        table=np.vstack([wave, x, alpha, beta])
-        print "Target: "+self.target.directive
-        print 'Shape: ' + str(self.target.shape)
-        print 'N=%d'%N
-        print 'aeff=%f'%self.target.aeff()
+        table=np.vstack([wave, self.mkd, self.x, self.alpha, self.beta])
+        print "Target: ",self.target.directive, '(', self.target.__class__, ')'
+        print 'N=%d'%self.target.N
+        print 'aeff=%f'%self.target.aeff
         print 'd=%f'%self.target.d
-
-        print 'wave\tx\talpha\tbeta'
-        print '-----------------------------------'
+        print 'wave          mkd         x           alpha       beta'
+        print '--------------------------------------------------------------'
         for r in table.transpose():
             print r
 
@@ -382,7 +376,7 @@ class DDscat(object):
         """Calculate the x-parameter (Userguide p8)."""
         a=self.target.aeff
         
-        out=[2*np.pi*a/l for l in self.settings.wavelength]        
+        out=[2*np.pi*a/l for l in self.settings.wavelengths]        
 
         return np.asarray(out)
     
@@ -391,8 +385,12 @@ class DDscat(object):
         """Calculate m*k*d (Userguide p8)."""
         m_dat=results.MInTable(self.target.material[0])
 
+        out = []
         k = 2*np.pi*self.target.d
-        out=[ k/l*m_dat(l) for l in self.settings.wavelength]        
+        for l in self.settings.wavelengths:
+            m = m_dat(l)
+            m = np.abs(m['Rem']+1j*m['Imm'])
+            out.append(k/l*m)        
             
         return np.asarray(out)
 
@@ -459,7 +457,7 @@ class DDscat(object):
 
     def calltarget(self):
         '''
-        Executes ```calltarget``` to generate a target.ut file for builtin target geometries.
+        Executes ```calltarget``` to generate a target.out file for builtin target geometries.
         '''
             
         self.write()

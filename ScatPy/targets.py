@@ -506,6 +506,7 @@ class FROM_FILE(Target):
     '''
     Base class for targets of arbitrary geometry.
 
+    :param grid: The dipole grid
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
                      file(s) to use for the target. Default is taken from default.par.
@@ -523,8 +524,6 @@ class FROM_FILE(Target):
 
         self.description=''
         self.fname='shape.dat'
-
-        self.sh_param = (0,0,0) # Unused for FROM_FILE
 
         self.d = d if d else default_d    
     
@@ -545,11 +544,11 @@ class FROM_FILE(Target):
         return (self.N*3/4/np.pi)**(1/3)*self.d
 
     @property
-    def d_shape(self):
+    def sh_param(self):
         """
         The dimensions of the target in dipole units
         """
-        return np.array(self.grid.shape[:3])
+        return self.grid.shape[:3]
     
     @property
     def N(self):
@@ -715,6 +714,19 @@ class FROM_FILE(Target):
         
         return target
 
+    def make_periodic(self, period):
+        """
+        Return a periodic version of this target.
+        
+        :period: The unit vector in um. 0 = no repetition
+        """
+
+        new = copy.deepcopy(self)
+        new.__class__ = FRMFILPBC
+        new.period = period
+        return new
+
+    
     def VTRconvert(self, outfile=None):
         """Execute VTRConvert to generate a model file viewable in Paraview"""
         Target.VTRconvert(self, outfile)
@@ -749,6 +761,8 @@ class FROM_FILE(Target):
             
         mlab.points3d(X, Y, Z, *args, **kwargs)
         mlab.show()
+    
+    
 
 class Iso_FROM_FILE(FROM_FILE):
     '''
@@ -770,22 +784,6 @@ class Iso_FROM_FILE(FROM_FILE):
             grid=np.zeros((0,0,0), dtype=int)
 
         FROM_FILE.__init__(self, grid, d=d, material=material, folder=folder)
-
-
-
-def triple(func):
-    """
-    Decorator to turn a function returning only one value into one that returns
-    a 3-tuple of that value.
-    """
-    
-    def triple_func(*args):
-        val =func(*args)
-        return (val,)*3
-        
-    return triple_func
-
-    
 
     
 class Ellipsoid_FF(Iso_FROM_FILE):

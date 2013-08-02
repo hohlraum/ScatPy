@@ -158,8 +158,16 @@ class Target(object):
         f.close()
     
         values = {}
-        values['directive'] = lines[10] 
-        values['sh_param'] = tuple(map(int, lines[11].split(' ')))
+        values['directive'] = lines[10]
+        
+        sh_param = []
+        for s in lines[11].split():
+            try:
+                sh_param.append(int(s))
+            except ValueError:
+                sh_param.append(s)
+        values['sh_param'] = tuple(sh_param)   
+
         n_mat = int(lines[12])
         values['material'] = lines[13: 13+n_mat]
 

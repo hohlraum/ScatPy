@@ -275,15 +275,6 @@ class Target_Builtin(Target):
         #return (self.N*3/4/np.pi)**(1/3)*self.d
 
 
-
-class Periodic1D(Target):
-    """Base class for 1D periodic targets"""
-    pass
-
-class Periodic2D(Target):
-    """Base class for 2D periodic targets"""
-    pass
-
 class RCTGLPRSM(Target_Builtin):        
     """A rectangular prism target
     
@@ -1055,6 +1046,66 @@ class Conical_Helix(Iso_FROM_FILE):
                     self.grid[i,j,k]=sphere_check(i,j,k)
         
         self.refresh_N()
+
+### Periodic Targets
+
+class Periodic(object):
+    """Base class for periodic targets
+
+    :param dim: The number of periodic dimensions (1 or 2)    
+    :param period: A 2-tuple which defines the period of the array
+                        in the x,y TF directions. (in um)
+
+    """
+    
+    def dimension(self):
+        """
+        Returns the number of periodic dimensions
+        """
+        return sum(i != 0 for i in self.period)
+
+class FRMFILPBC(FROM_FILE, Periodic):
+    """
+    Base class for periodic targets of arbitrary geometry.
+    
+    :param grid: The dipole grid
+    :param period: A 2-tuple which defines the period of the array
+                        in the x,y TF directions. (in um)
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is taken from default.par.
+    :param folder: The target working directory. The default is the CWD.
+
+    If anisotropic, the “microcrystals” in the target are assumed to be aligned
+    with the principal axes of the dielectric tensor parallel to the TF axes.
+
+    FROMFILPBC does not inherit from Target_Builtin so for the purposes of inheritence
+    it is not considered a builtin target.
+        
+    """
+    def __init__(self, grid=None, period=(0,0), d=None, material=None, folder=None, fname=None):    
+
+        FROM_FILE.__init__(self, grid=grid, d=d, material=material, folder=folder)
+
+        self.fname = 'shape.dat' if fname is None else fname
+        self.period = period
+
+    @property
+    def sh_param(self):
+        """Return the shape parameter"""
+        return (int(self.perodicity[0]/self.d), int(self.period[1]/self.d), self.fname)
+
+
+    def save_str(self):
+        """Return the four line string of target definition for inclusion in the ddscat.par file"""
+        out='**** Target Geometry and Composition ****\n'
+        out+=self.directive+'\n'
+        out+=str(self.sh_param)[1:-1]+' \'shape.dat\' \n'
+        out+=str(self.NCOMP)+'\n'
+        out+='\''+utils.resolve_mat_file(self.mat_file)+'\'\n'
+        
+        return out    
+
 
 def Holify(target, radius, posns=None, num=None, seed=None):
     """

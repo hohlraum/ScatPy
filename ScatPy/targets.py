@@ -475,9 +475,9 @@ class CYLINDER(Target_Builtin):
     :param length: the length of the cylinder in microns (not including endcaps)
     :param radius: the radius of the cylinder
     :param orient: the orientation of the cylinder
-                SHPAR3 = 1 for cylinder axis aˆ1 ∥ xˆTF: aˆ1 = (1, 0, 0)TF and aˆ2 = (0, 1, 0)TF;
-                SHPAR3 = 2 for cylinder axis aˆ1 ∥ yˆTF: aˆ1 = (0, 1, 0)TF and aˆ2 = (0, 0, 1)TF;
-                SHPAR3 = 3 for cylinder axis aˆ1 ∥ zˆTF: aˆ1 = (0, 0, 1)TF and aˆ2 = (1, 0, 0)TF in the TF.
+                SHPAR3 = 1 for cylinder axis a^1 | x^TF: a^1 = (1, 0, 0)TF and a^2 = (0, 1, 0)TF;
+                SHPAR3 = 2 for cylinder axis a^1 | y^TF: a^1 = (0, 1, 0)TF and a^2 = (0, 0, 1)TF;
+                SHPAR3 = 3 for cylinder axis a^1 | z^TF: a^1 = (0, 0, 1)TF and a^2 = (1, 0, 0)TF in the TF.
     :param d: The dipole density. Default is taken from targets.default_d.
     :param material: A string, or list of strings specifying the material
                      file(s) to use for the target. Default is taken from default.par.
@@ -1157,7 +1157,7 @@ class RCTGL_PBC(RCTGLPRSM, Periodic):
     def sh_param(self):
         """Return the shape parameter"""
 
-        return RCTGLPRSM.sh_param() + (self.perodicity[0]/self.d, self.period[1]/self.d)
+        return RCTGLPRSM.sh_param + (self.perodicity[0]/self.d, self.period[1]/self.d)
 
     @classmethod
     def fromfile(cls, fname):
@@ -1204,7 +1204,7 @@ class CYLNDRPBC(CYLINDER, Periodic):
     def sh_param(self):
         """Return the shape parameter"""
 
-        return CYLINDER.sh_param() + (self.perodicity[0]/self.d, self.period[1]/self.d)
+        return CYLINDER.sh_param + (self.perodicity[0]/self.d, self.period[1]/self.d)
 
     @classmethod
     def fromfile(cls, fname):
@@ -1226,8 +1226,6 @@ class CYLNDRPBC(CYLINDER, Periodic):
 cls_conversion={RCTGLPRSM:RCTGL_PBC,
                 FROM_FILE:FRMFILPBC,
                 CYLINDER :CYLNDRPBC}
-
-
 
 def Holify(target, radius, posns=None, num=None, seed=None):
     """

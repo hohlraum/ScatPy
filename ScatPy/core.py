@@ -314,10 +314,12 @@ class DDscat(object):
         :param submit_script: Use True to write a .sge file for submitting the job 
                             to an SGE cluster via ```qsub```.
         
-        If the current profile has a ```write_script``` then it is run once
+        If the current profile has a ```write_script``` then it is run after
         the ddscat.par has been written, and is called with any addition
         arguments to write.        
         """
+
+        self.check()
 
         s=fileio.build_ddscat_par(self.settings, self.target)
         
@@ -331,6 +333,29 @@ class DDscat(object):
             config['write_script'](self, *args, **kwargs)
         except KeyError:
             pass            
+
+    def check(self):
+        """
+        Perform simple self consistency checks on the job.
+        
+        Raises an exception if it finds a problem.
+        """
+
+        # Check that the correct type of scattering plane is used for Periodic targets
+        if isinstance(self.target, targets.Periodic):
+            if self.target.dimension == 1:
+                for s in self.settings.scat_planes:
+                    if not isinstance(s, ranges.Scat_Range_1dPBC):
+                        raise TypeError('Target is 1D periodic. Scattering plane definitions must be Scat_Range_1dPBC')
+            elif self.target.dimension == 2 :
+                for s in self.settings.scat_planes:
+                    if not isinstance(s, ranges.Scat_Range_2dPBC):
+                        raise TypeError('Target is 2D periodic. Scattering plane definitions must be Scat_Range_2dPBC')
+        else:
+            for s in self.settings.scat_planes:
+                if not isinstance(s, ranges.Scat_Range):
+                    raise TypeError('Target is finite, isolated. Scattering plane definitions must be Scat_Range')
+            
 
     @property
     def folder(self):

@@ -111,3 +111,25 @@ Which columns are plotted is controlled by the attributes ``x_field`` and
     q.plot()
     legend(loc=0)
 
+
+Organizing Results
+==================
+
+Zipfiles
+--------
+For large calculations the output files from DDSCAT can number in the tens of
+thousands. The sheer number makes management difficult and consumes disk space.
+ScaPy offers a utility function to compress these files into zip files organized
+by file type
+
+>>> utils.compress_files()
+
+This command compresses all .fml, .sca, .avg, .E1 and .E2 files in the current working
+directory into their own
+zip files with names ``all_fml.zip``, ``all_sca.zip``, ``all_avg.zip``, and 
+``all_En.zip``. Furthermore, all table types can directly access files
+within the archive without it having to be unzipped, by specifying the ``zfile``
+keyword argument:
+
+>>> a = results.AVGTable(zfile = True)
+

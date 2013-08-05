@@ -139,6 +139,70 @@ crossing wires resembling toy `jacks <http://en.wikipedia.org/wiki/Jacks_(game)>
 
 .. image:: 3Djack.png
 
+
+Periodic Targets
+================
+Targets that are repeat in 1 or 2 dimensions derive from the class :class:`targets.Periodic`.
+Periodic targets are used the same way as isolated ones, but have an additional
+required parameter ``period`` which is a 2D vector specifying the repeat distance in
+the ``x`` and ``y`` directions of the target frame in units of um. For example
+the following makes an array of 0.5um cubes on a 1um 2D grid::
+
+    >>> grid = targets.RCTGL_PBC((0.5, 0.5, 0.5), (1.0, 1.0))
+    >>> print grid.save_str()
+    **** Target Geometry and Composition ****
+    RCTGLPRSM
+    33 33 33 66.66666666666667 66.66666666666667
+    1
+    '/Users/andrewmark/Documents/Analysis/ddscat/mp/Au_Palik.txt'
+
+To make a semi-infinite array of objects simply leave one of the components of
+``period`` equal to zero. This will make an infinite line of 200nm tall by 50nm diameter 
+cylinders spaced by 500nm in the ``y`` direction::
+
+    >>> line = targets.CYLNDRPBC(0.2, 0.05, 1, (0,0.5))
+    >>> print line.save_str()
+    **** Target Geometry and Composition ****
+    CYLINDER1
+    13 7 1 0.0 33.333333333333336
+    1
+    '/Users/andrewmark/Documents/Analysis/ddscat/mp/Au_Palik.txt'
+
+
+Make an isolated target periodic
+--------------------------------
+Any isolated target which has a corresponding periodic version built into DDSCAT
+can be converted into that periodic version with the method ``make_periodic(period)``.
+In essence, you first create the target unit cell (TUC) and then tile that unit
+cell by the specififed unit vector. So the previous array of cylinders could have
+been created with
+
+    >>> cyl = targets.CYLINDER(0.2, 0.05, 1)
+    >>> line = cyl.make_periodic((0, 0.5))
+    print line.save_str()
+    **** Target Geometry and Composition ****
+    CYLINDER1
+    13 7 1 0.0 33.333333333333336
+    1
+    '/Users/andrewmark/Documents/Analysis/ddscat/mp/Au_Palik.txt'
+
+This is particularly helpful for creating arrays of arbitrarily shaped objects
+since it allows you to first develop the abitrarily shaped target within the TUC,
+either with ``FROM_FILE.fromfunction`` or through a custom class, and then
+repeat that TUC on the desired grid.
+
+    >>> helix = ScatPy.targets.Helix(0.2, 0.1, 0.05, 0.02)
+    Generating Helix...
+    Done constructing sweep path...    
+    >>> helix_array = helix.make_periodic((0.1, 0.1))    
+    >>> print helix_array.save_str()
+    **** Target Geometry and Composition ****
+    FROM_FILE
+    6.666666666666667 6.666666666666667 'shape.dat'
+    1
+    '/Users/andrewmark/Documents/Analysis/ddscat/mp/Au_Palik.txt'
+
+
 Loading a Target from a File
 ============================
 Targets previously saved to disk can be loaded using ``Target.fromfile(fname)``

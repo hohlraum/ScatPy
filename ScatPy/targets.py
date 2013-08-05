@@ -190,6 +190,31 @@ class Target(object):
         else:
             raise ValueError('Requires two out of three parameters')
 
+    def make_periodic(self, period):
+        """
+        Return a periodic version of this target, if one is available.
+        
+        :period: The unit vector in um. A component = 0: no repetition
+        """
+
+        if isinstance(self, Periodic):
+            raise TypeError('Target is already periodic')
+
+        new_cls = None
+        for old_cls in cls_conversion:
+            if isinstance(self, old_cls):
+                new_cls = cls_conversion[old_cls]
+                break
+
+        if new_cls is None:
+            raise TypeError('No corresponding periodic class for %s.' % str(self.__class__))
+
+        new = copy.deepcopy(self)                
+        new.__class__ = new_cls
+        new.period = period
+        return new
+
+
 class Target_Builtin(Target):
     """
     Base class for the standard target geometries that are built into DDSCAT.
@@ -315,6 +340,7 @@ class RCTGLPRSM(Target_Builtin):
         d = cls._calc_size(aeff=aeff, N=N)
         phys_shape = np.array(vals['sh_param']) * d
         return cls(phys_shape, d, vals['material'])
+
 
 class Cube(RCTGLPRSM):  
     """
@@ -713,18 +739,6 @@ class FROM_FILE(Target):
         target.grid = np.fromfunction(i_func, d_shape)
         
         return target
-
-    def make_periodic(self, period):
-        """
-        Return a periodic version of this target.
-        
-        :period: The unit vector in um. 0 = no repetition
-        """
-
-        new = copy.deepcopy(self)
-        new.__class__ = FRMFILPBC
-        new.period = period
-        return new
 
     
     def VTRconvert(self, outfile=None):

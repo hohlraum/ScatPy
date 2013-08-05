@@ -313,13 +313,13 @@ class RCTGLPRSM(Target_Builtin):
     def __init__(self, phys_shape, d=None, material=None, folder=None):
 
         Target_Builtin.__init__(self, 'RCTGLPRSM', d=d, material=material, folder=folder)
-        self.phys_shape = phys_shape
+        self.phys_shape = np.array(phys_shape)
 
     @property
     def sh_param(self):
         """The shape parameters based on the physical shape"""
         
-        return np.around(self.phys_shape/self.d).astype(int)
+        return tuple(np.around(self.phys_shape/self.d).astype(int))
 
     @staticmethod
     def _calc_N(sh_param):
@@ -430,7 +430,7 @@ class ELLIPSOID(Target_Builtin):
     def sh_param(self):
         """Calculate the shape parameters"""
 
-        return 2 * np.around(self.semiaxes/self.d).astype(int)
+        return tuple(2 * np.around(self.semiaxes/self.d).astype(int))
         
     @staticmethod
     def _calc_N(sh_param):
@@ -1105,7 +1105,7 @@ class FRMFILPBC(FROM_FILE, Periodic):
     @property
     def sh_param(self):
         """Return the shape parameter"""
-        return (self.perodicity[0]/self.d, self.period[1]/self.d, self.fname)
+        return (self.period[0]/self.d, self.period[1]/self.d, self.fname)
 
     @classmethod
     def fromfile(cls, fname):
@@ -1157,7 +1157,7 @@ class RCTGL_PBC(RCTGLPRSM, Periodic):
     def sh_param(self):
         """Return the shape parameter"""
 
-        return RCTGLPRSM.sh_param + (self.perodicity[0]/self.d, self.period[1]/self.d)
+        return (RCTGLPRSM.sh_param.fget(self)) + (self.period[0]/self.d, self.period[1]/self.d)
 
     @classmethod
     def fromfile(cls, fname):
@@ -1204,7 +1204,7 @@ class CYLNDRPBC(CYLINDER, Periodic):
     def sh_param(self):
         """Return the shape parameter"""
 
-        return CYLINDER.sh_param + (self.perodicity[0]/self.d, self.period[1]/self.d)
+        return (CYLINDER.sh_param.fget(self)) + (self.period[0]/self.d, self.period[1]/self.d)
 
     @classmethod
     def fromfile(cls, fname):

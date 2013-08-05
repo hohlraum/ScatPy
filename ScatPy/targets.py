@@ -327,7 +327,7 @@ class RCTGLPRSM(Target_Builtin):
         
         :param sh_param: size in dipoles
         """
-        return np.array(sh_param).prod()        
+        return np.array(sh_param[0:3]).prod()        
 
     @classmethod
     def fromfile(cls, fname):
@@ -520,8 +520,8 @@ class CYLINDER(Target_Builtin):
         aeff = vals['aeff'].first
         d = cls._calc_size(aeff=aeff, N=N)
         phys_shape = np.array(sh_param) * d
-        length , radius = phys_shape[0], phys_shape[1]*2
-        return cls(length, radius, d, vals['material'])
+        length, radius, orient = phys_shape[0], phys_shape[1]*2, phys_shape[2]
+        return cls(length, radius, orient, vals['material'])
         
             
 
@@ -1105,18 +1105,128 @@ class FRMFILPBC(FROM_FILE, Periodic):
     @property
     def sh_param(self):
         """Return the shape parameter"""
-        return (int(self.perodicity[0]/self.d), int(self.period[1]/self.d), self.fname)
+        return (self.perodicity[0]/self.d, self.period[1]/self.d, self.fname)
 
-
-    def save_str(self):
-        """Return the four line string of target definition for inclusion in the ddscat.par file"""
-        out='**** Target Geometry and Composition ****\n'
-        out+=self.directive+'\n'
-        out+=str(self.sh_param)[1:-1]+' \'shape.dat\' \n'
-        out+=str(self.NCOMP)+'\n'
-        out+='\''+utils.resolve_mat_file(self.mat_file)+'\'\n'
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Load target definition from the specified .par file.
         
-        return out    
+        Assumes that the accompanying shape.dat file is in the same folder.
+
+        This function currently assumes that the target basis vectors are
+        orthonormal.        
+        """
+        vals = cls._read_values(fname)
+
+        aeff = vals['aeff'].first
+
+        h,_ = os.path.split(fname)
+        shape_file = vals['sh_param'][2]
+        shape_file = os.path.join(h, vals['sh_param'][2]) 
+        shape = results.ShapeTable(fname=shape_file)
+
+        grid = cls._table2grid(shape.data[:,1:])        
+
+        d = cls._calc_size(aeff=aeff, N=len(shape.data))
+        period = np.array(vals['sh_param'][:2] * d)
+
+        return cls(grid=grid, period=period, d=d, material=vals['material'])
+
+
+class RCTGL_PBC(RCTGLPRSM, Periodic):
+    """
+    A target of periodic rectangular prisms.
+    
+    :param phys_shape: (length, width, height) of the prism in microns
+    :param period: A 2-tuple which defines the period of the array
+                        in the x,y TF directions. (in um)
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is taken from default.par.
+    :param folder: The target working directory. The default is the CWD.
+
+    """
+    def __init__(self, phys_shape, period, d=None, material=None, folder=None, fname=None):    
+
+        RCTGLPRSM.__init__(self, phys_shape, d=d, material=material, folder=folder)
+
+        self.period = period
+
+    @property
+    def sh_param(self):
+        """Return the shape parameter"""
+
+        return RCTGLPRSM.sh_param() + (self.perodicity[0]/self.d, self.period[1]/self.d)
+
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Load target definition from the specified .par file.
+        """
+        vals = cls._read_values(fname)
+        N = cls._calc_N(vals['sh_param'])
+        aeff = vals['aeff'].first
+        d = cls._calc_size(aeff=aeff, N=N)
+        phys_shape = np.array(vals['sh_param']) * d
+        period = phys_shape[3:4]
+        return cls(phys_shape[:3], period, d, vals['material'])
+
+
+class CYLNDRPBC(CYLINDER, Periodic):
+    """
+    A target of periodic cylinders.
+    
+    :param length: the length of the cylinder in microns (not including endcaps)
+    :param radius: the radius of the cylinder
+    :param orient: the orientation of the cylinder
+                SHPAR3 = 1 for cylinder axis aˆ1 ∥ xˆTF: aˆ1 = (1, 0, 0)TF and aˆ2 = (0, 1, 0)TF;
+                SHPAR3 = 2 for cylinder axis aˆ1 ∥ yˆTF: aˆ1 = (0, 1, 0)TF and aˆ2 = (0, 0, 1)TF;
+                SHPAR3 = 3 for cylinder axis aˆ1 ∥ zˆTF: aˆ1 = (0, 0, 1)TF and aˆ2 = (1, 0, 0)TF in the TF.
+    :param period: The periodicity 
+    :param period: A 2-tuple which defines the period of the array
+                        in the x,y TF directions. (in um)
+    :param d: The dipole density. Default is taken from targets.default_d.
+    :param material: A string, or list of strings specifying the material
+                     file(s) to use for the target. Default is taken from default.par.
+    :param folder: The target working directory. The default is the CWD.
+
+    """
+    
+    def __init__(self, length, radius, orient, period, d=None, material=None, folder=None):    
+
+
+        CYLINDER.__init__(self, length, radius, orient, d=d, material=material, folder=folder)
+
+        self.period = period
+
+    @property
+    def sh_param(self):
+        """Return the shape parameter"""
+
+        return CYLINDER.sh_param() + (self.perodicity[0]/self.d, self.period[1]/self.d)
+
+    @classmethod
+    def fromfile(cls, fname):
+        """
+        Load target definition from the specified .par file.
+        """
+        vals = cls._read_values(fname)
+        N = cls._calc_N(vals['sh_param'])
+        aeff = vals['aeff'].first
+        d = cls._calc_size(aeff=aeff, N=N)
+        phys_shape = np.array(vals['sh_param']) * d
+        length, radius, orient = phys_shape[0], phys_shape[1]*2, phys_shape[2]
+        period = phys_shape[3:4]
+        return cls(length, radius, orient, period, d, vals['material'])
+
+#: A dict which translates between a finite isolated target class and its 
+#: corresponding (semi)infite periodic partner. The keys are the classes of
+#: the isolated target, and the values are the classes of the periodic ones.
+cls_conversion={RCTGLPRSM:RCTGL_PBC,
+                FROM_FILE:FRMFILPBC,
+                CYLINDER :CYLNDRPBC}
+
 
 
 def Holify(target, radius, posns=None, num=None, seed=None):

@@ -750,8 +750,7 @@ class FROM_FILE(Target):
         """
         Display the dipoles using Mayavi. 
         
-        Currently does not distinguish between dipoles of different materials,
-        and does not display dipole anisotropy.
+        Currently assumes that all dipoles are isotropic.
         """
         from mayavi import mlab
 
@@ -772,8 +771,9 @@ class FROM_FILE(Target):
         X=table[:, 0][::mask_points]
         Y=table[:, 1][::mask_points]
         Z=table[:, 2][::mask_points]
+        c=table[:, 3][::mask_points]
             
-        mlab.points3d(X, Y, Z, *args, **kwargs)
+        mlab.points3d(X, Y, Z, c, scale_mode='none', *args, **kwargs)
         mlab.show()
     
     

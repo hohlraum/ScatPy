@@ -123,12 +123,12 @@ class Table(dict):
         self.y_fields=None
 
 
-    def plot(self, fields=None, normalize=False, smooth=False, x_field=None,
+    def plot(self, y_fields=None, normalize=False, smooth=False, x_field=None,
              label=None, lw=2, **kwargs):
         """
         Plot the table contents.
         
-        :param fields: list of field names to plot. If absent, plots the fields found
+        :param y_fields: list of field names to plot. If absent, plots the fields found
                        in self.y_fields
         :param normalize: if True, set the maximum of all plots to 1
         :param smooth: if True, applies a spline smooth to the plot
@@ -140,18 +140,18 @@ class Table(dict):
         if x_field is None:
             x_field=self.x_field
 
-        if fields is None:
-            fields=self.y_fields
+        if y_fields is None:
+            y_fields=self.y_fields
     
         ylbl=''
-        for f in fields[0:]:
+        for f in y_fields[0:]:
             ylbl+=f+', '
         ylbl=ylbl[:-2] #trim last ', '
         
         plt.xlabel(x_field)
         plt.ylabel(ylbl)
       
-        for f in fields:
+        for f in y_fields:
             y=self[f]
             if label is None:
                 l_text=f
@@ -194,7 +194,7 @@ class Table(dict):
         
             v*=c
 
-    def export(self, fname, fields=['Q_ext']):
+    def export(self, fname, fields=('Q_ext')):
         """
         Export the table as an ascii file
         
@@ -795,13 +795,13 @@ class MInTable(ResultTable):
             
             self.data=dat
             for (l,d) in zip(self.col_lbl, self.data.transpose()):
-                setattr(self, clean_string(l), d)
+                self[l] = d
 
             self.interps={}
             for l in self.col_lbl[1:]:
-                l=clean_string(l)
-                step = 1 if self.wave[0]<self.wave[-1] else -1
-                self.interps[l]=interp1d(self.wave[::step], getattr(self, l)[::step])                
+                cl=clean_string(l)
+                step = 1 if self['wave'][0]<self['wave'][-1] else -1
+                self.interps[cl]=interp1d(self['wave'][::step], self[l][::step])                
 
     def __call__(self, wave):
         out={}

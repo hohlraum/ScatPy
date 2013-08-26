@@ -117,13 +117,13 @@ def pol2str(v):
 
     threshold=1e-6
     
-    if n_dist(v, pol_cL)<threshold or n_dist(-v, pol_cL)<threshold:
+    if n_dist(v, core.pol_cL)<threshold or n_dist(-v, core.pol_cL)<threshold:
         return 'cL'
-    elif n_dist(v, pol_cR)<threshold or n_dist(-v, pol_cR)<threshold:
+    elif n_dist(v, core.pol_cR)<threshold or n_dist(-v, core.pol_cR)<threshold:
         return 'cR'
-    elif n_dist(v, pol_lH)<threshold or n_dist(-v, pol_lH)<threshold:
+    elif n_dist(v, core.pol_lH)<threshold or n_dist(-v, core.pol_lH)<threshold:
         return 'lH'
-    elif n_dist(v, pol_lV)<threshold or n_dist(-v, pol_lV)<threshold:
+    elif n_dist(v, core.pol_lV)<threshold or n_dist(-v, core.pol_lV)<threshold:
         return 'lV'
 
     else:

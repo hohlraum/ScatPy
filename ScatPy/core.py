@@ -209,12 +209,13 @@ class Settings(object):
         n_scat= int(lines[42])
         
         if n_scat > 0:
-            if isinstance(target, targets.Periodic1D):
-                settings['scat_planes'] = [ranges.Scat_Range_1dPBC.fromstring(l) for l in lines[43:43+n_scat]]
-            elif isinstance(target, targets.Periodic2D):
-                settings['scat_planes'] = [ranges.Scat_Range_2dPBC.fromstring(l) for l in lines[43:43+n_scat]]
-            else: # Assume isolated finite target
+            if not isinstance(target, targets.Periodic): # Assume isolated finite target
                 settings['scat_planes'] = [ranges.Scat_Range.fromstring(l) for l in lines[43:43+n_scat]]
+            else:
+                if target.dimension == 1:          
+                    settings['scat_planes'] = [ranges.Scat_Range_1dPBC.fromstring(l) for l in lines[43:43+n_scat]]
+                elif target.dimension == 2:
+                    settings['scat_planes'] = [ranges.Scat_Range_2dPBC.fromstring(l) for l in lines[43:43+n_scat]]
         
         return settings
 

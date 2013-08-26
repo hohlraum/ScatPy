@@ -11,16 +11,15 @@ It includes a number of submodules:
   -utils: a handful of common utilities
 
 """
-
+import core
 import fileio
 import ranges
 import results
 import targets
 import utils
-from core import DDscat as DDscat
-from core import Settings as Settings
+from core import (DDscat, Settings, set_config)
 from core import (pol_cL, pol_cR, pol_lV, pol_lH)
 
 __version__=0.1
-__all__=["DDscat", "Settings", "ranges", "results", "targets", "fileio", "utils",
+__all__=["DDscat", "Settings", "set_config", "ranges", "results", "targets", "fileio", "utils",
          'pol_cL', 'pol_cR', 'pol_lV', 'pol_lH']

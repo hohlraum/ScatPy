@@ -13,6 +13,7 @@ import copy
 import results
 import warnings
 import pdb
+import matplotlib as mpl
 
 import utils
 import fileio
@@ -1056,8 +1057,51 @@ class Conical_Helix(Iso_FROM_FILE):
             for j in range(self.d_shape[1]):
                 for k in range(self.d_shape[2]):
                     self.grid[i,j,k]=sphere_check(i,j,k)
+
+class Polygon(Iso_FROM_FILE):
+    """
+    A planar target in the shape defined by the polygon
+
+    dimensions are physical, in um
+
+    :param polygon: a list of vertices for the polygon
+    :param thickness: the thickness of the polygon
+    :param bbox: the bounding box. By default uses the smallest box that contains
+                 the entire polygon.    
+    :param d: the dipole dipole spacing, if not specified default value is used
+    :param material: A string specifying the material
+                     file to use for the target. Default is taken from default.par.
+    :param folder: The target working directory. The default is the CWD.        
+    
+    Dipoles within the polygon correspond to material, outside to ambient.    
+    
+    """
+    def __init__(self, polygon, thickness, bbox = None, d=None, material=None, folder=None):
+
+        Iso_FROM_FILE.__init__(self, d=d, material=material, folder=folder)
         
-        self.refresh_N()
+        mins = polygon.min(0)
+        maxs = polygon.max(0)
+        poly_centre = (mins+maxs)/2
+        poly_size = maxs-mins
+    
+        px_size = np.ceil((poly_size / self.d)).astype(int)
+        scale = min(px_size / poly_size)
+    
+        self.verts = (polygon - poly_centre)*scale + px_size/2
+        path = mpl.path.Path(self.verts)
+
+        x, y = np.meshgrid(np.arange(px_size[0]),np.arange(px_size[1]))
+        x, y = x.flatten(), y.flatten()        
+        xy = np.vstack((x,y)).T
+        
+        grid = path.contains_points(xy)
+        grid = grid.reshape(px_size).astype(int)
+        
+        self.grid = np.tile(grid, (round(thickness/self.d), 1, 1))
+        
+        self.origin = np.array(tuple(poly_centre)+(thickness/2.,))
+        
 
 ### Periodic Targets
 

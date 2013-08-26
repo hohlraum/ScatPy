@@ -400,18 +400,20 @@ class AVGTable(ResultTable):
             z=None
             f=open(os.path.join(folder, fname), 'Ur')
 
+        ncomps = 0
         for i in range(37):
             line=f.readline()
             if line.find('1 incident polarizations') <> -1:
-                hdr=32
+                hdr=31
                 c_widths=[3, 6, 6, 10, 10, 11, 11]
                 plot_fields=['THETA', '<|f11|^2>']
-                break
             if line.find('2 incident polarizations') <> -1:
-                hdr=37
+                hdr=36
                 c_widths=[6, 7,9,12,12,11,11,11,11,11,11,11]
                 plot_fields=['S_11']
-                break
+            if line.find('n=') <> -1: # Compositions
+                ncomps+=1
+    
 
         f.close()
         if z: z.close()
@@ -419,16 +421,16 @@ class AVGTable(ResultTable):
         ResultTable.__init__(self, fname, hdr, c_widths, **kwargs)
         self.x_field='THETA'        
         self.y_fields=plot_fields
-        if hdr==32:
-            self.summary=AVGSummaryTable(fname, folder, npol=1, **kwargs)
+        if hdr==31:
+            self.summary=AVGSummaryTable(fname, folder, npol=1, ncomps=ncomps, **kwargs)
         else:
-            self.summary=AVGSummaryTable(fname, folder, npol=2, **kwargs)
+            self.summary=AVGSummaryTable(fname, folder, npol=2, ncomps=ncomps, **kwargs)
 
 class AVGSummaryTable(Table):
     """
     A class for reading the summary section of AVGTables.
     """      
-    def __init__(self, fname=None, folder=None, npol=None, zfile=None, **kwargs):
+    def __init__(self, fname=None, folder=None, npol=None, ncomps=None, zfile=None, **kwargs):
         if fname is None:
             fname='w000r000.avg'
         self.fname=fname
@@ -439,6 +441,8 @@ class AVGSummaryTable(Table):
         self.zfile=zfile
 
         Table.__init__(self)
+
+        self.ncomps=ncomps        
 
         if npol is not None:
             self.npol=npol
@@ -455,14 +459,16 @@ class AVGSummaryTable(Table):
 
     def _find_pol(self, f):
 
-        for i in range(37):
+        self.ncomps = 0
+        for i in range(40):
             line=f.readline()
             if line.find('1 incident polarizations') <> -1:
                 self.npol=1
-                break
             if line.find('2 incident polarizations') <> -1:
                 self.npol=2
-                break
+            if line.find('n=') <> -1:
+                self.ncomps +=1
+
 
     def refresh(self):
         """
@@ -490,7 +496,7 @@ class AVGSummaryTable(Table):
                     
         hdr=''
 
-        for i in range(32):
+        for i in range(31 + self.ncomps):
             hdr+=f.readline()
             
         self.header=hdr
@@ -499,10 +505,10 @@ class AVGSummaryTable(Table):
         l=hdr[9].split()
         self.wave=float(l[1])
 
-        l=hdr[18]
+        l=hdr[17+self.ncomps]
         self['Epol']=np.array(utils.str2complexV(l))
                 
-        l=hdr[28].split()
+        l=hdr[27+self.ncomps].split()
         self['Q_ext']=np.array(float(l[1]))
         self['Q_abs']=np.array(float(l[2]))
         self['Q_sca']=np.array(float(l[3]))
@@ -512,7 +518,7 @@ class AVGSummaryTable(Table):
         Reload the data from the file in the case of two polarization calcs.
         """         
         hdr=''
-        for i in range(37):
+        for i in range(36 + self.ncomps):
             hdr+=f.readline()
             
         self.header=hdr
@@ -521,13 +527,13 @@ class AVGSummaryTable(Table):
         l=hdr[9].split()
         self.wave=float(l[1])
 
-        l1=hdr[18]
-        l2=hdr[19]
+        l1=hdr[17 + self.ncomps]
+        l2=hdr[18 + self.ncomps]
         self['Epol']=np.array([utils.str2complexV(l1),
                               utils.str2complexV(l2)])
         
-        l1=hdr[28].split()
-        l2=hdr[29].split()
+        l1=hdr[27 + self.ncomps].split()
+        l2=hdr[28 + self.ncomps].split()
         self['Q_ext']=np.array([float(l1[1]), float(l2[1])])
         self['Q_abs']=np.array([float(l1[2]), float(l2[2])])
         self['Q_sca']=np.array([float(l1[3]), float(l2[3])])
@@ -731,10 +737,12 @@ class QTable2(ResultTable):
     Fields are: aeff, wave, Q_pha, Q_pol, Q_cpol
 
     """
-    def __init__(self, fname=None, **kwargs):
+    def __init__(self, fname=None, num_mat=1, **kwargs):
         if fname==None:
             fname='qtable2'
-        ResultTable.__init__(self, fname, 12, [10,11,12,12,12], **kwargs)
+            
+        hdr_lines = 11 +num_mat
+        ResultTable.__init__(self, fname, hdr_lines, [10,11,12,12,12], **kwargs)
         self.x_field='wave'
         self.y_fields=['Q_pha']
 

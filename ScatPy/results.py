@@ -1122,7 +1122,6 @@ class ResultCollection(OrderedDict):
         """
         Plot all of the tables in the collection in one plot.
         """        
-        
         for (key, table) in self.iteritems():
 #            if fields is None:
 #                flds=table.y_fields
@@ -1253,6 +1252,7 @@ class FolderCollection(ResultCollection):
             f_key=posixpath.normpath(f_key)
             try:
                 self[f_key]=rtable(folder=f)
+                print f_key
             except (IOError):
                 pass
 

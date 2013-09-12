@@ -60,8 +60,8 @@ class Settings(object):
     #: Specify binary output
     CBINFLAG='NOTBIN'
 
-    #: Initial Memory Allocation
-    InitialMalloc=np.array([100,100,100])
+    #: Initial Memory Allocation. None will attempt to automatically size the initial malloc
+    InitialMalloc = None
 
     #: Either do or skip nearfield calculations (True, False)
     NRFLD=False 

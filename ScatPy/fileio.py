@@ -35,7 +35,12 @@ def build_ddscat_par(settings, target):
     out+=settings.CBINFLAG +'\n'
     
     out+='**** Initial Memory Allocation ****'+'\n'
-    out+=settings.InitialMalloc.__str__()[1:-1]+'\n'
+    if settings.InitialMalloc is not None:
+        out+=settings.InitialMalloc.__str__()[1:-1]+'\n'
+    elif isinstance(target, targets.FROM_FILE):
+        out+=str(target.sh_param())[1:-1]+'\n'
+    else:
+        out+='100 100 100\n'
     
     out+=target.save_str() #Target defn goes here
     

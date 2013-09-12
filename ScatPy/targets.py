@@ -1068,7 +1068,10 @@ class Polygon(Iso_FROM_FILE):
     :param polygon: a list of vertices for the polygon
     :param thickness: the thickness of the polygon
     :param bbox: the bounding box. By default uses the smallest box that contains
-                 the entire polygon.    
+                 the entire polygon. If bbox is a 2-tuple then the values specify
+                 the width and height of the box and the polygon is centred within it.
+                 If the bbox is a 4-tuple, then the values specify the bottom
+                 left x,y coordinates and the width and height.
     :param d: the dipole dipole spacing, if not specified default value is used
     :param material: A string specifying the material
                      file to use for the target. Default is taken from default.par.
@@ -1081,15 +1084,31 @@ class Polygon(Iso_FROM_FILE):
 
         Iso_FROM_FILE.__init__(self, d=d, material=material, folder=folder)
         
-        mins = polygon.min(0)
-        maxs = polygon.max(0)
-        poly_centre = (mins+maxs)/2
-        poly_size = maxs-mins
+        polygon= np.array(polygon)
+        p_min = polygon.min(0)
+        p_max = polygon.max(0)
+        poly_centre = (p_min+p_max)/2
+        poly_size = p_max-p_min
+        
+        if bbox is None:
+            bbox_corner = p_min
+            bbox_size = poly_size
+        
+        elif len(bbox) == 2:
+            bbox_corner = poly_centre - np.array(bbox)/2
+            bbox_size = np.array(bbox)
+
+        elif len(bbox) == 4:
+            bbox_corner = np.array(bbox[:2])
+            bbox_size = np.array(bbox[-2:])
+        else:
+            raise ValueError('Argument bbox must have length 2 or 4')
     
-        px_size = np.ceil((poly_size / self.d)).astype(int)
-        scale = min(px_size / poly_size)
+        px_size = np.ceil((bbox_size / self.d)).astype(int)
+        scale = min(px_size / bbox_size)
     
-        self.verts = (polygon - poly_centre)*scale + px_size/2
+        # map the vertices into dipole space
+        self.verts = (polygon - bbox_corner)*scale
         path = mpl.path.Path(self.verts)
 
         x, y = np.meshgrid(np.arange(px_size[0]),np.arange(px_size[1]))
@@ -1114,7 +1133,7 @@ class Periodic(object):
                         in the x,y TF directions. (in um)
 
     """
-    
+    @property
     def dimension(self):
         """
         Returns the number of periodic dimensions

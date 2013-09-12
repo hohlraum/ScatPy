@@ -35,8 +35,6 @@ from collections import OrderedDict
 
 import utils
 
-
-
 #def _dichroism_calculator(L,R):
 #    """
 #    Calculates the dichroism of two spectra based on linear absorptance
@@ -713,6 +711,16 @@ class SCASummaryTable(Table):
         return [self.wave, CDext, CDabs, CDsca]
 
 
+def _find_header_len(fname, folder, search):
+    
+    if folder is not None:
+        fname=os.path.join(folder, fname)
+
+    with open(fname) as f:
+        for (i,l) in enumerate(f):
+            if l.find(search) != -1:
+                return i
+        
 class QTable(ResultTable):
     """
     A class for reading qtable output files.
@@ -721,11 +729,12 @@ class QTable(ResultTable):
 
     
     """
-    def __init__(self, fname=None, num_mat=1, **kwargs):
+    def __init__(self, fname=None, folder=None, **kwargs):
         if fname==None:
             fname='qtable'
-        hdr_lines=12+num_mat
-        ResultTable.__init__(self, fname, hdr_lines, [10,11,11,11,11,12,11,11,6], **kwargs)
+
+        hdr_lines=_find_header_len(fname, folder, 'aeff')
+        ResultTable.__init__(self, fname, hdr_lines, [10,11,11,11,11,12,11,11,6], folder=folder, **kwargs)
         self.x_field='wave'
         self.y_fields=['Q_ext']
 
@@ -737,12 +746,12 @@ class QTable2(ResultTable):
     Fields are: aeff, wave, Q_pha, Q_pol, Q_cpol
 
     """
-    def __init__(self, fname=None, num_mat=1, **kwargs):
+    def __init__(self, fname=None, folder=None, **kwargs):
         if fname==None:
             fname='qtable2'
             
-        hdr_lines = 11 +num_mat
-        ResultTable.__init__(self, fname, hdr_lines, [10,11,12,12,12], **kwargs)
+        hdr_lines=_find_header_len(fname, folder, 'aeff')
+        ResultTable.__init__(self, fname, hdr_lines, [10,11,12,12,12], folder=folder, **kwargs)
         self.x_field='wave'
         self.y_fields=['Q_pha']
 

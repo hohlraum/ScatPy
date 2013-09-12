@@ -893,8 +893,7 @@ class ShapeTable(dict):
         """
         Display the dipoles using Mayavi. 
         
-        Currently does not distinguish between dipoles of different materials,
-        and does not display dipole anisotropy.
+        Does not display dipole anisotropy.
         """
         from mayavi import mlab
 
@@ -913,13 +912,15 @@ class ShapeTable(dict):
         if mask_points is None:
             X=self['IX']
             Y=self['IY']
-            Z=self['IZ']        
+            Z=self['IZ']
+            c=self['ICOMPx']
         else:
             X=self['IX'][::mask_points]
             Y=self['IY'][::mask_points]
             Z=self['IZ'][::mask_points]                    
-            
-        mlab.points3d(X, Y, Z, *args, **kwargs)
+            c=self['ICOMPx'][::mask_points]
+
+        mlab.points3d(X, Y, Z, c, scale_mode='none', *args, **kwargs)
         mlab.show()
 
 

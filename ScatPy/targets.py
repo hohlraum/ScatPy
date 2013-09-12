@@ -213,6 +213,7 @@ class Target(object):
         new = copy.deepcopy(self)                
         new.__class__ = new_cls
         new.period = period
+        new.directive = new_cls.directive
         return new
 
 
@@ -1139,10 +1140,12 @@ class FRMFILPBC(FROM_FILE, Periodic):
     it is not considered a builtin target.
         
     """
+    directive = 'FRMFILPBC'
     def __init__(self, grid=None, period=(0,0), d=None, material=None, folder=None, fname=None):    
 
         FROM_FILE.__init__(self, grid=grid, d=d, material=material, folder=folder)
 
+#        self.directive = 'FRMFILPBC'
         self.fname = 'shape.dat' if fname is None else fname
         self.period = period
 
@@ -1191,10 +1194,13 @@ class RCTGL_PBC(RCTGLPRSM, Periodic):
     :param folder: The target working directory. The default is the CWD.
 
     """
+    directive = 'RCTGL_PBC'
+    
     def __init__(self, phys_shape, period, d=None, material=None, folder=None, fname=None):    
 
         RCTGLPRSM.__init__(self, phys_shape, d=d, material=material, folder=folder)
 
+        self.directive = 'RCTGL_PBC'
         self.period = period
 
     @property
@@ -1242,6 +1248,7 @@ class CYLNDRPBC(CYLINDER, Periodic):
 
         CYLINDER.__init__(self, length, radius, orient, d=d, material=material, folder=folder)
 
+        self.directive = 'CYLNDRPBC'
         self.period = period
 
     @property

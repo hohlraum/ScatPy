@@ -75,10 +75,7 @@ class Target(object):
             self.sh_param = sh_param
 
         if aeff is not None:
-            if isinstance(aeff, ranges.How_Range):
-                self.aeff = aeff.first
-            else:
-                self.aeff = aeff
+            self.aeff = aeff
                 
         if folder is None:
             self._folder='.'

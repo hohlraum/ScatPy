@@ -88,9 +88,13 @@ def ellipticity_surf(DeltaQ, a_eff, rho):
 def _dichroism_calculator(L,R):
     """
     Calculates the difference spectrum of two spectra.
+
+    Can cope with spectra of different lengths, but wavelengths must be 
+    aligned.
     """
     
-    return L-R
+    l = min(len(L), len(R))
+    return L[:l,...] - R[:l,...]
 
 
 # ===================================================================
@@ -454,6 +458,7 @@ class AVGSummaryTable(Table):
                     self._find_pol(f)
                 
         self.refresh()
+        self.x_field = 'wave'
 
     def _find_pol(self, f):
 
@@ -561,7 +566,10 @@ class AVGSummaryTable(Table):
         CDabs = _dichroism_calculator(Qabs[a], Qabs[b])
         CDsca = _dichroism_calculator(Qsca[a], Qsca[b])
 
-        return [self.wave, CDext, CDabs, CDsca]
+        l = min(len(CDext), len(self.wave))
+        wave = self.wave[:l,...]
+
+        return [wave, CDext, CDabs, CDsca]
 
 
 class SCASummaryTable(Table):
@@ -707,6 +715,9 @@ class SCASummaryTable(Table):
         CDext = _dichroism_calculator(Qext[a], Qext[b])
         CDabs = _dichroism_calculator(Qabs[a], Qabs[b])
         CDsca = _dichroism_calculator(Qsca[a], Qsca[b])
+
+        l = min(len(CDext), len(self.wave))
+        wave = self.wave[:l,...]
 
         return [self.wave, CDext, CDabs, CDsca]
 
@@ -889,9 +900,11 @@ class ShapeTable(dict):
         """
         self.folder=new_folder
     
-    def show(self, *args, **kwargs):
+    def show(self, show_now=True, *args, **kwargs):
         """
         Display the dipoles using Mayavi. 
+        
+        :param show_now: If True calls mlab.show immediately. 
         
         Does not display dipole anisotropy.
         """
@@ -921,7 +934,9 @@ class ShapeTable(dict):
             c=self['ICOMPx'][::mask_points]
 
         mlab.points3d(X, Y, Z, c, scale_mode='none', *args, **kwargs)
-        mlab.show()
+        
+        if show_now:
+            mlab.show()
 
 
 class TargetTable(ShapeTable):
@@ -1081,21 +1096,28 @@ class EnTable(dict):
         """
         self.folder=new_folder
 
-    def show(self, field=None):
+    def show(self, show_now=True, field=None):
         """
         Visualize the selected field with mayavi
 
+        :param show_now: If True calls mlab.show immediately. 
+
+
         call mlab.show() to display the figure after making desired adjustments
         """
+
+        from mayavi import mlab
 
         #TODO: add default physical axes
         
         if field is None:
             field='Etot2'
         
-        mlab.contour3d(self['Etot2'])
+        mlab.contour3d(self[field])
         warnings.warn('Use mlab.show() to display the figure when you are ready')
-    
+
+        if show_now:       
+            mlab.show()
 
 ###===================================================================
 ###  Collections
@@ -1108,7 +1130,7 @@ class ResultCollection(OrderedDict):
         A collection of several results together in one object.
     
         Results are returned as a dictionary of ```Table```s where the key names
-        for each Table corresponds to the folder from which it was loaded.
+        for each Table corresponds to the folder or file from which it was loaded.
         """
         super(ResultCollection, self).__init__()    
 
@@ -1194,8 +1216,9 @@ class ResultCollection(OrderedDict):
                     cd=Table()
                     for f in fields:
                         cd[f]=_dichroism_calculator(self[L][f], self[R][f])
-                    x_field=self[L].x_field
-                    cd[x_field]=self[L][x_field]
+                    l = len(cd[f])
+                    x_field=self[L].x_field                    
+                    cd[x_field]=self[L][x_field][:l,...]
                     
                     cd.x_field=x_field
                     cd.y_fields=fields
@@ -1272,7 +1295,8 @@ class FileCollection(ResultCollection):
         """
         if r_type is None:
             r_type='avgsummary'
-    
+
+        self.r_type = r_type    
         if r_type.lower()=='avgtable':
             rtable=AVGTable
             flt="*.avg"
@@ -1284,7 +1308,7 @@ class FileCollection(ResultCollection):
             rtable=FMLTable
             flt='*.fml'
         elif r_type.lower()=='scatable':
-            rtable=SCATable
+            rtable=SCASummaryTable
             flt='*.sca'
             
         if path is None:
@@ -1298,6 +1322,22 @@ class FileCollection(ResultCollection):
                 self[f_key]=rtable(f)
             except (IOError):
                 pass
+
+    def make_table(self):
+        """
+        Compile the various files into one table
+        """
+        
+        files = sorted(self.keys())
+        cols = self[self.keys()[0]].keys()
+        table = Table()
+        for c in cols:
+            table[c] = np.array([self[f][c] for f in files])            
+
+        table['wave'] = np.array([self[f].wave for f in files])        
+        table.x_field = 'wave'
+        table.y_fields = ['Q_ext']
+        return table
 
     def _avgsum_dichroism(self, fields=None):
         """

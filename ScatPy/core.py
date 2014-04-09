@@ -315,9 +315,9 @@ class DDscat(object):
         :param submit_script: Use True to write a .sge file for submitting the job 
                             to an SGE cluster via ```qsub```.
         
-        If the current profile has a ```write_script``` then it is run after
-        the ddscat.par has been written, and is called with any addition
-        arguments to write.        
+        If the current profile defines a function ```write_script``` then this
+        is run after the ddscat.par has been written, and is called with any
+        addition arguments to write.        
         """
 
         self.check()

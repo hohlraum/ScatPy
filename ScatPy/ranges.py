@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 A collection of ranges found in ddscat.par
 

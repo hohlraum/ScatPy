@@ -196,7 +196,7 @@ class Table(dict):
         
             v*=c
 
-    def export(self, fname, fields=('Q_ext')):
+    def export(self, fname, fields=('Q_ext',)):
         """
         Export the table as an ascii file
         

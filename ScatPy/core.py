@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 import os
 import os.path
-import posixpath
+import posixpath, ntpath
 import copy
 import pdb
 import inspect

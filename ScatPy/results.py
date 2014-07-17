@@ -690,6 +690,9 @@ class SCASummaryTable(Table):
         self['Q_ext']=np.array([float(l1[1]), float(l2[1])])
         self['Q_abs']=np.array([float(l1[2]), float(l2[2])])
         self['Q_sca']=np.array([float(l1[3]), float(l2[3])])
+        
+        l3=hdr[37].split()
+        self['Q_pol']=np.array([float(l3[1]), float(l3[1])])
             
     def dichroism(self):
         """
@@ -1510,7 +1513,7 @@ class SCAHyperSpace():
         self.ProcessSCASpace()
         self.shape=(len(self.w_range), len(self.r_range), len(self.beta_range),
                     len(self.theta_range), len(self.phi_range),
-                    len(self.Epol_range), 3)
+                    len(self.Epol_range), 2+len(self.Epol))
 
         self.data=np.zeros(self.shape)
         self.refresh()
@@ -1547,7 +1550,10 @@ class SCAHyperSpace():
             theta_idx=Theta[sca.theta]
             phi_idx=Phi[sca.phi]
 
-            dat=np.array((sca['Q_ext'], sca['Q_abs'], sca['Q_sca'])).transpose()
+            if len(self.Epol)==1:
+                dat=np.array((sca['Q_ext'], sca['Q_abs'], sca['Q_sca'])).transpose()
+            elif len(self.Epol)==2:
+                dat=np.array((sca['Q_ext'], sca['Q_abs'], sca['Q_sca'], sca['Q_pol'])).transpose()
 
             self.data[w_idx, r_idx, beta_idx, theta_idx, phi_idx, :, :]=dat
 

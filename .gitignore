@@ -5,7 +5,9 @@
 doc/build
 MANIFEST
 ScatPy.egg-info/
+build/
 dist/
+ScatPy/_version.py
 !MANIFEST.in
 ScatPy/testing
 doc/examples/tmp/

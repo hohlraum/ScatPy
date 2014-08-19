@@ -58,6 +58,7 @@ Installation
 
     * `numpy <http://www.numpy.org/.>`_
     * `matplotlib <http://matplotlib.org/index.html>`_
+    * `scipy <http://www.scipy.org/>`_
 
     Visualizing targets in 3D also requires: 
 
@@ -73,15 +74,17 @@ Installation
 Getting Started
 ===============
 Once you have ``ScatPy`` installed, start by reading the :doc:`userguide`
-and reviewing the :doc:`examples`. More advanced use will benefit from referring
+and reviewing the :doc:`examples`. More advanced users will benefit from referring
 to the :doc:`api/api`. 
 
-Acknowledgements
-================
-Initial work on ScatPy was carried out at the Max Planck Institute for
-Intelligent Systems, under funding provided by the DPG.
+Acknowledgements and Citations
+==============================
+Work on ScatPy was carried out at the Max Planck Institute for Intelligent Systems, under funding provided by the DPG.
 
-Sahand Eslami provided numerous bug reports.
+If this code contributes to a publication, please cite::
+
+    A.G. Mark, S. Eslami, and P. Fischer; Python code for interacting with DDSCAT.
+    Available at https://pypi.python.org/pypi/ScatPy.
 
 
 License

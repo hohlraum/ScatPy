@@ -12,14 +12,29 @@ It includes a number of submodules:
 
 """
 import core
+import utils
+
+# Create profile folder in user home directory if one does not already exist.
+try:
+    utils.make_profile()
+except IOError:
+    pass
+
 import fileio
 import ranges
 import results
 import targets
-import utils
+
 from core import (DDscat, Settings, set_config)
 from core import (pol_cL, pol_cR, pol_lV, pol_lH)
 
-__version__=0.1
 __all__=["DDscat", "Settings", "set_config", "ranges", "results", "targets", "fileio", "utils",
          'pol_cL', 'pol_cR', 'pol_lV', 'pol_lH']
+
+try:
+    from _version import __version__ as v
+    __version__ = v
+    del v
+except ImportError:
+    __version__ = "UNKNOWN"
+    

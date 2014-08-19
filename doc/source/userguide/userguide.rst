@@ -29,12 +29,28 @@ Overview
 The general workflow for ScatPy is to:
 
 1. Create a target
-#. Create a DDscat job
-#. Select the desired run parameters for job (wavelength range, solver,)
-#. Run the job, either locally or on a remote server
-#. Load the result tables
-#. Process and plot the results
+1. Create a DDscat job
+1. Select the desired run parameters for job (wavelength range, solver,)
+1. Run the job, either locally or on a remote server
+1. Load the result tables
+1. Process and plot the results
 
+Profiles
+========
+When ScatPy is imported for the first time it will attempt to create a folder ```.ScatPy```
+in the current user's home directory. It will populate this folder with configuration files
+that can be edited to suit your requirements. The two most important ones are ```default.par```
+which is the base ```DDSCAT.par``` file for all DDSCAT jobs, and ```default.py``` which
+contains the default configurations for file locations, and file system types. These files
+can be edited to match your preferred configuration.
+
+Multiple profile files mean that it is possible to setup and test a job on one computer 
+(e.g. a local workstation) and then export the job settings for execution on a different
+system (e.g. a remote cluster). 
+
+
+Userguide Contents
+==================
 .. toctree::
     :maxdepth: 2
     

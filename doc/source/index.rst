@@ -73,12 +73,12 @@ Installation
 
 Getting Started
 ===============
-Once you have ``ScatPy`` installed, start by reading the :doc:`userguide`
+Once you have ``ScatPy`` installed, start by reading the :doc:`userguide/userguide`
 and reviewing the :doc:`examples`. More advanced users will benefit from referring
 to the :doc:`api/api`. 
 
-Acknowledgements and Citations
-==============================
+Acknowledgements and Citing
+===========================
 Work on ScatPy was carried out at the Max Planck Institute for Intelligent Systems, under funding provided by the DPG.
 
 If this code contributes to a publication, please cite::

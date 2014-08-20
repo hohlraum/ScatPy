@@ -35,7 +35,7 @@ from distutils.command.sdist import sdist as _sdist
 from subprocess import Popen, PIPE
 import re
 
-version_file = 'gdsCAD/_version.py'
+version_file = 'ScatPy/_version.py'
 
 def git_version():
     """Return the git tag of the current commit"""

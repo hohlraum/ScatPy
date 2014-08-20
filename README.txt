@@ -22,7 +22,7 @@ Documentation
 =============
 
 Complete documentation can be found at:
-    http://pythonhosted.org/ScatPy/#
+    http://pythonhosted.org/ScatPy
 
 
 Download

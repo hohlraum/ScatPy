@@ -4,7 +4,7 @@
 .spyderproject
 doc/build
 MANIFEST
-ScatPy.egg-info/
+*.egg-info
 build/
 dist/
 ScatPy/_version.py

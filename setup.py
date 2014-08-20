@@ -9,7 +9,7 @@ import glob
 
 setup(
     name = 'ScatPy',
-    version = '0.1.0',
+    version = get_version(),
     author = 'Andrew G. Mark',
     author_email = 'mark@is.mpg.de',
     packages = ['ScatPy'],

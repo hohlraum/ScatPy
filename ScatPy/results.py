@@ -408,9 +408,9 @@ class AVGTable(ResultTable):
             if line.find('1 incident polarizations') <> -1:
                 hdr=31
                 c_widths=[3, 6, 6, 10, 10, 11, 11]
-                plot_fields=['THETA', '<|f11|^2>']
+                plot_fields=['theta', '<|f11|^2>']
             if line.find('2 incident polarizations') <> -1:
-                hdr=36
+                hdr=37
                 c_widths=[6, 7,9,12,12,11,11,11,11,11,11,11]
                 plot_fields=['S_11']
             if line.find('n=') <> -1: # Compositions
@@ -421,7 +421,7 @@ class AVGTable(ResultTable):
         if z: z.close()
             
         ResultTable.__init__(self, fname, hdr, c_widths, **kwargs)
-        self.x_field='THETA'        
+        self.x_field='theta'        
         self.y_fields=plot_fields
         if hdr==31:
             self.summary=AVGSummaryTable(fname, folder, npol=1, ncomps=ncomps, **kwargs)

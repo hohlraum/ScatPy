@@ -1099,14 +1099,19 @@ class EnTable(dict):
         """
         self.folder=new_folder
 
-    def show(self, show_now=True, field=None):
+    def show(self, field=None, show_now=True, phase=None, mask_points=None):
         """
         Visualize the selected field with mayavi
 
+        :param field:    Select the field to plot (default is Etot2)
         :param show_now: If True calls mlab.show immediately. 
+        :param phase:    The phase angle in deg to plot (default = 0deg)
+        :param mask_points: 
 
-
-        call mlab.show() to display the figure after making desired adjustments
+        The appearance of the display can be tweaked by deferring plotting with
+        '''show_now=True''' and then making the desired changes to the mayavi
+        pipeline. When complete, call mlab.show() to display the figure.
+        
         """
 
         from mayavi import mlab
@@ -1115,8 +1120,27 @@ class EnTable(dict):
         
         if field is None:
             field='Etot2'
+
+        f = self[field]
+
+        f=f[::mask_points, ::mask_points, ::mask_points,...]
         
-        mlab.contour3d(self[field])
+        if field=='Comp':
+            # Reduce the composition 3-tuple to a single scalar
+            f=f.sum(axis=3)
+
+        if f.dtype==np.dtype('complex64') or f.dtype==np.dtype('complex128'):
+            if phase is None:
+                phase = 1
+            else:
+                phase *= np.pi/180
+                phase = np.cos(phase) + 1j * np.sin(phase)
+
+            f = (f*phase).real
+            mlab.quiver3d(f[...,0], f[...,1], f[...,2])
+        else:            
+            mlab.contour3d(f)
+            
         warnings.warn('Use mlab.show() to display the figure when you are ready')
 
         if show_now:       

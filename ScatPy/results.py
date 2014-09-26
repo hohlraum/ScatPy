@@ -1141,10 +1141,12 @@ class EnTable(dict):
         else:            
             mlab.contour3d(f)
             
-        warnings.warn('Use mlab.show() to display the figure when you are ready')
-
         if show_now:       
             mlab.show()
+        else:
+            warnings.warn('Use mlab.show() to display the figure when you are ready')
+
+
 
 ###===================================================================
 ###  Collections

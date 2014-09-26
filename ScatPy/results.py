@@ -1099,14 +1099,14 @@ class EnTable(dict):
         """
         self.folder=new_folder
 
-    def show(self, field=None, show_now=True, phase=None, mask_points=None):
+    def show(self, field='Etot2', phase=0.0, mask_points=None, show_now=True):
         """
         Visualize the selected field with mayavi
 
         :param field:    Select the field to plot (default is Etot2)
-        :param show_now: If True calls mlab.show immediately. 
         :param phase:    The phase angle in deg to plot (default = 0deg)
-        :param mask_points: 
+        :param mask_points: The number of points to skip when plotting large datasets
+        :param show_now: If True calls mlab.show immediately. 
 
         The appearance of the display can be tweaked by deferring plotting with
         '''show_now=True''' and then making the desired changes to the mayavi
@@ -1118,33 +1118,29 @@ class EnTable(dict):
 
         #TODO: add default physical axes
         
-        if field is None:
-            field='Etot2'
-
         f = self[field]
 
-        f=f[::mask_points, ::mask_points, ::mask_points,...]
+        if mask_points is not None:            
+            f=f[::mask_points, ::mask_points, ::mask_points, ...]
         
         if field=='Comp':
             # Reduce the composition 3-tuple to a single scalar
             f=f.sum(axis=3)
 
         if f.dtype==np.dtype('complex64') or f.dtype==np.dtype('complex128'):
-            if phase is None:
-                phase = 1
-            else:
-                phase *= np.pi/180
-                phase = np.cos(phase) + 1j * np.sin(phase)
+            # For complex vector fields
+            phase = np.exp(1j * np.pi/180 * phase)
 
             f = (f*phase).real
             mlab.quiver3d(f[...,0], f[...,1], f[...,2])
-        else:            
+        else:
+            # For scalar fields
             mlab.contour3d(f)
             
         if show_now:       
             mlab.show()
         else:
-            warnings.warn('Use mlab.show() to display the figure when you are ready')
+            warnings.warn('Use mayavi.mlab.show() to display the figure when you are ready')
 
 
 

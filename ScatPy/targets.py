@@ -771,7 +771,17 @@ class FROM_FILE(Target):
         Y=table[:, 1][::mask_points]
         Z=table[:, 2][::mask_points]
         c=table[:, 3][::mask_points]
-            
+
+        # Draw box representing the target volume
+        sp = self.sh_param
+        bx, by, bz = [0, 0, 0, 0, 0], [0, sp[1], sp[1], 0, 0], [0, 0, sp[2], sp[2], 0]
+        mlab.plot3d(bx, by, bz)
+        bx, by, bz = [sp[0], sp[0], sp[0], sp[0], sp[0]], [0, sp[1], sp[1], 0, 0], [0, 0, sp[2], sp[2], 0]
+        mlab.plot3d(bx, by, bz)
+        for (y,z) in ((0,0), (sp[1], 0), (sp[1], sp[2]), (0, sp[2])):
+            mlab.plot3d((0, sp[0]), (y,y), (z,z))
+
+        # Draw the target                        
         mlab.points3d(X, Y, Z, c, scale_mode='none', *args, **kwargs)
         mlab.show()
     

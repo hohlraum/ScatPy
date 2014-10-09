@@ -774,15 +774,42 @@ class FROM_FILE(Target):
 
         # Draw box representing the target volume
         sp = self.sh_param
-        bx, by, bz = [0, 0, 0, 0, 0], [0, sp[1], sp[1], 0, 0], [0, 0, sp[2], sp[2], 0]
-        mlab.plot3d(bx, by, bz)
-        bx, by, bz = [sp[0], sp[0], sp[0], sp[0], sp[0]], [0, sp[1], sp[1], 0, 0], [0, 0, sp[2], sp[2], 0]
-        mlab.plot3d(bx, by, bz)
-        for (y,z) in ((0,0), (sp[1], 0), (sp[1], sp[2]), (0, sp[2])):
-            mlab.plot3d((0, sp[0]), (y,y), (z,z))
+        #box vertices
+        v0, v1, v2, v3 = (0,0,0), (0, sp[1], 0), (0, sp[1], sp[2]), (0, 0, sp[2])
+        v4, v5, v6, v7 = (sp[0],0,0), (sp[0], sp[1], 0), (sp[0], sp[1], sp[2]), (sp[0], 0, sp[2])
+
+        Box = np.array([v0, v1, v2, v3, v0, v4, v5, v6, v7, v4, v7, v3, v2, v6, v5, v1])
+        mlab.plot3d(Box[:,0], Box[:,1], Box[:,2], name='Target Volume')
+
 
         # Draw the target                        
-        mlab.points3d(X, Y, Z, c, scale_mode='none', *args, **kwargs)
+        #
+        # Create unconnected points
+        pts = mlab.pipeline.scalar_scatter(X,Y,Z, c, name='Dipoles') #, scale_mode='none', *args, **kwargs)
+#        mlab.outline(pts)
+        
+        # Use a geometry_filter to filter with a bounding box
+        geometry_filter = mlab.pipeline.user_defined(pts,
+                                           filter='GeometryFilter', name='VisibleVolume')
+        geometry_filter.filter.extent_clipping = True
+        # Connect our dialog to the filter
+ #       extent_dialog = ExtentDialog(
+ #                   data_x_min=0, data_x_max=1,
+ #                   data_y_min=0, data_y_max=1,
+ #                   data_z_min=0, data_z_max=1,
+ #                   filter=geometry_filter.filter)
+ #       extent_dialog.edit_traits()
+        
+        # The geometry_filter leaves hanging points, we need to add a
+        # CleanPolyData filter to get rid of these.
+        clip = mlab.pipeline.user_defined(geometry_filter,
+                                            filter='CleanPolyData')
+        
+        # Finally, visualize the remaining points with spheres using a glyph
+        # module
+        spheres = mlab.pipeline.glyph(clip, scale_mode='none')
+
+  #      mlab.points3d(X, Y, Z, c, scale_mode='none', *args, **kwargs)
         mlab.show()
     
     

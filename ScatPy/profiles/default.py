@@ -18,6 +18,6 @@ ddscat_path = '/usr/local/bin/'
 
 # An optional script that is run when the job is written
 
-#def write_script(job):
+#def write_script(job, config=None):
 #   """Useful postflight processing"""
 #    pass

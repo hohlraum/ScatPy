@@ -10,7 +10,11 @@ os = 'unix'
 # The absolute path to the folder containing materials properties
 mat_library = '/home/guests/mark/mat_prop'
 
-def write_script(job):
+# The absolute path of the ddscat executable
+mat_library = '/cluster/bin/ddscat'
+
+
+def write_script(job, config):
     import os.path
 
     with open(os.path.join(job.folder, 'submit.sge'), 'wb') as f:
@@ -32,7 +36,7 @@ def write_script(job):
  
         f.write('echo beginning `pwd`\n')
         f.write('date\n')
-        f.write('time /cluster/bin/ddscat\n' % ddscat_path)
+        f.write('time /cluster/bin/ddscat\n' % config['ddscat_exec'])
         f.write('echo completed `pwd`\n')
         f.write('echo \'------------------------------------------\'\n')
         f.write('date\n')

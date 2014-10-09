@@ -1,8 +1,8 @@
 # ScatPy Configuration file
-# For running DDSCAT on landau parallel
+# For running DDSCAT as a parallel computation through MPI
 
 # The profile name
-name = 'landau_mpi'
+name = 'mpi'
 
 # The operating system
 os = 'unix'
@@ -10,7 +10,13 @@ os = 'unix'
 # The absolute path to the folder containing materials properties
 mat_library = '/home/guests/mark/mat_prop'
 
-def write_script(job):
+# The absolute path of MPI 
+mpi = '/usr/mpi/gcc/openmpi-1.4.2/bin/mpirun'
+
+# The absolute path of the DDSCAT executable
+ddscat_exec = '/cluster/bin/ddscat_openmpi'
+
+def write_script(job, config=None):
     """A script to generate a SGE submission script."""
     import posixpath
     import os.path
@@ -40,8 +46,9 @@ def write_script(job):
  
         f.write('echo beginning `pwd`\n')
         f.write('date\n')
-        mpi = '/usr/mpi/gcc/openmpi-1.4.2/bin/mpirun'
-        f.write('time %s -np $NSLOTS -machinefile $TMPDIR/machines /cluster/bin/ddscat_openmpi\n' % (mpi))
+
+        f.write('time %s -np $NSLOTS -machinefile $TMPDIR/machines %s\n' % \
+             (config['mpi'], config['ddscat_exec']))
         f.write('echo completed `pwd`\n')
         f.write('echo \'------------------------------------------\'\n')
         f.write('date\n')

@@ -331,7 +331,7 @@ class DDscat(object):
         self.target.write()
 
         try:
-            config['write_script'](self, *args, **kwargs)
+            config['write_script'](self, config, *args, **kwargs)
         except KeyError:
             pass            
 

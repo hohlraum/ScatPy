@@ -97,7 +97,7 @@ class Lin_Range(How_Range):
         return cls(float(split[0]), float(split[1]), int(split[2]))
 
      
-class Scat_Range():
+class Scat_Range(object):
     '''
     A specialist range used for specifying scattering planes.
 
@@ -129,7 +129,7 @@ class Scat_Range():
         split = string.split()
         return cls(float(split[0]), float(split[1]), float(split[2]), int(split[3]))
 
-class Scat_Range_1dPBC():
+class Scat_Range_1dPBC(object):
     '''
     A specialist range used for specifying scattering cones for 1D periodic targets.
 
@@ -162,7 +162,7 @@ class Scat_Range_1dPBC():
         return cls(float(split[0]), float(split[1]), float(split[2]), int(split[3]))
 
 
-class Scat_Range_2dPBC():
+class Scat_Range_2dPBC(object):
     '''
     A specialist range used for specifying scattering diffraction order for 2D periodic targets.
 

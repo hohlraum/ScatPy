@@ -352,6 +352,10 @@ class DDscat(object):
                 for s in self.settings.scat_planes:
                     if not isinstance(s, ranges.Scat_Range_2dPBC):
                         raise TypeError('Target is 2D periodic. Scattering plane definitions must be Scat_Range_2dPBC')
+            
+            if self.settings.CMDFRM == 'LFRAME':
+                raise ValueError('For PBC calculations CMDFRM must be \'TFRAME\'')
+
         else:
             for s in self.settings.scat_planes:
                 if not isinstance(s, ranges.Scat_Range):

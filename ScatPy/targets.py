@@ -250,7 +250,7 @@ class Target_Builtin(Target):
 
         Subclasses must implement this themselves. The method should take
         the internally stored physical dimensions (e.g. self.radius, self.length)
-        and translate them into the shape parameters DDSCAT expects for
+        and translate them into a tuple of shape parameters that DDSCAT expects for
         this target type.
         
         This would be a good application for ABCs.
@@ -438,7 +438,7 @@ class ELLIPSOID(Target_Builtin):
         :param sh_param: size in dipoles
         """
 
-        return int(4/3*np.pi*(sh_param.prod()/8))
+        return int(4/3*np.pi*(np.asarray(sh_param).prod()/8))
     
     @classmethod
     def fromfile(cls, fname):
